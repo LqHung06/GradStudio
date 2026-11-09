@@ -320,7 +320,7 @@ function calcDeposit(p) {
 
 const confirmedSchedule = {
   '2026-10-24': [
-    { row: 'Makeup · Mai', start: 8, end: 12, label: 'Kỷ yếu lớp · Bận', num: '①', desc: 'Ca makeup kỷ yếu lớp (08:00–12:00). Đã xác nhận.' },
+    { row: 'Makeup · Mai', start: 8, end: 12, label: 'Kỷ yếu lớp · Bận', num: '①', desc: 'Ca makeup kỷ yếu lớp (08:00–12:00). Đã đặt lịch.' },
     { row: 'Thợ chụp · Hà', start: 10, end: 12, label: 'Gia đình · Ngọc', num: '②', desc: 'Gói chụp gia đình 4 người tại Phòng A với thợ Hà. Đã hoàn tất đặt cọc.' },
     { row: 'Phòng A', start: 10, end: 12, label: 'Gia đình · Ngọc', num: '②', desc: 'Phòng A đã xếp lịch cho gói Gia đình · Ngọc.' }
   ],
@@ -332,8 +332,8 @@ const confirmedSchedule = {
     { row: 'Phòng B', start: 14, end: 16, label: 'Tốt nghiệp · Minh', num: '②', desc: 'Phòng B đã xếp lịch cho Minh.' }
   ],
   '2026-11-08': [
-    { row: 'Makeup · Mai', start: 8, end: 10, label: 'Chân dung · An', num: '①', desc: 'Gói Chân dung profile cá nhân của An (08:00–10:00). Đã xác nhận.' },
-    { row: 'Thợ chụp · Hà', start: 10, end: 12, label: 'Gia đình · Ngọc', num: '②', desc: 'Gói chụp gia đình 4 người tại Phòng A với thợ Hà (10:00–12:00). Đã xác nhận.' },
+    { row: 'Makeup · Mai', start: 8, end: 10, label: 'Chân dung · An', num: '①', desc: 'Gói Chân dung profile cá nhân của An (08:00–10:00). Đã đặt lịch.' },
+    { row: 'Thợ chụp · Hà', start: 10, end: 12, label: 'Gia đình · Ngọc', num: '②', desc: 'Gói chụp gia đình 4 người tại Phòng A với thợ Hà (10:00–12:00). Đã đặt lịch.' },
     { row: 'Phòng A', start: 10, end: 12, label: 'Gia đình · Ngọc', num: '②', desc: 'Phòng A đã xếp lịch cho gói Gia đình · Ngọc.' }
   ]
 };

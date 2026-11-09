@@ -43,7 +43,7 @@ function Header({
 }
 
 function Footer() {
-  return <footer className="site-footer"><a className="brand" href="index.html"><span className="brand-mark" aria-hidden="true">◉</span><span>Grad<span className="brand-italic">Studio</span></span></a><span>Studio portrait stories · Saigon</span><span>Prototype · Dữ liệu minh họa</span></footer>;
+  return <footer className="site-footer"><a className="brand" href="index.html"><span className="brand-mark" aria-hidden="true">◉</span><span>Grad<span className="brand-italic">Studio</span></span></a><span>Studio portrait stories · Saigon</span></footer>;
 }
 
 function ScrollBackground() {
