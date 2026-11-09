@@ -242,4 +242,42 @@ Các mục kiểm thử trước trong nhật ký phản ánh báo cáo được
   - `npm run build` & `npm test`: **31/31 test suites PASS** (bao gồm `outside: []` trên cả 3 trang ở 360px, 768px, 1280px, 1440px).
   - W3C Nu HTML Checker (`curl` trực tiếp tới `https://validator.w3.org/nu/?out=text`): cả 3 trang `dist/index.html`, `dist/studio.html`, `dist/booking.html` đều trả về `The document validates according to the specified schema(s).` (**0 ERRORS, 0 WARNINGS**), lưu tại `checks/validator-{index,studio,booking}.txt`.
 
+### 23. Chuẩn hóa thang khoảng cách `--space-*`, cỡ chữ nội dung `>= 16px`, hiển thị câu hỏi của Linh trên Screen 1 và đồng bộ nhãn trạng thái
 
+- **Công cụ:** Antigravity Assistant, W3C Nu HTML Checker (`https://validator.w3.org/nu/?out=text`), Playwright Chromium.
+- **Yêu cầu:** rà soát toàn diện trước khi nộp theo Rubric (Tiêu chí 1 & Tiêu chí 4): chuẩn hóa các khai báo `padding`, `margin`, `gap` về biến `--space-*`, loại bỏ `font-size` bằng `px` lẻ, hiển thị sẵn câu hỏi của Linh và phản hồi của studio ngay trên DOM tĩnh của `index.html` (Screen 1), và thay thế nhãn `"Đã xác nhận"` trên lịch tài nguyên `studio.html` bằng `"Đã đặt lịch"`.
+- **Changed:**
+  - Mở rộng thang `:root` với `--space-5: 1.25rem` (20px) và `--space-10: 2.5rem` (40px); chuyển đổi 433 khai báo khoảng cách sang `var(--space-1)` đến `var(--space-16)` trên toàn bộ 5 file `src/styles/*.css` và `src/styles.css`.
+  - Xóa bỏ toàn bộ 36 khai báo `font-size` dùng `px` lẻ; nâng cỡ chữ nội dung hội thoại, form control, cảnh báo xung đột và dòng báo giá lên `1rem` (`16px`).
+  - Hiển thị trực tiếp đoạn trao đổi của Linh (*“Gói tốt nghiệp có makeup còn lịch 24/10 lúc 09:00 không?”*) và phản hồi của GradStudio (*“Để mình kiểm tra lịch cho bạn nhé”*) ngay trên thẻ dịch vụ Tốt nghiệp ở `index.html` (`src/pages/HomePage.jsx`) để nội dung luôn xuất hiện trong DOM tĩnh và ảnh chụp màn hình mà không che khuất trang.
+  - Thay toàn bộ 5 chỗ dùng chữ `"Đã xác nhận"` trên chú giải và các khối lịch của `studio.html` (`src/pages/StudioPage.jsx`, `src/data/fixtures.js`) thành `"Đã đặt lịch"` theo đúng bộ tên trạng thái chuẩn của đề bài.
+- **Rejected / lỗi phát hiện & khắc phục:**
+  - Qua kiểm tra `grep` trên `dist/index.html` và `dist/studio.html`, phát hiện câu hỏi của Linh ở Screen 1 trước đó chỉ xuất hiện sau khi bấm mở `FloatingChat` (nên chưa có mặt trong `dist/index.html` tĩnh), và chú giải lịch tài nguyên ở `studio.html` còn sót chữ `"Đã xác nhận"`. Đã bổ sung hiển thị tĩnh trên `HomePage.jsx` và đổi nhãn lịch sang `"Đã đặt lịch"`.
+- **Kiểm tra / bằng chứng:**
+  - Chạy lại `npm run build`, `npm test` (**31/31 PASS**) và kiểm tra lại cả 3 file `dist/index.html`, `dist/studio.html`, `dist/booking.html` qua W3C Nu HTML Checker (**0 ERRORS, 0 WARNINGS**).
+
+### 24. Tinh chỉnh giao diện theo phản hồi trực quan: bỏ nhãn demo dư thừa và sửa lỗi rớt dòng ngày tháng Studio
+
+- **Công cụ:** Antigravity Assistant, Playwright Chromium, W3C Nu HTML Checker.
+- **Yêu cầu:** loại bỏ các dòng chữ demo/role-handoff thừa ở chân trang Screen 3 và ghi chú demo ở Screen 2 theo phản hồi người dùng; sửa lỗi hiển thị ngày tháng ở danh sách hội thoại Screen 2 bị rớt dòng dọc từng chữ.
+- **Changed:**
+  - Bỏ phần văn bản `Prototype · Dữ liệu minh họa` trong `site-footer` (`src/components/Layout.jsx`).
+  - Bỏ thanh chuyển vai trò `role-handoff` (`Đang xem với vai trò khách hàng`) ở cuối trang `booking.html` (`src/pages/BookingPage.jsx`).
+  - Bỏ dòng ghi chú demo `studio-footnote` (`Các hội thoại và lịch ngoài GS-1024 là dữ liệu demo...`) ở cuối trang `studio.html` (`src/pages/StudioPage.jsx`).
+  - Cấu trúc lại `.thread-item`: đưa `<span className="thread-time">` vào bên trong `.thread-copy-header` cùng hàng với tên khách hàng, thiết lập `display: flex; justify-content: space-between; align-items: baseline` và `white-space: nowrap; flex-shrink: 0`.
+- **Rejected / lỗi phát hiện & khắc phục:**
+  - Trước đây `<span className="thread-time">` nằm ngoài `.thread-copy` và là phần tử con thứ 3 trong lưới CSS Grid 2 cột (`40px minmax(0,1fr)`), khiến nó bị đẩy xuống hàng thứ 2 cột 1 (chỉ rộng 40px), làm các chuỗi ngày tháng như `"2 ngày trước"`, `"Hôm qua"`, `"3 ngày trước"` bị ép rớt dòng từng từ một theo chiều dọc. Đã sửa triệt để bằng cách đưa vào header của `.thread-copy`, giúp ngày tháng luôn nằm trên một dòng ngang gọn gàng cạnh tên khách.
+- **Kiểm tra / bằng chứng:**
+  - `npm run build` & `npm test`: **31/31 PASS**.
+  - W3C Nu HTML Checker trên cả 3 trang: **0 ERRORS, 0 WARNINGS**.
+
+### 25. Sửa form "Booking mới" bị cắt ở Screen 2 và làm rõ nhãn chuyển vai ở Screen 1
+
+- **Công cụ:** Antigravity Assistant, Playwright Chromium (script đo bố cục), W3C Nu HTML Checker.
+- **Yêu cầu:** rà soát lần cuối theo mục "Fix these" của brief: chat và form Booking mới phải đọc được bằng cách cuộn trang ở mọi độ rộng.
+- **Changed:**
+  - `.booking-overlay` (`src/styles/studio-workspace.css`) đổi từ `position:absolute; inset:0; overflow-y:auto` sang `position:static`, nên form nằm trong luồng trang bên dưới khung chat.
+  - Nhãn liên kết ở Screen 1 đổi thành "Studio staff: tiếp tục cuộc trò chuyện của Linh" để nói rõ ai tiếp tục khi chuyển vai.
+- **Rejected / lỗi phát hiện & khắc phục:**
+  - Script đo bố cục cho thấy ở 360/768/1280px nút "Tạo booking" nằm ngoài vùng `.conversation-area` (ví dụ 1280px: nút ở y=972–1042, vùng kết thúc ở y=877), form có thanh cuộn riêng và phủ lên đoạn chat. Bộ 31 test không bắt được vì chỉ kiểm tra tràn ngang. Sau khi sửa, nút nằm trong vùng ở cả 3 độ rộng (1280px: y=1582–1651, vùng kết thúc y=1666) và đoạn chat hiển thị.
+- **Kiểm tra / bằng chứng:** `npm test` 31/31 PASS; W3C Nu HTML Checker 0 lỗi cả 3 trang. Chưa bổ sung test tự động cho lỗi cắt dọc.

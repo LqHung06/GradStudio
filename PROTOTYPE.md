@@ -95,13 +95,15 @@ Dự án đã giải quyết toàn bộ các vấn đề trong danh sách **"Fix
 - **0 khai báo `!important` trong toàn bộ định kiểu component/layout** (chỉ sử dụng duy nhất 1 dòng `@media (prefers-reduced-motion: reduce)` để tắt animation/transition theo chuẩn trợ năng).
 
 ### 6.2. Thang đo khoảng cách (Spacing Scale)
-Dựa trên bội số chuẩn của 4px (0.25rem):
+Dựa trên bội số chuẩn của 4px (0.25rem), áp dụng xuyên suốt qua custom properties (`var(--space-*)`):
 - `--space-1: 0.25rem` (4px)
 - `--space-2: 0.5rem` (8px)
 - `--space-3: 0.75rem` (12px)
 - `--space-4: 1rem` (16px)
+- `--space-5: 1.25rem` (20px)
 - `--space-6: 1.5rem` (24px)
 - `--space-8: 2rem` (32px)
+- `--space-10: 2.5rem` (40px)
 - `--space-12: 3rem` (48px)
 - `--space-16: 4rem` (64px)
 
