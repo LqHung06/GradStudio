@@ -1,0 +1,472 @@
+@media(min-width:1200px){
+
+.hero{
+  grid-template-columns:1.1fr 1.15fr .85fr;
+  gap:1.5rem;
+  min-height:650px
+}
+
+.hero-services{
+  display:block;
+  padding-left:1.5rem
+}
+
+.hero-services h2{
+  font:600 1.25rem system-ui;
+  letter-spacing:normal
+}
+
+.hero-services .eyebrow{
+  font-size:.75rem
+}
+
+.hero h1{
+  font-size:3.75rem
+}
+
+.hero-art{
+  min-height:500px
+}
+
+.hero-polaroid{
+  right:-1.5rem
+}
+
+.art-script{
+  font-size:2rem
+}
+
+.section-shell{
+  width:calc(100% - 4rem);
+  max-width:1440px
+}
+
+.booking-page{
+  padding-left:24%
+}}
+@media(max-width:1023px){
+
+.site-header{
+  padding:1rem 1.5rem;
+  gap:1rem
+}
+
+.main-nav{
+  gap:1rem
+}
+
+.header-actions{
+  gap:.75rem
+}
+
+.studio-layout{
+  grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)
+}
+
+.resource-panel{
+  grid-column:1/-1
+}
+
+.agenda{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 2rem
+}
+
+.booking-page{
+  padding-left:0
+}
+
+.booking-art{
+  display:none
+}
+
+.section-shell,.booking-page{
+  width:calc(100% - 3rem)
+}
+
+.booking-intro h1{
+  font-size:3rem
+}
+
+.hero h1{
+  font-size:3.5rem
+}
+
+.service-grid{
+  gap:1rem
+}
+
+.service-card-copy{
+  padding:1rem
+}
+
+.gallery-card{
+  min-height:250px
+}}
+@media(max-width:767px){
+
+.site-header{
+  flex-wrap:wrap;
+  padding:.75rem 1rem;
+  gap:.5rem
+}
+
+.brand{
+  font-size:1.25rem
+}
+
+.header-actions{
+  margin-left:auto;
+  gap:.5rem
+}
+
+.header-actions>.button{
+  padding:.5rem .75rem
+}
+
+.account-trigger{
+  font-size:.875rem
+}
+
+.account-trigger .avatar{
+  width:32px;
+  height:32px
+}
+
+.main-nav{
+  order:3;
+  flex:1 1 100%;
+  margin:0;
+  gap:1.5rem
+}
+
+.site-header .role-chip{
+  font-size:.875rem
+}
+
+.section-shell,.studio-page,.booking-page{
+  width:calc(100% - 2rem)
+}
+
+.hero{
+  grid-template-columns:1fr;
+  gap:2rem;
+  padding-block:2.5rem
+}
+
+.hero h1{
+  font-size:3.25rem
+}
+
+.hero-art{
+  min-height:400px;
+  width:90%;
+  margin:auto
+}
+
+.hero-art>img{
+  max-height:500px
+}
+
+.hero-polaroid{
+  right:-1rem
+}
+
+.hero-services{
+  display:block;
+  padding-top:1rem
+}
+
+.hero-services h2{
+  font-size:1.75rem
+}
+
+.service-grid{
+  grid-template-columns:1fr
+}
+
+.service-art{
+  height:240px
+}
+
+.section-heading{
+  display:block
+}
+
+.section-aside{
+  text-align:left;
+  margin-top:1rem
+}
+
+.service-section,.gallery-section,.process-section{
+  padding-block:3rem
+}
+
+.gallery-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
+
+.gallery-card{
+  min-height:220px;
+  padding:1rem
+}
+
+.gallery-label{
+  font-size:1.25rem
+}
+
+.gallery-drop{
+  display:block
+}
+
+.gallery-drop span{
+  display:block
+}
+
+.lightbox{
+  grid-template-columns:1fr;
+  gap:1rem;
+  padding:1rem
+}
+
+.lightbox-art{
+  min-height:320px
+}
+
+.process-grid{
+  grid-template-columns:1fr;
+  gap:1rem
+}
+
+.handoff{
+  flex-direction:column;
+  align-items:start;
+  padding:1.5rem
+}
+
+.chat-panel{
+  padding:1rem
+}
+
+.chat-panel-head h2{
+  font-size:1.75rem
+}
+
+.chat-compose{
+  flex-wrap:wrap
+}
+
+.chat-compose .button{
+  width:100%
+}
+
+.message{
+  max-width:95%;
+  padding:1rem
+}
+
+.site-footer{
+  flex-direction:column;
+  align-items:start;
+  padding:1.5rem 1rem
+}
+
+.page-intro{
+  display:block
+}
+
+.page-intro h1{
+  font-size:2.25rem
+}
+
+.page-intro>p{
+  margin-top:1rem
+}
+
+.studio-layout{
+  grid-template-columns:1fr
+}
+
+.resource-panel{
+  grid-column:auto
+}
+
+.thread-item{
+  grid-template-columns:40px minmax(0,1fr)
+}
+
+.context-grid{
+  grid-template-columns:1fr
+}
+
+.reply-form{
+  padding:1rem;
+  flex-wrap:wrap
+}
+
+.reply-form .button{
+  width:100%
+}
+
+.conversation-head,.booking-context{
+  padding:1rem
+}
+
+.conversation-head .status{
+  margin-left:0
+}
+
+.conversation-context{
+  margin:1rem
+}
+
+.message-thread{
+  padding:0 1rem 1rem
+}
+
+.agenda{
+  grid-template-columns:1fr
+}
+
+.booking-intro{
+  position:relative;
+  padding-top:2rem
+}
+
+.booking-intro h1{
+  font-size:2.5rem
+}
+
+.booking-deco{
+  display:block;
+  text-align:right;
+  font-size:2rem;
+  margin-top:1.5rem
+}
+
+.booking-filters{
+  gap:.25rem
+}
+
+.booking-filters button{
+  padding:.5rem .65rem
+}
+
+.booking-list{
+  display:grid;
+  grid-template-columns:1fr
+}
+
+.booking-list-item{
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr);
+  gap:.5rem .75rem
+}
+
+.booking-list-date{
+  grid-row:span 2
+}
+
+.booking-list-item .status{
+  grid-column:2
+}
+
+.booking-content{
+  grid-template-columns:1fr
+}
+
+.invoice-card{
+  order:-1
+}
+
+.booking-card-heading h2{
+  font-size:1.75rem
+}
+
+.booking-facts div{
+  grid-template-columns:1fr 1.2fr
+}
+
+.role-handoff{
+  flex-direction:column
+}
+
+.chosen-photo-grid{
+  grid-template-columns:1fr
+}
+
+.account-menu{
+  max-width:calc(100vw - 2rem)
+}
+
+.art-script{
+  font-size:2rem
+}
+
+.service-card-copy{
+  padding:1.5rem
+}}
+@media(prefers-reduced-motion:reduce){
+
+html{
+  scroll-behavior:auto
+}
+
+*,*::before,*::after{
+  animation:none;
+  transition:none
+}}
+
+.input-label{
+  display:block;
+  width:100%;
+  color:var(--muted);
+  margin-bottom:.5rem
+}
+
+.chat-compose,.reply-form{
+  flex-wrap:wrap
+}
+
+.chat-compose input,.reply-form input{
+  flex:1 1 160px;
+  width:auto
+}
+
+.chat-compose .input-label,.reply-form .input-label{
+  flex:1 1 100%
+}
+
+.search-field .input-label{
+  font-size:1rem
+}
+
+.lightbox:focus{
+  outline:3px solid var(--forest);
+  outline-offset:4px
+}
+
+.hero>*{
+  min-width:0
+}
+@media(min-width:768px) and (max-width:1023px){
+
+.site-header{
+  flex-wrap:wrap
+}
+
+.main-nav{
+  order:3;
+  flex:1 1 100%;
+  justify-content:center
+}
+
+.header-actions{
+  margin-left:auto
+}}
+@media(min-width:768px) and (max-width:1199px){
+
+.hero-polaroid{
+  right:1rem
+}}

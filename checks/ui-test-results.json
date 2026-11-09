@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-08T16:29:24.507Z",
+  "results": [
+    {
+      "name": "index 360px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "studio 360px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "booking 360px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "index 768px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "studio 768px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "booking 768px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "index 1280px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "studio 1280px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "booking 1280px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "index 1440px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "studio 1440px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "booking 1440px: overflow, landmarks, assets, tap targets",
+      "status": "PASS"
+    },
+    {
+      "name": "Hero typography: responsive text bounds, unchanged navigation and screenshots",
+      "status": "PASS"
+    },
+    {
+      "name": "Journey editorial typography: readable hierarchy, content and responsive screenshots",
+      "status": "PASS"
+    },
+    {
+      "name": "Gallery: category, reset, keyboard open/Escape and drag",
+      "status": "PASS"
+    },
+    {
+      "name": "Gallery filters: visible borders, readable text and keyboard selection",
+      "status": "PASS"
+    },
+    {
+      "name": "Gallery: every category loads its corresponding photo and opens the same image",
+      "status": "PASS"
+    },
+    {
+      "name": "Contact sheet: captions, six hover states and touch readability",
+      "status": "PASS"
+    },
+    {
+      "name": "Floating chat: all screens, validation, session persistence and keyboard",
+      "status": "PASS"
+    },
+    {
+      "name": "Home consultation invitation opens shared chat",
+      "status": "PASS"
+    },
+    {
+      "name": "Studio: thread selection, empty reply, status transition, combined search/filter",
+      "status": "PASS"
+    },
+    {
+      "name": "Studio: agreed filter and chronological resource agenda",
+      "status": "PASS"
+    },
+    {
+      "name": "Studio calendar: next/previous fixtures and conflict",
+      "status": "PASS"
+    },
+    {
+      "name": "Flow: create booking opens waiting deposit with disabled payment",
+      "status": "PASS"
+    },
+    {
+      "name": "Booking: filters synchronize week, payment and selected photos",
+      "status": "PASS"
+    },
+    {
+      "name": "Account: keyboard open, Escape, account details and close",
+      "status": "PASS"
+    },
+    {
+      "name": "Motion: hover feedback and reduced-motion settings",
+      "status": "PASS"
+    },
+    {
+      "name": "Every route: valid links/anchors, named controls, labels and alt text",
+      "status": "PASS"
+    },
+    {
+      "name": "Floating chat: mobile panel enters page flow and close stays reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "Scroll background: continuous stops, reverse, component surfaces, resize and reduced motion",
+      "status": "PASS"
+    },
+    {
+      "name": "Reduced motion, no console or network errors",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}
