@@ -1,3 +1,7 @@
 node_modules/
 .DS_Store
 *.log
+
+# Build output: built right before the zip is made, never committed
+dist/
+client/dist/
