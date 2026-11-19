@@ -331,3 +331,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs` đọc được đủ 39 dòng của bảng endpoint, kết quả `FAIL README.md … (0/39)`. Đúng như mong đợi, vì ví dụ sẽ nằm trong các file `01`–`13`.
   - `git diff main -- mock client` trống: chưa đụng tới mock và front end.
 - **Commits:** `contract(readme): base path, auth, error shape, endpoint table` · `docs: brief and AI-LOG entry 2 (contract README)`.
+
+### [TV1] 3. Contract: 01-auth, 08-jobs, 12-admins, 13-settings (19/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 3. Viết 4 file contract của TV1 trên branch `contract/tv1`, tách từ `contract/readme` (PR 1 chưa merge).
+- **Changed:**
+  - `docs/api/01-auth.md`, `08-jobs.md`, `12-admins.md`, `13-settings.md` (file mới). Mỗi endpoint có ai được gọi, body kèm giới hạn, câu trả lời thành công, mọi lỗi có thể xảy ra, và ví dụ chạy được theo chuỗi ví dụ trong README.
+  - `docs/api/README.md`: dữ liệu ban đầu ghi thêm user khách hàng của các booking có sẵn và id ảnh `ph-101` … `ph-136` của GS-1022, có thêm dòng trong `## Changes`.
+- **Rejected / lỗi phát hiện:**
+  - Ban đầu id ảnh `ph-01` của GS-1024 (đã dùng trong README) **trùng** với 36 ảnh có sẵn của GS-1022. Đã đổi ảnh có sẵn của GS-1022 thành `ph-101` … `ph-136`.
+  - Script kiểm JSON tự viết lần đầu chạy lỗi (`SyntaxError`), vì cách cắt hàm theo dấu `{}` hỏng với chuỗi `'{'` nằm trong `parseLoose`. Đã đổi sang cắt theo dòng đánh dấu cuối hàm.
+- **Checked:**
+  - Chạy `node tools/contract-check.mjs` khi chưa có mock:
+    - đọc được 40 ví dụ;
+    - nhận đúng ví dụ đăng nhập ở `01-auth.md:59`;
+    - 11/11 endpoint của TV1 có ví dụ;
+    - không có lỗi nào khác ngoài "không có mock" và "chưa có ví dụ" cho endpoint của TV2, TV3.
+  - Script chạy `parseLoose` của contract-check: 35 request `http` và 40 answer, 0 lỗi JSON.
+  - Chưa chạy được với mock (mock làm ngày 21/11). Lần chạy thật sẽ ghi ở mục AI-LOG của mock.
+- **Commits:** `contract(auth)` · `contract(jobs)` · `contract(admins)` · `contract(settings)` · `contract(readme): list story users and GS-1022 photo ids` · `docs: brief and AI-LOG entry 3`.
