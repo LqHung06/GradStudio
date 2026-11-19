@@ -281,3 +281,32 @@ Các mục kiểm thử trước trong nhật ký phản ánh báo cáo được
 - **Rejected / lỗi phát hiện & khắc phục:**
   - Script đo bố cục cho thấy ở 360/768/1280px nút "Tạo booking" nằm ngoài vùng `.conversation-area` (ví dụ 1280px: nút ở y=972–1042, vùng kết thúc ở y=877), form có thanh cuộn riêng và phủ lên đoạn chat. Bộ 31 test không bắt được vì chỉ kiểm tra tràn ngang. Sau khi sửa, nút nằm trong vùng ở cả 3 độ rộng (1280px: y=1582–1651, vùng kết thúc y=1666) và đoạn chat hiển thị.
 - **Kiểm tra / bằng chứng:** `npm test` 31/31 PASS; W3C Nu HTML Checker 0 lỗi cả 3 trang. Chưa bổ sung test tự động cho lỗi cắt dọc.
+
+---
+
+## PA#3
+
+Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tới mục tương ứng trong `brief.md`), **Changed**, **Rejected** (assistant làm sai gì, check nào phát hiện, đã yêu cầu sửa thế nào), **Checked** (các check đã chạy thật), **Commits**. Task tự làm không dùng assistant thì ghi `Tool: none`.
+
+### [TV1] 1. Setup PA#3: chuyển app vào client/, đơn giản hóa build, rules file cho PA#3 (19/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 1. Clone repo sang thư mục làm việc mới, làm trên branch `chore/pa3-setup`. Assistant đề xuất 6 commit, TV1 đồng ý rồi cho assistant commit bằng tên TV1.
+- **Changed:**
+  - `index.html`, `studio.html`, `booking.html`, `src/`, `public/`, `scripts/`, `tests/`, `vite.config.js`, `package*.json` chuyển vào `client/` (chỉ đổi tên đường dẫn).
+  - `dist/` ở thư mục gốc không còn được track; `.gitignore` thêm `dist/`, `client/dist/`.
+  - `client/vite.config.js`: bỏ plugin Babel tự viết; `base: '/'`; proxy `/api` sang `http://localhost:3001` cho cả `server` và `preview`. `client/package.json`: bỏ `@babel/core`, `@babel/preset-env`, `@babel/preset-react`; `build` chỉ còn `vite build`.
+  - Xóa `scripts/prerender.cjs` và `tests/ui.test.cjs` (vẫn còn trong lịch sử git).
+  - Thêm `tools/contract-check.mjs` và README của nó (chép nguyên từ tài liệu môn học).
+  - `AGENTS.md` viết lại cho PA#3. Phần mở đầu của `brief.md`, mục `## PA#3` của `AI-LOG.md`, và khung `FRONTEND.md`.
+- **Rejected / lỗi phát hiện:**
+  - `AGENTS.md` cũ vẫn mô tả trang tĩnh PA#2 (fixtures, nút cọc bị khóa, "No new route", khung chat nổi trên desktop). Nếu giữ, assistant sẽ làm ngược yêu cầu PA#3, nên đã viết lại.
+  - `npm run build` cũ gọi `prerender.cjs`, script này nạp Playwright từ một đường dẫn chỉ có trên máy TV1 (`~/.cache/codex-runtimes/...`), nên sẽ lỗi trên máy TV2 và TV3. Đã bỏ khỏi lệnh build.
+  - Không có thay đổi nào của assistant bị loại bỏ.
+- **Checked:**
+  - `npx vite build` với cấu hình cũ: chạy được.
+  - Build thử với cấu hình chỉ có `@vitejs/plugin-react` (không Babel): chạy được, CSS cùng hash và JS cùng kích thước (289.71 kB).
+  - Sau commit 3: `npm run build` chạy được.
+  - `node tools/contract-check.mjs` thoát với mã 2 ("docs/api/ not found"), đúng như mong đợi vì chưa có contract.
+  - `git status` sạch sau mỗi commit.
+- **Commits:** `chore: move PA#2 React app into client/` · `chore: stop tracking build output` · `chore(build): simplify Vite config, add /api proxy` · `chore: add tools/contract-check.mjs` · `docs: rewrite AGENTS.md for PA#3` · `docs: PA#3 skeleton for brief.md, AI-LOG.md, FRONTEND.md`.
