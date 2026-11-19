@@ -22,3 +22,15 @@ Tôi có dự định sẽ nộp trước bài này tầm 4,5 ngày, để dự 
 ```
 
 Trả lời trắc nghiệm của TV1: nộp bản chính T6 27/11 · Kiệt là TV2, Nhựt là TV3 · chỉ push branch, chưa mở PR.
+
+## 2. [TV1 · 19/11/2026 · Claude Code] Contract: docs/api/README.md
+
+Tin nhắn:
+
+```text
+Lên main check và nói những điều bạn sẽ làm trước và cần tôi duyệt với tư cách thành viên 1
+```
+
+Assistant đề xuất 2 PR: `contract/readme` (README, hạn 20/11 12:00) và `contract/tv1` (01-auth, 08-jobs, 12-admins, 13-settings), rồi hỏi bằng trắc nghiệm.
+
+Trả lời trắc nghiệm của TV1: **chỉ làm PR 1 (README)**; phần mô tả trong contract viết **tiếng Anh**, còn message hiển thị cho người dùng viết tiếng Việt; giữ nguyên branch `chore/pa3-setup`.

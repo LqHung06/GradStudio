@@ -310,3 +310,24 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs` thoát với mã 2 ("docs/api/ not found"), đúng như mong đợi vì chưa có contract.
   - `git status` sạch sau mỗi commit.
 - **Commits:** `chore: move PA#2 React app into client/` · `chore: stop tracking build output` · `chore(build): simplify Vite config, add /api proxy` · `chore: add tools/contract-check.mjs` · `docs: rewrite AGENTS.md for PA#3` · `docs: PA#3 skeleton for brief.md, AI-LOG.md, FRONTEND.md`.
+
+### [TV1] 2. Contract: docs/api/README.md (19/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 2. Viết `docs/api/README.md` theo kế hoạch PA#3 (mục 3.3–3.5 trong file kế hoạch), trên branch `contract/readme`.
+- **Changed:** `docs/api/README.md` (file mới), gồm:
+  - base path, xác thực và vai trò;
+  - một dạng lỗi duy nhất và bảng `error.code`;
+  - mã HTTP, quy ước dữ liệu, mã trạng thái nghiệp vụ;
+  - các đối tượng dùng chung;
+  - bảng 39 endpoint;
+  - chuỗi ví dụ, dữ liệu ban đầu của mock, hành vi của mock;
+  - mục `## Changes`.
+- **Rejected / lỗi phát hiện:**
+  - README chỉ dùng block `json` và `text`, không dùng block `http`. Nếu có block `http`, `contract-check` sẽ gửi nó tới mock như một ví dụ thật.
+  - Không có thay đổi nào của assistant bị loại bỏ.
+- **Checked:**
+  - `grep -c '^```http' docs/api/README.md` ra 0.
+  - `node tools/contract-check.mjs` đọc được đủ 39 dòng của bảng endpoint, kết quả `FAIL README.md … (0/39)`. Đúng như mong đợi, vì ví dụ sẽ nằm trong các file `01`–`13`.
+  - `git diff main -- mock client` trống: chưa đụng tới mock và front end.
+- **Commits:** `contract(readme): base path, auth, error shape, endpoint table` · `docs: brief and AI-LOG entry 2 (contract README)`.
