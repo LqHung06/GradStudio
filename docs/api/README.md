@@ -416,13 +416,13 @@ Ids from `mock/data/`, so that every route has data when opened directly:
 
 | Kind | Starting data |
 |---|---|
-| Users | `u-linh` (Linh), `u-thao` (Thảo), `u-mai` (Mai, make-up), `u-tuan` (Tuấn, photographer), `u-ha` (Hà, photographer, cannot sign in), `u-superadmin` |
+| Users | Can sign in: `u-linh` (Linh), `u-thao` (Thảo), `u-mai` (Mai, make-up), `u-tuan` (Tuấn, photographer), `u-superadmin`.<br>Cannot sign in (people of the story): `u-ha` (Hà, photographer), and the customers of the seeded bookings `u-khoa` (Trần Minh Khoa), `u-bao` (Hồ Gia Bảo), `u-han` (Lê Ngọc Hân), `u-anh` (Phạm Hoàng Anh). Full list in `01-auth.md`. |
 | Rooms | `r-a` (Phòng A), `r-b` (Phòng B) |
 | Services | `sv-ky-yeu` (Kỷ yếu lớp, from 350 000 per person), `sv-tot-nghiep` (Tốt nghiệp, from 1 800 000), `sv-chan-dung` (Chân dung/CV, from 690 000) |
 | Package | `pkg-tn-premium` (Gói Tốt nghiệp Premium, 2 hours, 30 edited photos, 1 800 000) |
 | Extras | `ex-makeup`, `ex-costume` |
 | Conversations | `c-linh` (`consulting`, already holds Linh's 09:00 question and the studio's reply), `c-khoa` (`unanswered`), `c-han` (`unanswered`), `c-bao` (`scheduled`), `c-anh` (`done`) |
-| Bookings | `GS-1020` (Phạm Hoàng Anh, `completed`)<br>`GS-1021` (Hồ Gia Bảo · Lớp 12A3, `booked`, 24/10 08:00–12:00 with Mai and Hà in Phòng A; this is why Mai is busy)<br>`GS-1022` (Trần Minh Khoa, `booked`, 36 previews, jobs for Tuấn)<br>`GS-1023` (Lê Ngọc Hân, `awaiting_deposit`) |
+| Bookings | `GS-1020` (Phạm Hoàng Anh, `completed`)<br>`GS-1021` (Hồ Gia Bảo · Lớp 12A3, `booked`, 24/10 08:00–12:00 with Mai and Hà in Phòng A; this is why Mai is busy)<br>`GS-1022` (Trần Minh Khoa, `booked`, 36 previews `ph-101` … `ph-136`, jobs for Tuấn)<br>`GS-1023` (Lê Ngọc Hân, `awaiting_deposit`) |
 
 ## Mock behaviour
 
@@ -456,3 +456,4 @@ The mock does not invent other rules.
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 
 - 2026-11-19: first version: conventions, error shape, business status codes, shared objects, endpoint table (39 endpoints), example chain, mock behaviour. (TV1)
+- 2026-11-19: starting data now lists the customers of the seeded bookings and the photo ids of GS-1022. `01-auth.md` and `08-jobs.md` refer to them, and the ids keep the GS-1024 photos `ph-01` … `ph-36` unique. (TV1)
