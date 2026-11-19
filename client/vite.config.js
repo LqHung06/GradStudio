@@ -1,29 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
-import babel from '@babel/core';
-import presetReact from '@babel/preset-react';
-import presetEnv from '@babel/preset-env';
 
-const jsxTransform = {
-  name: 'gradstudio-jsx-transform',
-  enforce: 'pre',
-  transform(code, id) {
-    if (!id.split('?')[0].endsWith('.jsx')) return null;
-    const result = babel.transformSync(code, {
-      filename: id,
-      presets: [[presetReact, { runtime: 'automatic' }], [presetEnv, { targets: 'defaults', modules: false }]],
-      sourceMaps: true,
-    });
-    return { code: result.code, map: result.map };
-  },
-};
+// The front end only calls relative /api paths. Both the dev server and
+// `vite preview` forward them to the mock (PA#3) or Express (PA#4) on port 3001.
+const api = { '/api': 'http://localhost:3001' };
 
 export default defineConfig({
-  plugins: [jsxTransform, react()],
-  base: './',
+  plugins: [react()],
+  // Absolute base: nested routes such as /my-bookings/GS-1024 must still load /assets/...
+  base: '/',
+  server: { proxy: api },
+  preview: { proxy: api },
   build: {
     rollupOptions: {
+      // PA#2 pages stay until the single-page router replaces them (front-end foundation step).
       input: {
         index: resolve(import.meta.dirname, 'index.html'),
         studio: resolve(import.meta.dirname, 'studio.html'),
