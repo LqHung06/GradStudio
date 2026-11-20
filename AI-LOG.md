@@ -430,3 +430,27 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs --base http://localhost:3001`: đọc được 71 ví dụ trong 10 file của `docs/api/`, 24/39 endpoint trong bảng `README.md` đã có ví dụ (đủ 11 endpoint TV1 + 13 endpoint TV2; 15 endpoint còn lại thuộc TV3 chưa viết), 0 lỗi cú pháp hay JSON; chưa có mock nên trả `ECONNREFUSED`.
   - `git diff --stat` và `git status`: chỉ thay đổi đúng 5 file contract của TV2, `brief.md` và `AI-LOG.md`.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV1] 8. Mock: khung server.mjs, users.json và auth.mjs (21/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 7. Dựng khung mock server `mock/server.mjs`, nạp dữ liệu động từ `mock/data/`, router tự nạp `mock/routes/`, middleware xác thực token, xử lý 4 chế độ mock (normal, slow, error, empty), ghi log chuẩn, seed 10 users trong `mock/data/users.json` và làm 3 endpoint auth trong `mock/routes/auth.mjs`.
+- **Changed:**
+  - `mock/server.mjs`: dựng HTTP server thuần bằng Node.js, khớp route ưu tiên đoạn tĩnh hơn `:param`, hỗ trợ `roles: 'signed-in'`, định dạng lỗi thống nhất, xử lý delay/4 chế độ mock và log `${method} ${url} → ${status}`.
+  - `mock/data/users.json`: đủ 10 user theo contract `01-auth.md` (6 tài khoản demo đăng nhập được, 4 user câu chuyện có `password: null`, Thảo có sẵn `createdAt`).
+  - `mock/routes/auth.mjs`: hoàn thành 3 route `POST /api/auth/login`, `GET /api/auth/me` và `POST /api/auth/logout`.
+- **Rejected / Quyết định kỹ thuật:**
+  - Chặn trường hợp body là JSON hợp lệ nhưng không phải object (như gửi mảng `[]`): trả ngay 400 VALIDATION với tin nhắn "Dữ liệu chưa hợp lệ" để handler không bị crash.
+  - Đúng path mà sai HTTP method thì trả 404 NOT_FOUND vì contract của nhóm không có mã 405.
+  - Câu thông báo lỗi 404 chọn là "Không tìm thấy" cho ngắn gọn, tự nhiên.
+  - Thêm kiểm tra cấu trúc route lúc khởi động (khai báo sai thì thoát luôn), in cảnh báo nếu bị trùng route, và bắt lỗi chiếm cổng 3001 (EADDRINUSE) để báo rõ ràng cho cả nhóm dễ dùng.
+  - Không đụng chạm vào `docs/api/`, `client/` hay `tools/`.
+- **Checked:**
+  - Chạy `node tools/contract-check.mjs --only 01-auth.md` đạt 12/12 PASS (0 FAIL).
+  - Test chế độ `error`: login vẫn 200, còn `auth/me` và route lạ đều trả 500 SERVER_ERROR đúng cấu trúc JSON.
+  - Test chế độ `slow`: độ trễ chuẩn ~2 giây (~2023 ms).
+  - Test chế độ `empty`: object đơn vẫn trả về bình thường, không làm đột biến dữ liệu `db`.
+  - Test ca biên: gửi mảng `[]` trả 400 VALIDATION; route lạ và sai method đều trả 404 NOT_FOUND.
+  - Test trùng cổng: mở server thứ hai bị báo lỗi cổng bận và thoát mã 1.
+  - `git diff main..HEAD -- docs/api client tools` hoàn toàn trống.
+- **Commits:** `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` · `mock(auth): users seeded data, login, me, and logout handlers`.
