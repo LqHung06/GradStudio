@@ -77,6 +77,7 @@ Every endpoint has at least one example: a `http` request block followed by a `h
 | Name in examples | Role | User id |
 |---|---|---|
 | `linh` | customer | `u-linh` |
+| `han` | customer | `u-han` |
 | `thao` | admin | `u-thao` |
 | `mai` | staff | `u-mai` |
 | `tuan` | staff | `u-tuan` |
@@ -188,7 +189,7 @@ Short references used inside other objects:
 
 ### ScheduleItemInput
 
-What a request sends for one part of a shoot day. Used by `POST /api/conversations/:id/proposals`, `POST /api/availability/check` and `PATCH /api/bookings/:code`:
+What a request sends for one part of a shoot day. Used by `POST /api/conversations/:id/proposals` and `POST /api/availability/check`:
 
 ```json
 {"kind": "shoot", "start": "14:00", "end": "16:00", "staffId": "u-tuan", "roomId": "r-b"}
@@ -404,9 +405,15 @@ The examples of all files run in this order on one freshly started mock. Every f
    - Selecting 31 photos gives **400**; selecting 30 gives **200**.
    - Linh pays the remaining 70% (`PAY-3`, gateway `success`): `paid_in_full`.
 10. **`10-admin-bookings`:**
-    - Moving GS-1023 to 24/10 09:00 with Mai gives **409 `CLASH`**; moving it to 25/10 09:00 gives **200**.
+    - Thảo proposes rescheduling GS-1023 to 24/10 09:00 with Mai in `c-han` → **409 `CLASH`**.
+    - Thảo proposes 25/10 09:00 in `c-han` → **201**, proposal `p-3`.
+    - Thảo sends `PATCH /api/bookings/GS-1023` with `{"proposalId": "p-3"}` before Hân accepts → **409 `CONFLICT`**.
+    - Hân accepts `p-3` in `c-han`.
+    - Thảo applies `p-3` again with `PATCH /api/bookings/GS-1023` → **200**.
     - Thảo cancels GS-1023.
     - Thảo sets the final link of GS-1024.
+
+    A proposal refused with 409 gets no id, so the next id after `p-2` is `p-3`.
 11. **`11-receive`:** Linh receives the photos of GS-1024; the booking becomes `completed`.
 12. **`12-admins`, `13-settings`:** the Superadmin lists and creates Admins, then reads and saves the settings.
 
@@ -416,13 +423,13 @@ Ids from `mock/data/`, so that every route has data when opened directly:
 
 | Kind | Starting data |
 |---|---|
-| Users | Can sign in: `u-linh` (Linh), `u-thao` (Thảo), `u-mai` (Mai, make-up), `u-tuan` (Tuấn, photographer), `u-superadmin`.<br>Cannot sign in (people of the story): `u-ha` (Hà, photographer), and the customers of the seeded bookings `u-khoa` (Trần Minh Khoa), `u-bao` (Hồ Gia Bảo), `u-han` (Lê Ngọc Hân), `u-anh` (Phạm Hoàng Anh). Full list in `01-auth.md`. |
+| Users | Can sign in: `u-linh` (Linh), `u-han` (Lê Ngọc Hân), `u-thao` (Thảo), `u-mai` (Mai, make-up), `u-tuan` (Tuấn, photographer), `u-superadmin`.<br>Cannot sign in (people of the story): `u-ha` (Hà, photographer), and the customers of the seeded bookings `u-khoa` (Trần Minh Khoa), `u-bao` (Hồ Gia Bảo), `u-anh` (Phạm Hoàng Anh). Full list in `01-auth.md`. |
 | Rooms | `r-a` (Phòng A), `r-b` (Phòng B) |
 | Services | `sv-ky-yeu` (Kỷ yếu lớp, from 350 000 per person), `sv-tot-nghiep` (Tốt nghiệp, from 1 800 000), `sv-chan-dung` (Chân dung/CV, from 690 000) |
 | Package | `pkg-tn-premium` (Gói Tốt nghiệp Premium, 2 hours, 30 edited photos, 1 800 000) |
 | Extras | `ex-makeup`, `ex-costume` |
-| Conversations | `c-linh` (`consulting`, already holds Linh's 09:00 question and the studio's reply), `c-khoa` (`unanswered`), `c-han` (`unanswered`), `c-bao` (`scheduled`), `c-anh` (`done`) |
-| Bookings | `GS-1020` (Phạm Hoàng Anh, `completed`)<br>`GS-1021` (Hồ Gia Bảo · Lớp 12A3, `booked`, 24/10 08:00–12:00 with Mai and Hà in Phòng A; this is why Mai is busy)<br>`GS-1022` (Trần Minh Khoa, `booked`, 36 previews `ph-101` … `ph-136`, jobs for Tuấn)<br>`GS-1023` (Lê Ngọc Hân, `awaiting_deposit`) |
+| Conversations | `c-linh` (`consulting`, already holds Linh's 09:00 question and the studio's reply), `c-khoa` (`unanswered`), `c-han` (`scheduled`, linked to `GS-1023`), `c-bao` (`scheduled`), `c-anh` (`done`) |
+| Bookings | `GS-1020` (Phạm Hoàng Anh, `completed`)<br>`GS-1021` (Hồ Gia Bảo · Lớp 12A3, `booked`, 24/10 08:00–12:00 with Mai and Hà in Phòng A; this is why Mai is busy)<br>`GS-1022` (Trần Minh Khoa, `booked`, 36 previews `ph-101` … `ph-136`, jobs for Tuấn)<br>`GS-1023` (Lê Ngọc Hân, `awaiting_deposit`, conversationId: `"c-han"`) |
 
 ## Mock behaviour
 
@@ -445,6 +452,7 @@ The mock is **lenient**. It refuses only what the flow needs to show:
 | Missing or invalid field | `400` |
 | A staff member or room is busy | `409 CLASH` |
 | Creating a booking before the customer accepted the proposal | `409` |
+| Applying a reschedule before the customer accepted the proposal | `409` |
 | Selecting more photos than the package allows | `400` |
 | Paying the remaining 70% before the selection is saved | `409` |
 | Receiving the photos before full payment or before the final link exists | `409` |
@@ -457,3 +465,4 @@ Every change to this file, once front-end code uses it, gets a line here: the da
 
 - 2026-11-19: first version: conventions, error shape, business status codes, shared objects, endpoint table (39 endpoints), example chain, mock behaviour. (TV1)
 - 2026-11-19: starting data now lists the customers of the seeded bookings and the photo ids of GS-1022. `01-auth.md` and `08-jobs.md` refer to them, and the ids keep the GS-1024 photos `ph-01` … `ph-36` unique. (TV1)
+- 2026-11-20: rescheduling now requires customer agreement in chat first (brief: "Both sides settle a time in chat"): `c-han` is `scheduled` and linked to `GS-1023`, `han` can sign in (`han-demo`) to accept proposal `p-3`, and `PATCH /api/bookings/:code` takes `{"proposalId"}` after agreement. (TV1)

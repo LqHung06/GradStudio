@@ -21,7 +21,7 @@
 | `u-superadmin` | Superadmin | superadmin | `superadmin@gradstudio.test` | yes, `superadmin-demo` |
 | `u-khoa` | Trần Minh Khoa | customer | `khoa@gradstudio.test` | no |
 | `u-bao` | Hồ Gia Bảo | customer | `bao@gradstudio.test` | no |
-| `u-han` | Lê Ngọc Hân | customer | `han@gradstudio.test` | no |
+| `u-han` | Lê Ngọc Hân | customer | `han@gradstudio.test` | yes, `han-demo` |
 | `u-anh` | Phạm Hoàng Anh | customer | `anh@gradstudio.test` | no |
 
 - Users marked "no" exist only as people in the story (customers of the seeded bookings, the second photographer). They have no password, and signing in as them answers `401 INVALID_CREDENTIALS`.
@@ -261,3 +261,4 @@ Content-Type: application/json
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 
 - 2026-11-19: first version. (TV1)
+- 2026-11-20: `u-han` can now sign in (`han-demo`) to accept rescheduling proposal `p-3` for `GS-1023`. (TV1)
