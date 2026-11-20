@@ -199,7 +199,241 @@ Bạn tự dán prompt vào brief.md rồi làm luôn nhé
 
 Assistant làm theo Tin nhắn 1, áp dụng thêm đề xuất (1), (2) và (4); `brief.md` là file thứ 4 trong diff.
 
-## 5. [TV2 · 20/11/2026 · Antigravity Assistant] Contract: 02-catalog, 06-payments, 07-reminders, 09-gallery, 11-receive
+## 5. [TV3 · 20/11/2026 · Codex] Contract: conversations, availability, bookings, admin-bookings
+
+Tin nhắn 1:
+
+````text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy thực hiện phần việc ngày 20/11/2026 của GradStudio PA#3: tạo nhánh và hoàn thiện 4 file contract để Kiệt review, nhóm merge trước 22:00 ngày 20/11.
+
+Các file cần hoàn thiện:
+- docs/api/03-conversations.md
+- docs/api/04-availability.md
+- docs/api/05-bookings.md
+- docs/api/10-admin-bookings.md
+
+Bạn cũng phải ghi brief.md và AI-LOG.md cho tôi, tuân thủ đúng cấu trúc đang có trong từng file.
+
+1. Đọc tài liệu
+
+Workspace:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Trước khi sửa, đọc:
+- GradStudio/AGENTS.md.
+- ke-hoach/ke-hoach/TV3-chat-booking-admin.md, mục 2, 3, 5.1, 7, 8 và 9.
+- GradStudio/docs/api/README.md, nhất là Shared objects, Endpoints, Example chain và Mock behaviour.
+- GradStudio/docs/api/01-auth.md để theo cách trình bày hiện có.
+- GradStudio/FRONTEND.md.
+- Toàn bộ GradStudio/brief.md và phần PA#3 trong GradStudio/AI-LOG.md.
+- contract-check-README.md và GradStudio/tools/contract-check.mjs.
+
+Khi cần đối chiếu yêu cầu gốc, đọc hai PDF ở workspace:
+- PA3-rubric-react-front-end.pdf
+- GradStudio-final-project-brief.pdf
+
+Nếu tài liệu khác nhau, ưu tiên:
+rubric → final project brief → docs/api/ → AGENTS.md → kế hoạch.
+
+2. Kiểm tra Git và tạo nhánh
+
+Làm việc trong repository GradStudio.
+
+Kiểm tra working tree, branch hiện tại, remote, git user.name và git user.email. Báo lại thông tin tác giả commit; không tự đổi cấu hình.
+
+Không xóa, ghi đè hoặc tự stash thay đổi có sẵn.
+
+Nếu working tree sạch, cập nhật main rồi tạo nhánh:
+git switch main
+git fetch origin
+git merge --ff-only origin/main
+git switch -c contract/tv3-chat-booking-admin
+
+Nếu nhánh đã tồn tại, kiểm tra nội dung trước khi dùng tiếp; không reset hoặc xóa nhánh.
+
+Nếu không truy cập được remote, báo rõ và tiếp tục từ main cục bộ khi an toàn. Không nói đã đồng bộ khi chưa làm được.
+
+Nếu thay đổi có sẵn hoặc main phân kỳ khiến không thể chuyển nhánh an toàn, báo tình trạng cụ thể. Không dùng lệnh phá hủy để xử lý.
+
+Nếu gặp dubious ownership, chỉ dùng safe.directory ở phạm vi từng lệnh cho repository này; không sửa cấu hình global.
+
+Ngoài fast-forward main ở trên, không merge nhánh. Không git add, commit, push hoặc tạo PR. Tôi sẽ đọc diff và tự thực hiện các bước đó.
+
+3. Phạm vi sửa file
+
+Tôi cho phép tạo và chỉnh sửa:
+- Bốn file contract của TV3 nêu trên.
+- brief.md: chỉ bổ sung mục của task này vào cuối file.
+- AI-LOG.md: chỉ bổ sung mục của task này trong phần PA#3, sau các mục hiện có.
+
+Không sửa docs/api/README.md, contract TV1/TV2, AGENTS.md, mock/, client/, tools/contract-check.mjs hoặc tài liệu lịch sử PA#2.
+
+Nếu cần thay đổi file dùng chung hoặc file của người khác, ghi đề xuất và lý do trong báo cáo bàn giao. Tiếp tục hoàn thành phần độc lập có thể làm được.
+
+4. Ghi brief.md và AI-LOG.md
+
+Đây là phần bắt buộc của task. Hãy trực tiếp ghi vào hai file, không chỉ đưa nội dung để tôi tự dán.
+
+Trước khi viết, đọc cấu trúc và các mục gần nhất. Giữ nguyên tiêu đề, hướng dẫn, nội dung cũ, cách đánh số, cấp heading, tên trường, thứ tự trường và cách dùng Markdown của từng file. Không chuẩn hóa hoặc viết lại phần của thành viên khác.
+
+brief.md:
+- Ghi nguyên văn toàn bộ prompt tôi giao cho bạn trước khi sửa contract.
+- Không rút gọn, diễn giải hoặc thay prompt bằng bản tóm tắt.
+- Dùng đúng mẫu hiện có:
+  ## <số tiếp theo>. [TV3 · 20/11/2026 · <công cụ thực tế>] Contract: conversations, availability, bookings, admin-bookings
+- Tiếp tục số thứ tự chung của file, không đánh lại từ 1.
+- Bên dưới dùng “Tin nhắn 1:” và khối code text theo mẫu.
+- Chọn độ dài hàng rào code đủ để giữ nguyên các khối code bên trong prompt và không làm hỏng Markdown.
+- Nếu có tin nhắn bổ sung cho cùng task, ghi tiếp “Tin nhắn 2:”, “Tin nhắn 3:” theo thứ tự thực tế.
+- Nếu prompt này đã được lưu đầy đủ, không ghi trùng.
+
+AI-LOG.md:
+- Giữ nguyên toàn bộ lịch sử PA#2 và các mục PA#3 đã có.
+- Không tạo thêm heading “## PA#3” nếu heading này đã tồn tại.
+- Thêm mục TV3 theo đúng kiểu heading và cách đánh số đang dùng trong phần PA#3; xác định số tiếp theo từ nội dung thực tế.
+- Giữ đúng thứ tự và cách viết các trường của mẫu hiện có:
+  Tool
+  Request
+  Changed
+  Rejected / lỗi phát hiện
+  Checked
+  Commits
+- Tool: ghi đúng công cụ thực tế.
+- Request: dẫn tới đúng số mục vừa thêm trong brief.md.
+- Changed: ghi các file và nội dung thực sự đã thay đổi, gồm cả cập nhật tài liệu ghi nhận task.
+- Rejected / lỗi phát hiện: chỉ ghi lỗi đã xảy ra, cách phát hiện và cách sửa. Nếu không có, ghi rõ không có; không dựng lỗi để đủ mẫu.
+- Checked: ghi lệnh hoặc cách kiểm tra đã thực hiện, kết quả và giới hạn của kiểm tra.
+- Commits: ghi rõ “TV3 commit sau khi đọc diff” nếu tôi chưa commit. Không bịa mã commit hoặc ghi commit dự kiến như đã có.
+
+Sau khi hoàn thành, kiểm tra diff của cả hai file để bảo đảm chỉ thêm nội dung của task, đúng cấu trúc, không mất nội dung cũ và không hỏng khối code.
+
+5. Quy ước viết contract
+
+Chỉ dùng endpoint trong bảng Endpoints của README. Dùng nguyên các shared object Booking, Message, Proposal, ScheduleItemInput, ScheduleItem, Clash và Suggestion.
+
+Không tự đổi tên field hoặc thêm field ngoài đặc tả. Nếu thiếu field cần thiết, chỉ ra chỗ thiếu. Với giới hạn validation chưa được chốt, đề xuất giá trị cụ thể và ghi cần nhóm xác nhận; không coi đó là quyết định đã được product owner duyệt.
+
+Mỗi endpoint cần có:
+- Vai trò được gọi.
+- Path/query parameters.
+- Body: kiểu dữ liệu, bắt buộc hay không và giới hạn từng field.
+- Response thành công.
+- Mọi lỗi áp dụng, gồm 400, 401, 403, 404, 409 khi có.
+
+Dùng đúng error shape trong README: code, message, fields, details.
+
+Mỗi endpoint có ít nhất một cặp request/response liên tiếp trong các khối code http:
+- Request body phải là JSON gửi được, không có dấu “…”.
+- Response có đủ field, kể cả field null; không dùng dấu “…” để bỏ qua phần chưa viết.
+- Token dùng {{token:linh}}, {{token:thao}}, {{token:han}}.
+- Cuối mỗi file có ## Changes, ghi ngày 2026-11-20, nội dung khởi tạo và người phụ trách TV3.
+- Giữ cách trình bày nhất quán với 01-auth.md.
+
+6. Nội dung từng file
+
+03-conversations.md
+
+Đặc tả đủ 6 endpoint:
+- GET /api/conversations
+- POST /api/conversations
+- GET /api/conversations/:id
+- POST /api/conversations/:id/messages
+- POST /api/conversations/:id/proposals
+- PATCH /api/conversations/:id/proposals/:proposalId
+
+Bao gồm phân quyền customer chỉ xem hội thoại của mình, admin xem tất cả; lọc trạng thái; gửi text và booking request; đề xuất giờ; khách đồng ý hoặc từ chối.
+
+Giữ chuỗi ví dụ chính:
+- Linh gửi yêu cầu trong c-linh, Thảo trả lời.
+- Đề xuất 09:00 trả 409 CLASH, không tiêu thụ ID.
+- p-1: makeup 14:00–15:00, chụp 15:00–17:00; Linh từ chối.
+- p-2: makeup 13:00–14:00, chụp 14:00–16:00; Linh đồng ý.
+
+POST tạo hội thoại cũng phải có ví dụ nhưng không làm lệch chuỗi chính hoặc ID dự kiến.
+
+04-availability.md
+
+Đặc tả:
+- GET /api/resources
+- GET /api/schedule?date=2026-10-24
+- POST /api/availability/check
+
+Có ví dụ 09:00 trùng vì Mai bận 08:00–12:00 và ví dụ 13:00/14:00 không trùng. Kết quả phải có lý do bằng chữ và gợi ý giờ thay thế.
+
+Kiểm tra availability không thay đổi dữ liệu. Lỗi CLASH ở các contract khác dùng cùng cấu trúc clashes/suggestions, đặt trong error.details.
+
+05-bookings.md
+
+Đặc tả:
+- POST /api/bookings
+- GET /api/bookings
+- GET /api/bookings/:code
+
+Ví dụ cần có:
+- Tạo từ p-1 trả 409 vì khách chưa đồng ý.
+- Tạo từ p-2 trả 201, sinh GS-1024.
+- GS-1024 có status awaiting_deposit, paymentStatus unpaid.
+- Không token trả 401.
+- Linh xem GS-1022 của người khác trả 404.
+
+Dùng đúng Booking trong README. Giá 1.800.000đ, cọc 540.000đ, còn lại 1.260.000đ.
+
+awaiting_deposit chưa giữ chỗ. Chỉ khi cọc thành công và tài nguyên được kiểm tra lại, booking mới chuyển booked.
+
+10-admin-bookings.md
+
+Đặc tả:
+- PATCH /api/bookings/:code
+- POST /api/bookings/:code/cancel
+- PUT /api/bookings/:code/final-link
+
+Chuỗi đổi lịch:
+- Admin gửi đề xuất vào c-han bằng endpoint conversations.
+- Giờ 24/10 09:00 với Mai trả 409 CLASH.
+- Đề xuất hợp lệ ngày 25/10 tạo p-3.
+- PATCH GS-1023 với p-3 trước khi Hân đồng ý trả 409.
+- Hân đồng ý p-3.
+- PATCH lại thành công và cập nhật công việc liên quan.
+- Khi áp dụng, kiểm tra trùng lại và bỏ qua chính booking đó.
+
+Sau đó hủy GS-1023 với lý do dài 5–500 ký tự, rồi lưu link https:// cho GS-1024 ở trạng thái được phép.
+
+Đặt các ví dụ gọi endpoint conversations của chuỗi đổi lịch trong file 10 để giữ đúng thứ tự chạy toàn bộ ví dụ.
+
+7. Kiểm tra trước khi bàn giao
+
+- Đối chiếu đủ 15 endpoint TV3 với README.
+- Kiểm tra mỗi request có response đi kèm.
+- Kiểm tra cú pháp JSON, HTTP status, error shape và field của shared object.
+- Rà tuần tự Example chain:
+  03 → 04 → 05 → các bước TV2/TV1 → 10.
+- Bảo đảm ví dụ lỗi không đổi state hoặc tiêu thụ ID.
+- Không thêm ví dụ thành công làm lệch p-1/p-2/p-3, GS-1024 hoặc dữ liệu các file sau.
+- Chạy git diff --check và đọc toàn bộ diff.
+- Rà lại cấu trúc brief.md, AI-LOG.md và đối chiếu số mục tham chiếu giữa hai file.
+
+Nếu chưa có mock, không tạo mock trong task này. Ghi rõ chưa chạy được contract-check với mock; không báo 0 FAIL hoặc runtime đã đạt. Không chạy kiểm tra frontend không liên quan.
+
+8. Bàn giao
+
+Khi hoàn thành, báo ngắn gọn:
+- Nhánh đang làm và tình trạng cập nhật từ remote.
+- Các file đã sửa.
+- Bảng 15 endpoint và file chứa ví dụ.
+- Số mục đã thêm trong brief.md và AI-LOG.md.
+- Kiểm tra đã chạy, kết quả và phần chưa kiểm tra được.
+- Những điểm cần Hưng, Kiệt hoặc product owner xác nhận.
+- Tóm tắt Booking, Message và Proposal để bàn giao cho Kiệt.
+- Commit message và nội dung PR đề xuất.
+
+PR dự kiến:
+Title: contract(tv3): define conversations, availability and booking APIs
+Reviewer: Kiệt, TV2.
+````
+## 6. [TV2 · 20/11/2026 · Antigravity Assistant] Contract: 02-catalog, 06-payments, 07-reminders, 09-gallery, 11-receive
 
 Tin nhắn 1 (tìm hiểu yêu cầu PA#3 và quy trình làm việc):
 

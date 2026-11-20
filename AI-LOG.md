@@ -387,7 +387,30 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs` khi chưa có mock: vẫn đọc được 40 ví dụ, chỉ có FAIL "không có mock" và "chưa có ví dụ" cho endpoint của TV2, TV3. Chưa chạy được với mock.
 - **Commits:** TV1 commit sau khi đọc diff.
 
-### [TV2] 6. Tìm hiểu quy trình PA#3, rà soát kế hoạch & câu hỏi PO, viết 5 file contract của TV2 (20/11/2026)
+### [TV3] 6. Contract: conversations, availability, bookings, admin-bookings (20/11/2026)
+
+- **Tool:** Codex; PowerShell, Node.js (module có sẵn), Git.
+- **Request:** `brief.md` mục 5, Tin nhắn 1. Hoàn thiện bốn contract TV3 để Kiệt review, nhóm merge trước 22:00 ngày 20/11; chỉ tạo nhánh, không add/commit/push/PR.
+- **Changed:**
+  - `docs/api/03-conversations.md`: 6 endpoint, quyền sở hữu hội thoại, text/booking request, 409 CLASH không cấp ID, p-1 bị từ chối, p-2 được đồng ý. POST tạo hội thoại dùng ví dụ 400 để không đổi chuỗi ID.
+  - `docs/api/04-availability.md`: resources, schedule, kiểm tra 09:00 trùng và 13:00/14:00 trống; Clash/Suggestion đầy đủ, kiểm tra chỉ đọc.
+  - `docs/api/05-bookings.md`: 3 endpoint, từ chối tạo từ p-1; tạo GS-1024 từ p-2, Booking đầy đủ và đúng tiền; ví dụ 401, 404; chỉ giữ chỗ sau cọc thành công và kiểm tra tài nguyên lại.
+  - `docs/api/10-admin-bookings.md`: 3 endpoint, chuỗi c-han/p-3, 409 trước khi Hân đồng ý, áp dụng sau đồng ý có kiểm tra lại và cập nhật job liên quan, hủy và link HTTPS. Nêu rõ thiếu quy định vòng đời job khi hủy; không thêm trạng thái Job. Dữ liệu seed GS-1023 còn thiếu được đánh dấu cần Hưng/Kiệt xác nhận.
+  - `brief.md`: chỉ thêm mục 5 chứa prompt nguyên văn trước khi viết contract; `AI-LOG.md`: chỉ thêm mục PA#3 số 6 này. Không sửa README, contract TV1/TV2, mock, client, tools hoặc tài liệu PA#2.
+- **Rejected / lỗi phát hiện:**
+  - Git switch/fetch ban đầu báo Permission denied khi ghi `.git/index.lock`/`FETCH_HEAD`. Đã dùng cơ chế cấp quyền cho đúng lệnh rồi chạy lại thành công; không đổi Git config. Tác giả hiện tại: `Nhut <lecongminhnhut6533@gmail.com>`.
+  - Script soạn contract tạm lần đầu lỗi đọc heading vì README dùng CRLF; đã chuẩn hóa xuống dòng trong bộ nhớ trước khi trích Booking. Không sửa README.
+  - Script kiểm tra tĩnh tạm lần đầu không nạp được `import.meta` trong VM; đã thay biểu thức đó chỉ trong bản sao bộ nhớ. So sánh byte với Git HEAD báo khác vì HEAD dùng LF còn working tree dùng CRLF; đã kiểm lại theo nội dung sau chuẩn hóa xuống dòng, không thay nội dung cũ.
+  - Khi ghi nhật ký, patch khớp nhầm mục TV1 số 4 và thêm một dòng trắng. `git diff -- AI-LOG.md` phát hiện ngay; đã bỏ dòng trắng đó và chỉ nối mục mới sau mục số 5.
+- **Checked:**
+  - Đọc AGENTS, README, 01-auth, FRONTEND, toàn bộ brief và PA#3 AI-LOG, kế hoạch TV3 mục 2/3/5.1/7/8/9, hướng dẫn và mã nguồn contract-check.
+  - Working tree ban đầu sạch trên main; fetch origin thành công; `git merge --ff-only origin/main` báo Already up to date; tạo `contract/tv3-chat-booking-admin`. `git rev-parse main origin/main` cùng `747ee74e271eb3a58c21f746e4c9eb7aa9d04d0b`.
+  - Script tạm `%TEMP%/gradstudio-tv3-static-check.cjs` dùng bộ phân tích Markdown/HTTP và bảng endpoint trích từ contract-check: 28 cặp request/response, 47 body JSON hợp lệ, 15/15 endpoint TV3 có ví dụ, đúng key của shared objects/error, không có dấu lược bỏ; thứ tự ID/trạng thái trong ví dụ đúng chuỗi yêu cầu. Đây là kiểm tra tĩnh, không gửi API request.
+  - Đọc toàn bộ nội dung mới và diff; `git diff --check` không báo lỗi; kiểm tra thêm bốn file mới chưa track bằng `git diff --no-index --check -- /dev/null <file>` không có lỗi whitespace (Git cảnh báo LF sẽ đổi thành CRLF khi track). So sánh với HEAD xác nhận hai file nhật ký chỉ nối nội dung (chuẩn hóa LF/CRLF khi so sánh), fence đóng đủ, brief mục 5 khớp Request của AI-LOG mục 6; chỉ một heading PA#3.
+  - Rà chuỗi theo README: p-1/p-2 rồi GS-1024; p-3 đặt trong file 10 sau thanh toán/gallery. Chưa có các file contract TV2 02/06/07/09/11 trong checkout nên chưa đối chiếu được ví dụ thực tế của TV2; Hưng/Kiệt cần xác nhận fixture và các giới hạn ghi là đề xuất.
+  - `Test-Path mock/server.mjs` trả False: chưa chạy contract-check với mock, chưa kiểm chứng state/ID hoặc các chế độ mock; không tuyên bố 0 FAIL/runtime đạt. Không chạy kiểm tra frontend.
+- **Commits:** TV3 commit sau khi đọc diff.
+### [TV2] 7. Tìm hiểu quy trình PA#3, rà soát kế hoạch & câu hỏi PO, viết 5 file contract của TV2 (20/11/2026)
 
 - **Tool:** Antigravity Assistant.
 - **Request:** `brief.md` mục 5. Đọc tài liệu rubric/brief và kế hoạch 3 thành viên, chạy thử luồng contract-check cá nhân, rà soát bộ 9 câu hỏi Product Owner, dọn file test cũ, kéo `main`, tạo nhánh `contract/tv2` và viết 5 file contract của TV2 (`02-catalog.md`, `06-payments.md`, `07-reminders.md`, `09-gallery.md`, `11-receive.md`).
