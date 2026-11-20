@@ -410,3 +410,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Rà chuỗi theo README: p-1/p-2 rồi GS-1024; p-3 đặt trong file 10 sau thanh toán/gallery. Chưa có các file contract TV2 02/06/07/09/11 trong checkout nên chưa đối chiếu được ví dụ thực tế của TV2; Hưng/Kiệt cần xác nhận fixture và các giới hạn ghi là đề xuất.
   - `Test-Path mock/server.mjs` trả False: chưa chạy contract-check với mock, chưa kiểm chứng state/ID hoặc các chế độ mock; không tuyên bố 0 FAIL/runtime đạt. Không chạy kiểm tra frontend.
 - **Commits:** TV3 commit sau khi đọc diff.
+### [TV2] 7. Tìm hiểu quy trình PA#3, rà soát kế hoạch & câu hỏi PO, viết 5 file contract của TV2 (20/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 5. Đọc tài liệu rubric/brief và kế hoạch 3 thành viên, chạy thử luồng contract-check cá nhân, rà soát bộ 9 câu hỏi Product Owner, dọn file test cũ, kéo `main`, tạo nhánh `contract/tv2` và viết 5 file contract của TV2 (`02-catalog.md`, `06-payments.md`, `07-reminders.md`, `09-gallery.md`, `11-receive.md`).
+- **Changed:**
+  - `docs/api/02-catalog.md` (file mới): 6 endpoint public (`services`, `packages`, `packages/:id`, `extras`, `portfolio`, `reviews`), kèm ví dụ `400` (`serviceId` không tồn tại) và `404`.
+  - `docs/api/06-payments.md` (file mới): 3 endpoint (`POST /api/bookings/:code/payments`, `GET /api/payments/:id`, `POST /api/test-gateway/:paymentId`), chuỗi ví dụ `PAY-1` thất bại và `PAY-2` cọc thành công, ghi rõ `test-gateway` chỉ có ở PA#3.
+  - `docs/api/07-reminders.md` (file mới): `GET /api/reminders` trả về `rm-1` sau khi `PAY-2` thành công, kèm lỗi `401`, `403`.
+  - `docs/api/09-gallery.md` (file mới): `GET /api/bookings/:code/photos` và `PUT /api/bookings/:code/selection` (viết đủ 30 và 31 ID `ph-01`..`ph-31` trong body request), đặt chuỗi ví dụ trả 70% (`PAY-3`) ở cuối file.
+  - `docs/api/11-receive.md` (file mới): `POST /api/bookings/:code/receive` chuyển booking thành `completed`, kèm lỗi `409` và `404`.
+  - `brief.md` mục 5 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Trong bước thử nghiệm cá nhân ban đầu, tạo nhầm `docs/02-catalog.md` ngoài thư mục `docs/api/` khiến `contract-check` báo `docs/api/ not found`, và dùng endpoint nháp `/api/catalog` khác với bảng endpoint chuẩn trong `README.md` của TV1. Đã xóa toàn bộ thư mục nháp `docs/api/` và `mock/` trước khi `git pull origin main` và tạo branch `contract/tv2`.
+  - Khi rà soát kế hoạch và bộ câu hỏi PO, phát hiện đề xuất câu 5 (đổi lịch cần khách đồng ý) ban đầu mâu thuẫn với kế hoạch TV3 và bảng Demo accounts thiếu dòng `han` (nhóm đã đồng bộ lại trong `README.md`, `01-auth.md` và `FRONTEND.md`).
+  - Không để assistant tự chạy `git add`/`git commit` theo quy tắc `AGENTS.md`.
+- **Checked:**
+  - `git pull origin main` và `git switch -c contract/tv2` thành công.
+  - `node tools/contract-check.mjs --base http://localhost:3001`: đọc được 71 ví dụ trong 10 file của `docs/api/`, 24/39 endpoint trong bảng `README.md` đã có ví dụ (đủ 11 endpoint TV1 + 13 endpoint TV2; 15 endpoint còn lại thuộc TV3 chưa viết), 0 lỗi cú pháp hay JSON; chưa có mock nên trả `ECONNREFUSED`.
+  - `git diff --stat` và `git status`: chỉ thay đổi đúng 5 file contract của TV2, `brief.md` và `AI-LOG.md`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.

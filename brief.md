@@ -433,3 +433,35 @@ PR dự kiến:
 Title: contract(tv3): define conversations, availability and booking APIs
 Reviewer: Kiệt, TV2.
 ````
+## 6. [TV2 · 20/11/2026 · Antigravity Assistant] Contract: 02-catalog, 06-payments, 07-reminders, 09-gallery, 11-receive
+
+Tin nhắn 1 (tìm hiểu yêu cầu PA#3 và quy trình làm việc):
+
+```text
+đọc mấy file ko nằm trong file được theo dõi (4 file) rồi cho biết bài tập nhóm lần này là làm gì
+```
+
+Tin nhắn 2:
+
+```text
+vậy giờ t muốn test thử làm cá nhân để hiểu quy trình thì giờ làm gì trước, và nó sẽ có gì, t chuwa hiểu lắm, làm mỗi frontend chứ ko backend à (và frontend mà cũng có API à), t thắc mắc
+```
+
+Tin nhắn 3 (kiểm tra kế hoạch nhóm và bộ câu hỏi Product Owner):
+
+```text
+đọc file kế hoạch, cùng 2 file pdf và 2 file md mà cái chưa được theo dõi á, để check xem phần làm việc của của cả 3 thành viên đã hợp lý với yêu cầu PA3 và nội dung đồ án hay chưa, và cái ở dưới là cái nhóm t tính hỏi á
+...
+```
+
+Tin nhắn 4 (rà lại 9 câu hỏi PO theo kế hoạch mới sửa):
+
+```text
+Chào các bạn Product Owner, nhóm [24120184 - 24120211 - 24120354] có 9 câu muốn hỏi thêm về những chỗ cần làm rõ. Nhóm có ghi kèm bước G1-G11 tương ứng để các bạn dễ theo dõi: ... đây là những câu hỏi nhóm t muốn hỏi product owner để rõ hơn về đồ án, check theo ke-hoach t mới sửa, và yêu cầu PA3, hãy coi xem còn cần hỏi thêm gì để rõ hơn nữa không
+```
+
+Tin nhắn 5 (chỉ định dọn test cũ, kéo main, tạo branch và viết 5 file contract của TV2):
+
+```text
+vậy dọn file test cũ, kéo main về, tạo nhánh, sau đó viết contract cho tôi đi, ghi những cái tôi trò chuyện vô AI log và brief theo cái có sẵn đi
+```
