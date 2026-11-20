@@ -454,3 +454,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Test trùng cổng: mở server thứ hai bị báo lỗi cổng bận và thoát mã 1.
   - `git diff main..HEAD -- docs/api client tools` hoàn toàn trống.
 - **Commits:** `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` · `mock(auth): users seeded data, login, me, and logout handlers`.
+
+### [TV1] 9. Mock: settings, admins, jobs và helper time (21/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 8. Cài đặt các route và data còn lại của TV1: sửa câu báo 403, thêm `mock/lib/time.mjs`, làm data/routes cho `settings`, `admins`, `jobs` và xử lý upload preview ảnh multipart.
+- **Changed:**
+  - `mock/server.mjs`: sửa thông báo 403 cho khớp tuyệt đối với contract (commit `13e3e19`).
+  - `mock/lib/time.mjs`: hàm `nowIso()` trả về thời gian chuẩn ISO có múi giờ `+07:00`.
+  - `mock/data/settings.json` và `mock/routes/settings.mjs`: `GET`, `PUT /api/settings` (ghi đè và kiểm tra giờ đóng sau giờ mở).
+  - `mock/routes/admins.mjs`: `GET`, `POST /api/admins` (lọc từ `db.users`, kiểm tra trùng email 409).
+  - `mock/data/jobs.json` và `mock/routes/jobs.mjs`: `GET`, `PATCH /api/jobs`, `POST /api/bookings/:code/previews` (xử lý multipart form data kiểm tra file JPEG/PNG ≤ 5MB).
+- **Rejected / Lỗi phát hiện:**
+  - Khi đối chiếu câu chữ với các file contract `12-admins.md` và `13-settings.md` (và kiểm tra với cờ `--strict-values`), phát hiện câu báo lỗi 403 trong `mock/server.mjs` viết theo prompt cũ ("Bạn không có quyền thực hiện thao tác này") lệch so với contract ("Bạn không có quyền truy cập chức năng này"). Đã yêu cầu assistant sửa ngay trên `mock/core` ở commit `13e3e19` trước khi làm tiếp các route.
+- **Checked:**
+  - `node tools/contract-check.mjs --only 13-settings.md`: 5/5 PASS (kể cả với `--strict-values`).
+  - `node tools/contract-check.mjs --only 12-admins.md`: 8/8 PASS (kể cả ví dụ admin mới tạo đăng nhập).
+  - Với `08-jobs.md`: chạy thử trên bản mock tạm có bổ sung 3 job của GS-1024 đạt 15/15 PASS.
+  - `MOCK_MODE=empty`: danh sách jobs và admins trả `[]`, settings vẫn trả object bình thường.
+  - `git diff main -- docs/api client tools` hoàn toàn trống.
+- **Commits:** `fix(mock): 403 message matches contract` · `mock(lib): time helper with +07:00 timezone` · `mock(settings): settings data, GET and PUT handlers` · `mock(admins): list and create admin handlers` · `mock(jobs): jobs data, list, update and preview upload handlers`.
