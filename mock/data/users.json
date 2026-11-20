@@ -1,0 +1,12 @@
+[
+  {"id": "u-linh", "name": "Linh", "role": "customer", "email": "linh@gradstudio.test", "password": "linh-demo"},
+  {"id": "u-han", "name": "Lê Ngọc Hân", "role": "customer", "email": "han@gradstudio.test", "password": "han-demo"},
+  {"id": "u-thao", "name": "Thảo", "role": "admin", "email": "thao@gradstudio.test", "password": "thao-demo", "createdAt": "2026-09-01T08:00:00+07:00"},
+  {"id": "u-mai", "name": "Mai", "role": "staff", "email": "mai@gradstudio.test", "password": "mai-demo"},
+  {"id": "u-tuan", "name": "Tuấn", "role": "staff", "email": "tuan@gradstudio.test", "password": "tuan-demo"},
+  {"id": "u-superadmin", "name": "Superadmin", "role": "superadmin", "email": "superadmin@gradstudio.test", "password": "superadmin-demo"},
+  {"id": "u-ha", "name": "Hà", "role": "staff", "email": "ha@gradstudio.test", "password": null},
+  {"id": "u-khoa", "name": "Trần Minh Khoa", "role": "customer", "email": "khoa@gradstudio.test", "password": null},
+  {"id": "u-bao", "name": "Hồ Gia Bảo", "role": "customer", "email": "bao@gradstudio.test", "password": null},
+  {"id": "u-anh", "name": "Phạm Hoàng Anh", "role": "customer", "email": "anh@gradstudio.test", "password": null}
+]
