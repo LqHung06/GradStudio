@@ -366,3 +366,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Khối code trong `brief.md` đóng mở đúng (prompt mục 2 dùng khối bốn dấu vì có chứa ```` ```http ````).
   - Đối chiếu prompt với README và `08-jobs.md`: 39 endpoint, không có block `http` trong README, giới hạn ảnh 5 MB, `## Changes` ở cuối: khớp.
 - **Commits:** TV1 commit sau khi đọc diff.
+
+### [TV1] 5. Contract: đổi lịch cần khách đồng ý, Hân đăng nhập được (20/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** prompt nguyên văn ở `brief.md` mục 4 (Tin nhắn 1: sửa đúng 3 file theo 11 vị trí; Tin nhắn 2: tự dán prompt vào brief rồi làm).
+- **Changed:**
+  - `docs/api/README.md`: thêm `han` vào bảng Demo accounts; `u-han` chuyển sang nhóm đăng nhập được; `c-han` thành `scheduled`, gắn `GS-1023`; `GS-1023` có `conversationId: "c-han"`; bỏ `PATCH /api/bookings/:code` khỏi mục ScheduleItemInput; bước 10 của chuỗi ví dụ thành 7 bước đổi lịch qua đề xuất `p-3`; thêm một dòng vào bảng quy tắc mock; một dòng `## Changes`.
+  - `docs/api/01-auth.md`: `u-han` đăng nhập được (`han-demo`); một dòng `## Changes`.
+  - `FRONTEND.md`: thêm dòng `han` vào Demo accounts (`contract-check` đọc bảng này để lấy `{{token:han}}`).
+  - `brief.md` mục 4 và mục này.
+- **Rejected / lỗi phát hiện:**
+  - Prompt ghi `p-3` nhưng chuỗi `03` có một đề xuất bị 409; nếu mock cấp id cho đề xuất bị từ chối thì id sẽ là `p-4`. Thêm câu "A proposal refused with 409 gets no id" vào bước 10 (đề xuất của assistant, TV1 đồng ý ở Tin nhắn 2).
+  - Chữ "reapplies" sai nghĩa (lần đầu bị từ chối); đổi thành "applies `p-3` again".
+  - Prompt muốn ghi gọn prompt trong brief; không làm, vì `brief.md` quy định ghi nguyên văn. Chỉ mục AI-LOG này được ghi gọn.
+- **Checked:**
+  - `git diff --stat`: `README.md`, `01-auth.md`, `FRONTEND.md`, `brief.md` (cộng `AI-LOG.md` sau khi ghi mục này); không đụng `03`, `05`, `10`, `mock/`, `client/`.
+  - README: 0 block `http`, khối code đủ cặp, bảng endpoint vẫn 39 dòng; không còn chữ cũ (`c-han` `unanswered`, "Moving GS-1023").
+  - `han`, `u-han`, `han-demo` khớp giữa 3 file.
+  - `node tools/contract-check.mjs` khi chưa có mock: vẫn đọc được 40 ví dụ, chỉ có FAIL "không có mock" và "chưa có ví dụ" cho endpoint của TV2, TV3. Chưa chạy được với mock.
+- **Commits:** TV1 commit sau khi đọc diff.
