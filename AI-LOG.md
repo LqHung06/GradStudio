@@ -351,3 +351,18 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Script chạy `parseLoose` của contract-check: 35 request `http` và 40 answer, 0 lỗi JSON.
   - Chưa chạy được với mock (mock làm ngày 21/11). Lần chạy thật sẽ ghi ở mục AI-LOG của mock.
 - **Commits:** `contract(auth)` · `contract(jobs)` · `contract(admins)` · `contract(settings)` · `contract(readme): list story users and GS-1022 photo ids` · `docs: brief and AI-LOG entry 3`.
+
+### [TV1] 4. Brief: bổ sung prompt giao việc cho mục 2 và mục 3 (20/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** tin nhắn trực tiếp ngày 20/11: nhờ đánh giá hai prompt giao việc rồi bổ sung vào `brief.md` trên branch `contract/tv1`. Nội dung hai prompt nằm ở `brief.md` mục 2 (Tin nhắn 2) và mục 3 (Tin nhắn 3).
+- **Changed:** `brief.md` (28 dòng thêm vào): thêm Tin nhắn 2 của mục 2 và Tin nhắn 3 của mục 3, đổi "Tin nhắn:" của mục 2 thành "Tin nhắn 1:", thêm ghi chú đối chiếu với README.
+- **Rejected / lỗi phát hiện:**
+  - Assistant ngày 19/11 đã ghi `brief.md` mục 2 và 3 bằng các tin nhắn ngắn, thiếu hai prompt giao việc thật (theo TV1, tin nhắn thật bị ghi đè nhầm). Phát hiện khi rà `git diff main..contract/tv1 -- brief.md` ngày 20/11; đã bổ sung hai prompt nguyên văn.
+  - Prompt ghi `Authorization: Bearer token-<userId>`, lệch README (`Bearer <token>`, token là chuỗi mờ). Phát hiện bằng cách đối chiếu prompt với `docs/api/README.md`. Giữ nguyên prompt, thêm ghi chú rằng README là chuẩn.
+  - Assistant đề nghị tự tạo commit, trái quy tắc `AGENTS.md`. Không commit; TV1 tự commit sau khi đọc diff.
+- **Checked:**
+  - `git diff --name-only` chỉ có `brief.md` (trước khi ghi mục này); không đụng `docs/api/` và `mock/`.
+  - Khối code trong `brief.md` đóng mở đúng (prompt mục 2 dùng khối bốn dấu vì có chứa ```` ```http ````).
+  - Đối chiếu prompt với README và `08-jobs.md`: 39 endpoint, không có block `http` trong README, giới hạn ảnh 5 MB, `## Changes` ở cuối: khớp.
+- **Commits:** TV1 commit sau khi đọc diff.
