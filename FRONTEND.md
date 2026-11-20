@@ -35,6 +35,7 @@ node tools/contract-check.mjs --base http://localhost:3001
 | Name in examples | Role | E-mail | Password |
 |---|---|---|---|
 | `linh` | customer | `linh@gradstudio.test` | `linh-demo` |
+| `han` | customer | `han@gradstudio.test` | `han-demo` |
 | `thao` | admin | `thao@gradstudio.test` | `thao-demo` |
 | `mai` | staff | `mai@gradstudio.test` | `mai-demo` |
 | `tuan` | staff | `tuan@gradstudio.test` | `tuan-demo` |

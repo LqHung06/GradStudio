@@ -310,3 +310,79 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs` thoát với mã 2 ("docs/api/ not found"), đúng như mong đợi vì chưa có contract.
   - `git status` sạch sau mỗi commit.
 - **Commits:** `chore: move PA#2 React app into client/` · `chore: stop tracking build output` · `chore(build): simplify Vite config, add /api proxy` · `chore: add tools/contract-check.mjs` · `docs: rewrite AGENTS.md for PA#3` · `docs: PA#3 skeleton for brief.md, AI-LOG.md, FRONTEND.md`.
+
+### [TV1] 2. Contract: docs/api/README.md (19/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 2. Viết `docs/api/README.md` theo kế hoạch PA#3 (mục 3.3–3.5 trong file kế hoạch), trên branch `contract/readme`.
+- **Changed:** `docs/api/README.md` (file mới), gồm:
+  - base path, xác thực và vai trò;
+  - một dạng lỗi duy nhất và bảng `error.code`;
+  - mã HTTP, quy ước dữ liệu, mã trạng thái nghiệp vụ;
+  - các đối tượng dùng chung;
+  - bảng 39 endpoint;
+  - chuỗi ví dụ, dữ liệu ban đầu của mock, hành vi của mock;
+  - mục `## Changes`.
+- **Rejected / lỗi phát hiện:**
+  - README chỉ dùng block `json` và `text`, không dùng block `http`. Nếu có block `http`, `contract-check` sẽ gửi nó tới mock như một ví dụ thật.
+  - Không có thay đổi nào của assistant bị loại bỏ.
+- **Checked:**
+  - `grep -c '^```http' docs/api/README.md` ra 0.
+  - `node tools/contract-check.mjs` đọc được đủ 39 dòng của bảng endpoint, kết quả `FAIL README.md … (0/39)`. Đúng như mong đợi, vì ví dụ sẽ nằm trong các file `01`–`13`.
+  - `git diff main -- mock client` trống: chưa đụng tới mock và front end.
+- **Commits:** `contract(readme): base path, auth, error shape, endpoint table` · `docs: brief and AI-LOG entry 2 (contract README)`.
+
+### [TV1] 3. Contract: 01-auth, 08-jobs, 12-admins, 13-settings (19/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** `brief.md` mục 3. Viết 4 file contract của TV1 trên branch `contract/tv1`, tách từ `contract/readme` (PR 1 chưa merge).
+- **Changed:**
+  - `docs/api/01-auth.md`, `08-jobs.md`, `12-admins.md`, `13-settings.md` (file mới). Mỗi endpoint có ai được gọi, body kèm giới hạn, câu trả lời thành công, mọi lỗi có thể xảy ra, và ví dụ chạy được theo chuỗi ví dụ trong README.
+  - `docs/api/README.md`: dữ liệu ban đầu ghi thêm user khách hàng của các booking có sẵn và id ảnh `ph-101` … `ph-136` của GS-1022, có thêm dòng trong `## Changes`.
+- **Rejected / lỗi phát hiện:**
+  - Ban đầu id ảnh `ph-01` của GS-1024 (đã dùng trong README) **trùng** với 36 ảnh có sẵn của GS-1022. Đã đổi ảnh có sẵn của GS-1022 thành `ph-101` … `ph-136`.
+  - Script kiểm JSON tự viết lần đầu chạy lỗi (`SyntaxError`), vì cách cắt hàm theo dấu `{}` hỏng với chuỗi `'{'` nằm trong `parseLoose`. Đã đổi sang cắt theo dòng đánh dấu cuối hàm.
+- **Checked:**
+  - Chạy `node tools/contract-check.mjs` khi chưa có mock:
+    - đọc được 40 ví dụ;
+    - nhận đúng ví dụ đăng nhập ở `01-auth.md:59`;
+    - 11/11 endpoint của TV1 có ví dụ;
+    - không có lỗi nào khác ngoài "không có mock" và "chưa có ví dụ" cho endpoint của TV2, TV3.
+  - Script chạy `parseLoose` của contract-check: 35 request `http` và 40 answer, 0 lỗi JSON.
+  - Chưa chạy được với mock (mock làm ngày 21/11). Lần chạy thật sẽ ghi ở mục AI-LOG của mock.
+- **Commits:** `contract(auth)` · `contract(jobs)` · `contract(admins)` · `contract(settings)` · `contract(readme): list story users and GS-1022 photo ids` · `docs: brief and AI-LOG entry 3`.
+
+### [TV1] 4. Brief: bổ sung prompt giao việc cho mục 2 và mục 3 (20/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** tin nhắn trực tiếp ngày 20/11: nhờ đánh giá hai prompt giao việc rồi bổ sung vào `brief.md` trên branch `contract/tv1`. Nội dung hai prompt nằm ở `brief.md` mục 2 (Tin nhắn 2) và mục 3 (Tin nhắn 3).
+- **Changed:** `brief.md` (28 dòng thêm vào): thêm Tin nhắn 2 của mục 2 và Tin nhắn 3 của mục 3, đổi "Tin nhắn:" của mục 2 thành "Tin nhắn 1:", thêm ghi chú đối chiếu với README.
+- **Rejected / lỗi phát hiện:**
+  - Assistant ngày 19/11 đã ghi `brief.md` mục 2 và 3 bằng các tin nhắn ngắn, thiếu hai prompt giao việc thật (theo TV1, tin nhắn thật bị ghi đè nhầm). Phát hiện khi rà `git diff main..contract/tv1 -- brief.md` ngày 20/11; đã bổ sung hai prompt nguyên văn.
+  - Prompt ghi `Authorization: Bearer token-<userId>`, lệch README (`Bearer <token>`, token là chuỗi mờ). Phát hiện bằng cách đối chiếu prompt với `docs/api/README.md`. Giữ nguyên prompt, thêm ghi chú rằng README là chuẩn.
+  - Assistant đề nghị tự tạo commit, trái quy tắc `AGENTS.md`. Không commit; TV1 tự commit sau khi đọc diff.
+- **Checked:**
+  - `git diff --name-only` chỉ có `brief.md` (trước khi ghi mục này); không đụng `docs/api/` và `mock/`.
+  - Khối code trong `brief.md` đóng mở đúng (prompt mục 2 dùng khối bốn dấu vì có chứa ```` ```http ````).
+  - Đối chiếu prompt với README và `08-jobs.md`: 39 endpoint, không có block `http` trong README, giới hạn ảnh 5 MB, `## Changes` ở cuối: khớp.
+- **Commits:** TV1 commit sau khi đọc diff.
+
+### [TV1] 5. Contract: đổi lịch cần khách đồng ý, Hân đăng nhập được (20/11/2026)
+
+- **Tool:** Claude Code.
+- **Request:** prompt nguyên văn ở `brief.md` mục 4 (Tin nhắn 1: sửa đúng 3 file theo 11 vị trí; Tin nhắn 2: tự dán prompt vào brief rồi làm).
+- **Changed:**
+  - `docs/api/README.md`: thêm `han` vào bảng Demo accounts; `u-han` chuyển sang nhóm đăng nhập được; `c-han` thành `scheduled`, gắn `GS-1023`; `GS-1023` có `conversationId: "c-han"`; bỏ `PATCH /api/bookings/:code` khỏi mục ScheduleItemInput; bước 10 của chuỗi ví dụ thành 7 bước đổi lịch qua đề xuất `p-3`; thêm một dòng vào bảng quy tắc mock; một dòng `## Changes`.
+  - `docs/api/01-auth.md`: `u-han` đăng nhập được (`han-demo`); một dòng `## Changes`.
+  - `FRONTEND.md`: thêm dòng `han` vào Demo accounts (`contract-check` đọc bảng này để lấy `{{token:han}}`).
+  - `brief.md` mục 4 và mục này.
+- **Rejected / lỗi phát hiện:**
+  - Prompt ghi `p-3` nhưng chuỗi `03` có một đề xuất bị 409; nếu mock cấp id cho đề xuất bị từ chối thì id sẽ là `p-4`. Thêm câu "A proposal refused with 409 gets no id" vào bước 10 (đề xuất của assistant, TV1 đồng ý ở Tin nhắn 2).
+  - Chữ "reapplies" sai nghĩa (lần đầu bị từ chối); đổi thành "applies `p-3` again".
+  - Prompt muốn ghi gọn prompt trong brief; không làm, vì `brief.md` quy định ghi nguyên văn. Chỉ mục AI-LOG này được ghi gọn.
+- **Checked:**
+  - `git diff --stat`: `README.md`, `01-auth.md`, `FRONTEND.md`, `brief.md` (cộng `AI-LOG.md` sau khi ghi mục này); không đụng `03`, `05`, `10`, `mock/`, `client/`.
+  - README: 0 block `http`, khối code đủ cặp, bảng endpoint vẫn 39 dòng; không còn chữ cũ (`c-han` `unanswered`, "Moving GS-1023").
+  - `han`, `u-han`, `han-demo` khớp giữa 3 file.
+  - `node tools/contract-check.mjs` khi chưa có mock: vẫn đọc được 40 ví dụ, chỉ có FAIL "không có mock" và "chưa có ví dụ" cho endpoint của TV2, TV3. Chưa chạy được với mock.
+- **Commits:** TV1 commit sau khi đọc diff.
