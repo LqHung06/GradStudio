@@ -32,7 +32,7 @@ function fail(status, code, message, fields = {}, details = null) {
 const SERVER_ERROR = () => fail(500, 'SERVER_ERROR', 'Máy chủ đang gặp sự cố, vui lòng thử lại.');
 const NOT_FOUND = () => fail(404, 'NOT_FOUND', 'Không tìm thấy');
 const UNAUTHENTICATED = () => fail(401, 'UNAUTHENTICATED', 'Vui lòng đăng nhập để tiếp tục');
-const FORBIDDEN = () => fail(403, 'FORBIDDEN', 'Bạn không có quyền thực hiện thao tác này');
+const FORBIDDEN = () => fail(403, 'FORBIDDEN', 'Bạn không có quyền truy cập chức năng này');
 const BAD_JSON = () => fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ');
 
 // ---------- data: mock/data/*.json -> db.<file name> ----------
