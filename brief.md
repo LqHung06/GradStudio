@@ -465,3 +465,403 @@ Tin nhắn 5 (chỉ định dọn test cũ, kéo main, tạo branch và viết 5
 ```text
 vậy dọn file test cũ, kéo main về, tạo nhánh, sau đó viết contract cho tôi đi, ghi những cái tôi trò chuyện vô AI log và brief theo cái có sẵn đi
 ```
+
+
+## 7. [TV1 · 21/11/2026 · Claude Code] Mock: khung server.mjs, users.json và auth.mjs
+
+Tin nhắn:
+
+```text
+[KHỐI RÀNG BUỘC CHUNG — MOCK]
+- Bạn đang làm việc trong repo GradStudio (PA#3).
+- Chỉ sử dụng các module có sẵn của Node.js: `node:http`, `node:fs`, `node:path`, `node:url`.
+- Tuyệt đối KHÔNG tạo `package.json`, KHÔNG dùng `npm install` hay bất kỳ thư viện ngoài nào trong thư mục `mock/`.
+- KHÔNG sửa bất kỳ file nào trong `docs/api/`, `client/`, `tools/` hay `ke-hoach/`. Không sửa contract để khớp với code mock.
+- Phạm vi task này: CHỈ làm khung `mock/server.mjs`, dữ liệu `mock/data/users.json` và route `mock/routes/auth.mjs`. Các tài nguyên khác (jobs, admins, settings...) sẽ làm ở task sau.
+
+---
+
+[YÊU CẦU KỸ THUẬT CHI TIẾT]
+
+1. File `mock/server.mjs` (Khung máy chủ và Router động):
+- Khởi động: Lắng nghe ở cổng `process.env.PORT || 3001`. Đọc `process.env.MOCK_MODE || 'normal'`. Khi khởi động in console: `Mock server listening on port <PORT> (mode: <MODE>)`. Nếu MOCK_MODE không thuộc `['normal', 'slow', 'error', 'empty']`, in thông báo lỗi và thoát process (`process.exit(1)`).
+- Nạp dữ liệu tự động: Đọc toàn bộ file `.json` trong `mock/data/` vào đối tượng bộ nhớ `db`, tên thuộc tính là tên file bỏ đuôi `.json` (ví dụ `users.json` -> `db.users`). Dữ liệu này chỉ lưu trong RAM và tự reset khi restart server.
+- Nạp Route động: Tự động import tất cả các file `.mjs` trong thư mục `mock/routes/`. Mỗi file export default một mảng các route: `{ method, path, roles, handler }`.
+- Khớp Route (Path matching & Ưu tiên):
+  * Hỗ trợ path param dạng `:param` (ví dụ: `/api/bookings/:code`).
+  * ⚠️ QUY TẮC ĐỘ ƯU TIÊN: Route có đoạn cố định (static segment) PHẢI thắng route có `:param` khi cùng pattern (ví dụ `/api/bookings/export` phải khớp trước `/api/bookings/:code`), không phụ thuộc vào thứ tự import file.
+- Phân quyền (roles):
+  * `roles: null` -> Route công khai (public).
+  * `roles: 'signed-in'` -> ⚠️ Bất kỳ người dùng nào đã đăng nhập hợp lệ đều truy cập được.
+  * `roles: ['admin', ...]` -> Chỉ người dùng có role trong mảng mới được truy cập.
+- Xác thực (Auth middleware):
+  * Đọc header `Authorization: Bearer <token>`. Token mock có dạng `token-<userId>`. Tìm user tương ứng trong `db.users`.
+  * Nếu route yêu cầu đăng nhập (`roles` khác null) mà thiếu token, sai định dạng hoặc không tìm thấy user: trả mã 401 `UNAUTHENTICATED` kèm message: "Vui lòng đăng nhập để tiếp tục", `fields: {}`.
+  * Nếu user không có role hợp lệ: trả mã 403 `FORBIDDEN` kèm message: "Bạn không có quyền thực hiện thao tác này", `fields: {}`.
+- Đối tượng `ctx` truyền vào handler:
+  * `{ params, query, body, rawBody, headers, user, db, fail }`.
+  * `params`: object các tham số từ URL (`{ code: 'GS-1024' }`).
+  * `query`: object các query param từ URL (hỗ trợ phân tích query string đơn giản).
+  * `body`: JSON parsed object. Nếu body gửi lên rỗng thì coi là `{}`. Nếu JSON hỏng thì trả ngay 400 `VALIDATION` với message "Dữ liệu chưa hợp lệ", `fields: {}`.
+  * `rawBody`: Buffer dữ liệu thô (cho multipart sau này).
+  * `user`: object User hiện tại từ `db.users` hoặc `null`.
+  * `fail(status, code, message, fields = {}, details = null)`: hàm tiện ích trả về lỗi theo đúng chuẩn:
+    `{ status, body: { error: { code, message, fields, details } } }`.
+- Xử lý Response:
+  * Handler có thể là `async` và trả về `{ status, body }`.
+  * Nếu `status === 204`: gửi response rỗng (không gửi Content-Type và body).
+  * Các status khác: set header `Content-Type: application/json; charset=utf-8` và serialize `JSON.stringify(body)`.
+  * Xử lý lỗi ngoại lệ: Nếu handler ném exception, catch lại và in stack trace ra console, đồng thời trả 500 `SERVER_ERROR` đúng format lỗi chung.
+- Xử lý 4 chế độ `MOCK_MODE`:
+  * `normal`: delay ngẫu nhiên ~150ms trước khi trả lời.
+  * `slow`: delay 2000ms.
+  * `error`: MỌI request (NGOẠI TRỪ `POST /api/auth/login`) đều bị chặn và trả ngay 500 `SERVER_ERROR` với body:
+    `{"error": {"code": "SERVER_ERROR", "message": "Máy chủ đang gặp sự cố, vui lòng thử lại.", "fields": {}, "details": null}}`. Kể cả route không tồn tại (404) cũng phải trả về 500 ở chế độ này.
+  * `empty`: Với các response thành công (`status < 400`), đệ quy biến MỌI mảng (`Array`) thành `[]` (kể cả mảng lồng trong object). Tuyệt đối KHÔNG làm thay đổi dữ liệu gốc trong `db`. Các object đơn lẻ (như user hay booking) và response lỗi giữ nguyên.
+- Không tìm thấy route: Trả mã 404 `NOT_FOUND` đúng cấu trúc error chung.
+- Logging: Mỗi request in đúng 1 dòng ra terminal: `${method} ${url} → ${status}` (in cả query string nếu có, ví dụ `GET /api/jobs?status=done → 200`).
+
+---
+
+2. File `mock/data/users.json` (10 User theo contract `01-auth.md`):
+⚠️ Contract yêu cầu đủ 10 người dùng mẫu, không phải 6 người:
+- 6 người đăng nhập được (password là `<name>-demo`):
+  * `u-linh` (Linh, role: "customer", email: "linh@gradstudio.test", password: "linh-demo")
+  * `u-han` (Lê Ngọc Hân, role: "customer", email: "han@gradstudio.test", password: "han-demo")
+  * `u-thao` (Thảo, role: "admin", email: "thao@gradstudio.test", password: "thao-demo", createdAt: "2026-09-01T08:00:00+07:00")
+  * `u-mai` (Mai, role: "staff", email: "mai@gradstudio.test", password: "mai-demo")
+  * `u-tuan` (Tuấn, role: "staff", email: "tuan@gradstudio.test", password: "tuan-demo")
+  * `u-superadmin` (Superadmin, role: "superadmin", email: "superadmin@gradstudio.test", password: "superadmin-demo")
+- 4 người trong câu chuyện nhưng KHÔNG được đăng nhập (`password: null`):
+  * `u-ha` (Hà, role: "staff", email: "ha@gradstudio.test", password: null)
+  * `u-khoa` (Trần Minh Khoa, role: "customer", email: "khoa@gradstudio.test", password: null)
+  * `u-bao` (Hồ Gia Bảo, role: "customer", email: "bao@gradstudio.test", password: null)
+  * `u-anh` (Phạm Hoàng Anh, role: "customer", email: "anh@gradstudio.test", password: null)
+
+Lưu ý: Khi trả về thông tin user trong API, CHỈ trả `{ id, name, role }`, tuyệt đối không để lộ `email` hay `password`.
+
+---
+
+3. File `mock/routes/auth.mjs` (Xử lý xác thực):
+Export default mảng chứa 3 route:
+
+a. `POST /api/auth/login` (roles: null - public):
+- Body gồm `email` và `password`.
+- Validation:
+  * `email`: trim khoảng trắng, không phân biệt hoa thường, bắt buộc, định dạng email hợp lệ, tối đa 120 ký tự.
+  * `password`: bắt buộc, độ dài 1 đến 100 ký tự.
+  * Thông báo lỗi chi tiết theo contract:
+    - Thiếu/trống email: `fields.email = "Vui lòng nhập email"`
+    - Sai format email: `fields.email = "Email không đúng định dạng"`
+    - ⚠️ Email quá 120 ký tự: `fields.email = "Email tối đa 120 ký tự"`
+    - Thiếu/trống password: `fields.password = "Vui lòng nhập mật khẩu"`
+    - ⚠️ Password quá 100 ký tự: `fields.password = "Mật khẩu tối đa 100 ký tự"`
+  * Nếu có lỗi validation -> trả 400 `VALIDATION` ("Dữ liệu chưa hợp lệ", kèm `fields`).
+- Kiểm tra tài khoản:
+  * So khớp email và password. Nếu không tìm thấy, sai mật khẩu hoặc user có `password === null` -> trả mã 401 `INVALID_CREDENTIALS` kèm message "Email hoặc mật khẩu không đúng", `fields: {}`.
+- Thành công: Trả 200:
+  `{ token: "token-" + user.id, user: { id: user.id, name: user.name, role: user.role } }`.
+
+b. `GET /api/auth/me` (roles: 'signed-in'):
+- Trả 200: `{ user: { id: ctx.user.id, name: ctx.user.name, role: ctx.user.role } }`.
+
+c. `POST /api/auth/logout` (roles: 'signed-in'):
+- Trả status 204 (không có body).
+- Lưu ý: Không vô hiệu hóa token trong bộ nhớ vì `contract-check` sẽ tái sử dụng token này cho các kiểm thử sau.
+
+---
+
+[TIÊU CHÍ NGHIỆM THU — TỰ KIỂM TRƯỚC KHI BÁO CÁO]
+1. Chạy `node mock/server.mjs`: server chạy trơn tru, log đúng định dạng.
+2. Chạy `node tools/contract-check.mjs --only 01-auth.md`: ĐẠT 0 FAIL cho toàn bộ 12 ví dụ của `01-auth.md`.
+3. Kiểm tra với `MOCK_MODE=error`: `POST /api/auth/login` vẫn trả 200, trong khi `GET /api/auth/me` trả 500 đúng cấu trúc JSON error.
+4. Kiểm tra với `MOCK_MODE=slow`: thời gian phản hồi khoảng 2s.
+5. Kiểm tra với `MOCK_MODE=empty`: login và auth/me vẫn trả về object bình thường.
+6. Gửi request đến route không tồn tại (vd: `GET /api/not-found`) trả 404 đúng format error.
+7. Gửi body JSON hỏng vào login trả 400 `VALIDATION`.
+8. Kiểm tra `git diff -- docs/api client tools` -> PHẢI hoàn toàn trống.
+
+---
+
+[QUY ĐỊNH COMMIT VÀ PHẢN HỒI]
+Sau khi kiểm tra đạt tất cả các tiêu chí trên, hãy tạo 2 commit riêng bằng tiếng Anh:
+1. `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` (chứa mock/server.mjs)
+2. `mock(auth): users seeded data, login, me, and logout handlers` (chứa mock/data/users.json và mock/routes/auth.mjs)
+
+Báo cáo lại danh sách file đã tạo, kết quả của từng bước kiểm tra nghiệm thu, và ghi nhận rõ các phần chưa kiểm tra được (ví dụ mã 403 cần chờ task chiều).
+```
+
+## 7. [TV1 · 21/11/2026 · Claude Code] Mock: khung server.mjs, users và auth
+
+Tin nhắn 1:
+
+```text
+Hiện tại tôi cần làm gì tieps theo
+```
+
+Assistant trả lời: việc tiếp theo là khung mock và auth, merge trước 12:00 ngày 21/11 (kế hoạch mục 5.3).
+
+Tin nhắn 2:
+
+```text
+Bạn hãy nêu chi tiết công việc để tôi viết brief cho bạn
+```
+
+Assistant liệt kê chi tiết phạm vi, yêu cầu của `server.mjs`, `users.json`, `auth.mjs`, tiêu chí XONG và 3 điểm cần chốt (`roles: 'signed-in'`, 10 user theo contract thay vì 6, câu báo lỗi khi quá dài).
+
+Tin nhắn 3 (prompt giao việc):
+
+````text
+[KHỐI RÀNG BUỘC CHUNG — MOCK]
+- Bạn đang làm việc trong repo GradStudio (PA#3).
+- Chỉ sử dụng các module có sẵn của Node.js: `node:http`, `node:fs`, `node:path`, `node:url`.
+- Tuyệt đối KHÔNG tạo `package.json`, KHÔNG dùng `npm install` hay bất kỳ thư viện ngoài nào trong thư mục `mock/`.
+- KHÔNG sửa bất kỳ file nào trong `docs/api/`, `client/`, `tools/` hay `ke-hoach/`. Không sửa contract để khớp với code mock.
+- Phạm vi task này: CHỈ làm khung `mock/server.mjs`, dữ liệu `mock/data/users.json` và route `mock/routes/auth.mjs`. Các tài nguyên khác (jobs, admins,
+settings...) sẽ làm ở task sau.
+
+---
+
+[YÊU CẦU KỸ THUẬT CHI TIẾT]
+
+1. File `mock/server.mjs` (Khung máy chủ và Router động):
+- Khởi động: Lắng nghe ở cổng `process.env.PORT || 3001`. Đọc `process.env.MOCK_MODE || 'normal'`. Khi khởi động in console: `Mock server listening on port
+<PORT> (mode: <MODE>)`. Nếu MOCK_MODE không thuộc `['normal', 'slow', 'error', 'empty']`, in thông báo lỗi và thoát process (`process.exit(1)`).
+- Nạp dữ liệu tự động: Đọc toàn bộ file `.json` trong `mock/data/` vào đối tượng bộ nhớ `db`, tên thuộc tính là tên file bỏ đuôi `.json` (ví dụ `users.json` ->
+`db.users`). Dữ liệu này chỉ lưu trong RAM và tự reset khi restart server.
+- Nạp Route động: Tự động import tất cả các file `.mjs` trong thư mục `mock/routes/`. Mỗi file export default một mảng các route: `{ method, path, roles,
+handler }`.
+- Khớp Route (Path matching & Ưu tiên):
+  * Hỗ trợ path param dạng `:param` (ví dụ: `/api/bookings/:code`).
+  * ⚠️ QUY TẮC ĐỘ ƯU TIÊN: Route có đoạn cố định (static segment) PHẢI thắng route có `:param` khi cùng pattern (ví dụ `/api/bookings/export` phải khớp trước
+  `/api/bookings/:code`), không phụ thuộc vào thứ tự import file.
+- Phân quyền (roles):
+  * `roles: null` -> Route công khai (public).
+  * `roles: 'signed-in'` -> ⚠️ Bất kỳ người dùng nào đã đăng nhập hợp lệ đều truy cập được.
+  * `roles: ['admin', ...]` -> Chỉ người dùng có role trong mảng mới được truy cập.
+- Xác thực (Auth middleware):
+  * Đọc header `Authorization: Bearer <token>`. Token mock có dạng `token-<userId>`. Tìm user tương ứng trong `db.users`.
+  * Nếu route yêu cầu đăng nhập (`roles` khác null) mà thiếu token, sai định dạng hoặc không tìm thấy user: trả mã 401 `UNAUTHENTICATED` kèm message: "Vui lòng
+  đăng nhập để tiếp tục", `fields: {}`.
+  * Nếu user không có role hợp lệ: trả mã 403 `FORBIDDEN` kèm message: "Bạn không có quyền thực hiện thao tác này", `fields: {}`.
+- Đối tượng `ctx` truyền vào handler:
+  * `{ params, query, body, rawBody, headers, user, db, fail }`.
+  * `params`: object các tham số từ URL (`{ code: 'GS-1024' }`).
+  * `query`: object các query param từ URL (hỗ trợ phân tích query string đơn giản).
+  * `body`: JSON parsed object. Nếu body gửi lên rỗng thì coi là `{}`. Nếu JSON hỏng thì trả ngay 400 `VALIDATION` với message "Dữ liệu chưa hợp lệ", `fields:
+  {}`.
+  * `rawBody`: Buffer dữ liệu thô (cho multipart sau này).
+  * `user`: object User hiện tại từ `db.users` hoặc `null`.
+  * `fail(status, code, message, fields = {}, details = null)`: hàm tiện ích trả về lỗi theo đúng chuẩn:
+    `{ status, body: { error: { code, message, fields, details } } }`.
+- Xử lý Response:
+  * Handler có thể là `async` và trả về `{ status, body }`.
+  * Nếu `status === 204`: gửi response rỗng (không gửi Content-Type và body).
+  * Các status khác: set header `Content-Type: application/json; charset=utf-8` và serialize `JSON.stringify(body)`.
+  * Xử lý lỗi ngoại lệ: Nếu handler ném exception, catch lại và in stack trace ra console, đồng thời trả 500 `SERVER_ERROR` đúng format lỗi chung.
+- Xử lý 4 chế độ `MOCK_MODE`:
+  * `normal`: delay ngẫu nhiên ~150ms trước khi trả lời.
+  * `slow`: delay 2000ms.
+  * `error`: MỌI request (NGOẠI TRỪ `POST /api/auth/login`) đều bị chặn và trả ngay 500 `SERVER_ERROR` với body:
+    `{"error": {"code": "SERVER_ERROR", "message": "Máy chủ đang gặp sự cố, vui lòng thử lại.", "fields": {}, "details": null}}`. Kể cả route không tồn tại
+    (404) cũng phải trả về 500 ở chế độ này.
+  * `empty`: Với các response thành công (`status < 400`), đệ quy biến MỌI mảng (`Array`) thành `[]` (kể cả mảng lồng trong object). Tuyệt đối KHÔNG làm thay
+  đổi dữ liệu gốc trong `db`. Các object đơn lẻ (như user hay booking) và response lỗi giữ nguyên.
+- Không tìm thấy route: Trả mã 404 `NOT_FOUND` đúng cấu trúc error chung.
+- Logging: Mỗi request in đúng 1 dòng ra terminal: `${method} ${url} → ${status}` (in cả query string nếu có, ví dụ `GET /api/jobs?status=done → 200`).
+
+---
+
+2. File `mock/data/users.json` (10 User theo contract `01-auth.md`):
+⚠️ Contract yêu cầu đủ 10 người dùng mẫu, không phải 6 người:
+- 6 người đăng nhập được (password là `<name>-demo`):
+  * `u-linh` (Linh, role: "customer", email: "linh@gradstudio.test", password: "linh-demo")
+  * `u-han` (Lê Ngọc Hân, role: "customer", email: "han@gradstudio.test", password: "han-demo")
+  * `u-thao` (Thảo, role: "admin", email: "thao@gradstudio.test", password: "thao-demo", createdAt: "2026-09-01T08:00:00+07:00")
+  * `u-mai` (Mai, role: "staff", email: "mai@gradstudio.test", password: "mai-demo")
+  * `u-tuan` (Tuấn, role: "staff", email: "tuan@gradstudio.test", password: "tuan-demo")
+  * `u-superadmin` (Superadmin, role: "superadmin", email: "superadmin@gradstudio.test", password: "superadmin-demo")
+- 4 người trong câu chuyện nhưng KHÔNG được đăng nhập (`password: null`):
+  * `u-ha` (Hà, role: "staff", email: "ha@gradstudio.test", password: null)
+  * `u-khoa` (Trần Minh Khoa, role: "customer", email: "khoa@gradstudio.test", password: null)
+  * `u-bao` (Hồ Gia Bảo, role: "customer", email: "bao@gradstudio.test", password: null)
+  * `u-anh` (Phạm Hoàng Anh, role: "customer", email: "anh@gradstudio.test", password: null)
+
+Lưu ý: Khi trả về thông tin user trong API, CHỈ trả `{ id, name, role }`, tuyệt đối không để lộ `email` hay `password`.
+
+---
+
+3. File `mock/routes/auth.mjs` (Xử lý xác thực):
+Export default mảng chứa 3 route:
+
+a. `POST /api/auth/login` (roles: null - public):
+- Body gồm `email` và `password`.
+- Validation:
+  * `email`: trim khoảng trắng, không phân biệt hoa thường, bắt buộc, định dạng email hợp lệ, tối đa 120 ký tự.
+  * `password`: bắt buộc, độ dài 1 đến 100 ký tự.
+  * Thông báo lỗi chi tiết theo contract:
+    - Thiếu/trống email: `fields.email = "Vui lòng nhập email"`
+    - Sai format email: `fields.email = "Email không đúng định dạng"`
+    - ⚠️ Email quá 120 ký tự: `fields.email = "Email tối đa 120 ký tự"`
+    - Thiếu/trống password: `fields.password = "Vui lòng nhập mật khẩu"`
+    - ⚠️ Password quá 100 ký tự: `fields.password = "Mật khẩu tối đa 100 ký tự"`
+  * Nếu có lỗi validation -> trả 400 `VALIDATION` ("Dữ liệu chưa hợp lệ", kèm `fields`).
+- Kiểm tra tài khoản:
+  * So khớp email và password. Nếu không tìm thấy, sai mật khẩu hoặc user có `password === null` -> trả mã 401 `INVALID_CREDENTIALS` kèm message "Email hoặc
+  mật khẩu không đúng", `fields: {}`.
+- Thành công: Trả 200:
+  `{ token: "token-" + user.id, user: { id: user.id, name: user.name, role: user.role } }`.
+
+b. `GET /api/auth/me` (roles: 'signed-in'):
+- Trả 200: `{ user: { id: ctx.user.id, name: ctx.user.name, role: ctx.user.role } }`.
+
+c. `POST /api/auth/logout` (roles: 'signed-in'):
+- Trả status 204 (không có body).
+- Lưu ý: Không vô hiệu hóa token trong bộ nhớ vì `contract-check` sẽ tái sử dụng token này cho các kiểm thử sau.
+
+---
+
+[TIÊU CHÍ NGHIỆM THU — TỰ KIỂM TRƯỚC KHI BÁO CÁO]
+1. Chạy `node mock/server.mjs`: server chạy trơn tru, log đúng định dạng.
+2. Chạy `node tools/contract-check.mjs --only 01-auth.md`: ĐẠT 0 FAIL cho toàn bộ 12 ví dụ của `01-auth.md`.
+3. Kiểm tra với `MOCK_MODE=error`: `POST /api/auth/login` vẫn trả 200, trong khi `GET /api/auth/me` trả 500 đúng cấu trúc JSON error.
+4. Kiểm tra với `MOCK_MODE=slow`: thời gian phản hồi khoảng 2s.
+5. Kiểm tra với `MOCK_MODE=empty`: login và auth/me vẫn trả về object bình thường.
+6. Gửi request đến route không tồn tại (vd: `GET /api/not-found`) trả 404 đúng format error.
+7. Gửi body JSON hỏng vào login trả 400 `VALIDATION`.
+8. Kiểm tra `git diff -- docs/api client tools` -> PHẢI hoàn toàn trống.
+
+---
+
+[QUY ĐỊNH COMMIT VÀ PHẢN HỒI]
+Sau khi kiểm tra đạt tất cả các tiêu chí trên, hãy tạo 2 commit riêng bằng tiếng Anh:
+1. `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` (chứa mock/server.mjs)
+2. `mock(auth): users seeded data, login, me, and logout handlers` (chứa mock/data/users.json và mock/routes/auth.mjs)
+
+Báo cáo lại danh sách file đã tạo, kết quả của từng bước kiểm tra nghiệm thu, và ghi nhận rõ các phần chưa kiểm tra được (ví dụ mã 403 cần chờ task chiều).
+````
+
+## 8. [TV1 · 21/11/2026 · Claude Code] Mock: sửa câu 403, time helper, settings, admins, jobs
+
+Các tin nhắn sau mục 7, theo thứ tự:
+
+Tin nhắn 1 (kèm nội dung mục 8 của `AI-LOG.md`, đã ghi nguyên văn trong file đó):
+
+```text
+Tôi đã test kỹ toàn bộ code mock và auth bạn vừa làm: contract-check đạt 12/12 PASS và cả 4 chế độ mock đều chạy rất chuẩn. Giờ bạn cập nhật giúp tôi mục số 8
+vào cuối file AI-LOG.md nhé.
+[...nội dung mục 8...]
+Cập nhật xong bạn kiểm tra lại diff đảm bảo chỉ thay đổi đúng file AI-LOG.md rồi tạo commit giúp tôi:
+`docs(ai-log): entry 8, mock core and auth`
+ , bạn hãy rà soát lại tôi kiểm tra có đúng chưa
+```
+
+Tin nhắn 2:
+
+```text
+commit không cần sửa đâu
+```
+
+Tin nhắn 3:
+
+```text
+Bạn hãy mở PR giúp tôi , có title và description
+```
+
+Tin nhắn 4:
+
+```text
+Hãy kiểm tra tinh trạng PR giúp tôi và nêu công việc kế tiếp
+```
+
+Tin nhắn 5:
+
+```text
+Có, nêu chi tiết 3 file để tôi viết brief
+```
+
+Assistant liệt kê chi tiết 3 file và báo lỗi câu 403 trong `server.mjs` khác contract ("thực hiện thao tác này" thay vì "truy cập chức năng này").
+
+Tin nhắn 6 (prompt giao việc):
+
+````text
+[KHỐI RÀNG BUỘC CHUNG — MOCK]
+- Bạn đang làm việc trong repo GradStudio (PA#3), vai trò TV1.
+- Chỉ dùng các module có sẵn của Node.js: node:http, node:fs, node:path, node:url. Không package.json, không npm install.
+- KHÔNG sửa docs/api/, client/, tools/. Chỉ thao tác trong thư mục mock/.
+- Các quyết định kỹ thuật đã chốt:
+  1. previewCount tính động dựa trên số ảnh cùng bookingCode trong db.photos (nếu chưa có thì là 0).
+  2. Bước kiểm tra quyền upload preview chỉ đọc db.jobs, không phụ thuộc vào db.bookings.
+  3. Lần upload đầu tiên cho booking chưa có ảnh sẽ sinh 36 ảnh ph-01..ph-36, totalPhotos là 36.
+  4. Cho phép tạo mock/lib/time.mjs với hàm nowIso() trả ISO string múi giờ +07:00.
+
+---
+
+[CÁC BƯỚC THỰC HIỆN VÀ COMMIT]
+
+Bước 0. Sửa lỗi 403 trên mock/core:
+- Trong mock/server.mjs, sửa câu báo 403 thành đúng nguyên văn contract: "Bạn không có quyền truy cập chức năng này".
+- Commit ngay trên mock/core:
+  `fix(mock): 403 message matches contract`
+
+Bước 1. Tách nhánh mock/tv1-routes từ mock/core:
+- Chạy: git checkout -b mock/tv1-routes
+
+Bước 2. Helper thời gian (mock/lib/time.mjs):
+- Viết mock/lib/time.mjs export hàm nowIso(): trả về thời gian hiện tại theo định dạng ISO kèm múi giờ +07:00 (ví dụ: "2026-11-21T10:00:00+07:00").
+- Commit: `mock(lib): time helper with +07:00 timezone`
+
+Bước 3. Settings (13-settings.md - 2 endpoint):
+- Tạo mock/data/settings.json: {"openingHours": {"open": "08:00", "close": "20:00"}, "reminderHoursBefore": 24}. Giữ nguyên tên field.
+- Tạo mock/routes/settings.mjs:
+  * GET /api/settings: roles ['superadmin'], trả 200 {"settings": ...}.
+  * PUT /api/settings: roles ['superadmin'], nhận body ghi đè settings.
+    - Validate openingHours.open: bắt buộc, định dạng HH:mm (00:00-23:59), lỗi: fields['openingHours.open'] = "Giờ không đúng định dạng HH:mm".
+    - Validate openingHours.close: bắt buộc, định dạng HH:mm, phải sau open, lỗi: fields['openingHours.close'] = "Giờ đóng cửa phải sau giờ mở cửa".
+    - Validate reminderHoursBefore: số nguyên từ 1 đến 168, lỗi: fields.reminderHoursBefore = "Chọn từ 1 đến 168 giờ".
+    - Chỉ lưu đúng 3 field hợp lệ vào db.settings, trả 200 {"settings": ...}.
+- Commit: `mock(settings): settings data, GET and PUT handlers`
+
+Bước 4. Admins (12-admins.md - 2 endpoint):
+- Tạo mock/routes/admins.mjs (dữ liệu dùng chung db.users, lọc user có role === 'admin'):
+  * GET /api/admins: roles ['superadmin'], trả danh sách admin dạng {id, name, email, active: true, createdAt}, không trả password, sắp xếp theo createdAt tăng
+  dần.
+  * POST /api/admins: roles ['superadmin'].
+    - Validate name: trim, 2-80 ký tự (lỗi: "Tên từ 2 đến 80 ký tự").
+    - Validate email: trim, bắt buộc, định dạng email, tối đa 120 ký tự (lỗi tương tự login).
+    - Validate password: 8-100 ký tự (lỗi: "Mật khẩu ít nhất 8 ký tự", nếu bỏ trống thì "Vui lòng nhập mật khẩu", nếu >100 thì "Mật khẩu tối đa 100 ký tự").
+    - Kiểm tra email trùng với bất kỳ ai trong db.users (không phân biệt hoa thường) -> trả 409 EMAIL_TAKEN với fields.email = "Email này đã được dùng".
+    - Sinh admin mới: id dạng "u-admin-<n>" (n tăng dần), role: "admin", active: true, createdAt: nowIso(). Lưu vào db.users và trả 201 {"admin": ...}.
+- Commit: `mock(admins): list and create admin handlers`
+
+Bước 5. Jobs & Previews (08-jobs.md - 4 endpoint):
+- Tạo mock/data/jobs.json: chứa 4 job khởi tạo (J-GS-1021-makeup, J-GS-1021-shoot, J-GS-1022-shoot, J-GS-1022-edit) đầy đủ các field theo mục 3 trong thảo
+luận.
+- Tạo mock/routes/jobs.mjs:
+  * GET /api/jobs: roles ['staff']. Lọc job của user hiện tại (staff.id === user.id). Lọc theo ?status= (nếu status không thuộc todo|in_progress|done thì 400
+  fields.status: "Trạng thái không hợp lệ"). Sắp xếp: có ngày trước (theo date, start), không có ngày (edit) xếp cuối theo bookingCode. previewCount tính động
+  từ db.photos.
+  * GET /api/jobs/:id: roles ['staff']. Không tìm thấy hoặc không phải việc của mình -> 404 "Không tìm thấy việc này".
+  * PATCH /api/jobs/:id: roles ['staff']. Cùng luật 404. Cập nhật status (bắt buộc, lỗi 400 nếu sai/trống) và note (tối đa 500 ký tự, rỗng thì xóa, bỏ qua thì
+  giữ nguyên). Trả 200 {"job": ...}.
+  * POST /api/bookings/:code/previews: roles ['staff'], nhận multipart:
+    1. Kiểm tra db.jobs: nếu user không có việc nào trong bookingCode -> 404 "Không tìm thấy booking này".
+    2. Nếu user chỉ có việc kind === "makeup" trong booking đó -> 403 "Chỉ thợ chụp hoặc chỉnh ảnh của booking này được đăng ảnh xem trước".
+    3. Đọc rawBody dạng latin1: tìm part name="file". Không có -> 400 fields.file = "Vui lòng chọn ảnh".
+    4. Kiểm tra Content-Type của part: chỉ nhận image/jpeg hoặc image/png -> 400 "Chỉ nhận ảnh JPEG hoặc PNG".
+    5. Kiểm tra Content-Length > 5MB + 64KB -> 400 "Ảnh tối đa 5 MB".
+    6. Tạo ảnh: url "/samples/preview-NN.svg", alt "Ảnh xem trước số N (minh họa)", uploadedBy {id, name}, uploadedAt: nowIso().
+       Nếu booking chưa có ảnh nào trong db.photos, thêm ảnh tải lên thành ph-01 và tự sinh thêm ph-02..ph-36 (tổng 36 ảnh, totalPhotos: 36). Nếu đã có ảnh thì
+       thêm tiếp ph-37...
+       Lưu vào db.photos và trả 201 {"photo": ..., "totalPhotos": ...}.
+- Commit: `mock(jobs): jobs data, list, update and preview upload handlers`
+
+---
+
+[TIÊU CHÍ NGHIỆM THU]
+1. Chạy `node tools/contract-check.mjs --only 13-settings.md` đạt 5/5 PASS (kể cả với cờ --strict-values).
+2. Chạy `node tools/contract-check.mjs --only 12-admins.md` đạt 8/8 PASS (kể cả admin mới tạo đăng nhập được).
+3. Với 08-jobs.md: Thử nghiệm trên bản mock tạm có thêm 3 job của GS-1024 để xác nhận 12/12 PASS (không commit dữ liệu tạm này).
+4. MOCK_MODE=empty: {"jobs": []}, {"admins": []}, còn settings vẫn trả object.
+5. `git diff main -- docs/api client tools` hoàn toàn trống.
+````
