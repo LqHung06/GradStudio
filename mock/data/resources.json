@@ -1,0 +1,12 @@
+{
+  "staff": [
+    {"id": "u-mai", "name": "Mai", "skill": "makeup"},
+    {"id": "u-tuan", "name": "Tuấn", "skill": "photo"},
+    {"id": "u-ha", "name": "Hà", "skill": "photo"}
+  ],
+  "rooms": [
+    {"id": "r-a", "name": "Phòng A"},
+    {"id": "r-b", "name": "Phòng B"}
+  ],
+  "costumes": [{"id": "co-cu-nhan", "name": "Áo cử nhân", "quantity": 10}]
+}

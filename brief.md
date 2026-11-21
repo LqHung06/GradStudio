@@ -90,7 +90,7 @@ Tin nhắn 1:
 
 
  Bạn hãy cập nhật đúng 3 file: `docs/api/README.md`, `docs/api/01-auth.md`, và `FRONTEND.md` theo các yêu cầu chi tiết dưới đây.
-    
+
     ### RÀNG BUỘC NGHIÊM NGẶT:
     1. CHỈ sửa đúng 3 file trên. Tuyệt đối KHÔNG tạo hay sửa các file 03, 05, 10 (đó là file của TV3). KHÔNG chạm vào mock/, ke-hoach/, client/ hay bất kỳ
     file nào khác.
@@ -99,13 +99,13 @@ Tin nhắn 1:
     nhận diện ví dụ).
     4. README chỉ mô tả chuỗi ví dụ và quy tắc mock, không định nghĩa chi tiết body hay các mã lỗi thay cho file `10-admin-bookings.md`.
     5. KHÔNG tự ý chạy git commit. Sau khi sửa xong, hãy dừng lại để tôi kiểm tra git diff.
-    
+
     ---
-    
+
     ### CHI TIẾT CÁC ĐIỂM CẦN SỬA:
-    
+
     #### A. File `docs/api/README.md` (8 vị trí)
-    
+
     1. **Bảng Demo accounts** (khoảng dòng 77):
        Thêm dòng của tài khoản `han` vào bảng:
        ```markdown
@@ -113,26 +113,26 @@ Tin nhắn 1:
        | `han` | customer | `u-han` |
        | `thao` | admin | `u-thao` |
        ```
-    
+
     2. **Bảng Data the mock starts with, dòng Users** (khoảng dòng 419):
        Chuyển `u-han` (Lê Ngọc Hân) từ nhóm "Cannot sign in" sang nhóm "Can sign in":
        - Cũ: `Can sign in: u-linh (Linh), u-thao (Thảo), u-mai (Mai, make-up), u-tuan (Tuấn, photographer), u-superadmin.`
        - Mới: `Can sign in: u-linh (Linh), u-han (Lê Ngọc Hân), u-thao (Thảo), u-mai (Mai, make-up), u-tuan (Tuấn, photographer), u-superadmin.`
        - Trong nhóm "Cannot sign in", xóa bỏ `u-han (Lê Ngọc Hân)`.
-    
+
     3. **Bảng Data the mock starts with, dòng Conversations** (khoảng dòng 424):
        Đổi trạng thái `c-han` từ `unanswered` thành `scheduled`, kèm ghi chú gắn với GS-1023:
        - Sửa `c-han` thành: `` `c-han` (`scheduled`, linked to `GS-1023`) ``
-    
+
     4. **Bảng Data the mock starts with, dòng Bookings** (khoảng dòng 425):
        Cập nhật `GS-1023` để thể hiện `conversationId`:
        - Sửa `GS-1023` thành: `` `GS-1023` (Lê Ngọc Hân, `awaiting_deposit`, conversationId: `"c-han"`) ``
-    
+
     5. **Mục ScheduleItemInput** (khoảng dòng 191):
        Bỏ `PATCH /api/bookings/:code` khỏi câu giới thiệu các endpoint sử dụng dạng này:
        - Cũ: `Used by POST /api/conversations/:id/proposals, POST /api/availability/check and PATCH /api/bookings/:code:`
        - Mới: `Used by POST /api/conversations/:id/proposals and POST /api/availability/check:`
-    
+
     6. **Mục Chuỗi ví dụ (The example chain), bước 10 (`10-admin-bookings`)** (khoảng dòng 407):
        Thay thế nội dung của mục 10 bằng chuỗi 7 bước đổi lịch cần khách đồng ý:
        ```markdown
@@ -145,13 +145,13 @@ Tin nhắn 1:
            - Thảo cancels GS-1023.
            - Thảo sets the final link of GS-1024.
        ```
-    
+
     7. **Bảng Mock behaviour** (khoảng dòng 444):
        Thêm 1 dòng quy tắc vào bảng lenient của mock:
        ```markdown
        | Applying a reschedule before the customer accepted the proposal | `409` |
        ```
-    
+
     8. **Mục ## Changes ở cuối file**:
        Thêm dòng thay đổi ngày 2026-11-20:
        ```markdown
@@ -159,11 +159,11 @@ Tin nhắn 1:
        linked to `GS-1023`, `han` can sign in (`han-demo`) to accept proposal `p-3`, and `PATCH /api/bookings/:code` takes `{"proposalId"}` after agreement.
        (TV1)
        ```
-    
+
     ---
-    
+
     #### B. File `docs/api/01-auth.md` (2 vị trí)
-    
+
     1. **Bảng Starting data (`mock/data/users.json`)**:
        Tại dòng `u-han`: Đổi cột **Can sign in** từ `no` thành `yes, han-demo`.
 
@@ -203,7 +203,7 @@ Assistant làm theo Tin nhắn 1, áp dụng thêm đề xuất (1), (2) và (4)
 
 Tin nhắn 1:
 
-````text
+```text
 Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy thực hiện phần việc ngày 20/11/2026 của GradStudio PA#3: tạo nhánh và hoàn thiện 4 file contract để Kiệt review, nhóm merge trước 22:00 ngày 20/11.
 
 Các file cần hoàn thiện:
@@ -432,7 +432,8 @@ Khi hoàn thành, báo ngắn gọn:
 PR dự kiến:
 Title: contract(tv3): define conversations, availability and booking APIs
 Reviewer: Kiệt, TV2.
-````
+```
+
 ## 6. [TV2 · 20/11/2026 · Antigravity Assistant] Contract: 02-catalog, 06-payments, 07-reminders, 09-gallery, 11-receive
 
 Tin nhắn 1 (tìm hiểu yêu cầu PA#3 và quy trình làm việc):
@@ -465,7 +466,6 @@ Tin nhắn 5 (chỉ định dọn test cũ, kéo main, tạo branch và viết 5
 ```text
 vậy dọn file test cũ, kéo main về, tạo nhánh, sau đó viết contract cho tôi đi, ghi những cái tôi trò chuyện vô AI log và brief theo cái có sẵn đi
 ```
-
 
 ## 7. [TV1 · 21/11/2026 · Claude Code] Mock: khung server.mjs, users.json và auth.mjs
 
@@ -611,7 +611,7 @@ Assistant liệt kê chi tiết phạm vi, yêu cầu của `server.mjs`, `users
 
 Tin nhắn 3 (prompt giao việc):
 
-````text
+```text
 [KHỐI RÀNG BUỘC CHUNG — MOCK]
 - Bạn đang làm việc trong repo GradStudio (PA#3).
 - Chỉ sử dụng các module có sẵn của Node.js: `node:http`, `node:fs`, `node:path`, `node:url`.
@@ -739,7 +739,7 @@ Sau khi kiểm tra đạt tất cả các tiêu chí trên, hãy tạo 2 commit 
 2. `mock(auth): users seeded data, login, me, and logout handlers` (chứa mock/data/users.json và mock/routes/auth.mjs)
 
 Báo cáo lại danh sách file đã tạo, kết quả của từng bước kiểm tra nghiệm thu, và ghi nhận rõ các phần chưa kiểm tra được (ví dụ mã 403 cần chờ task chiều).
-````
+```
 
 ## 8. [TV1 · 21/11/2026 · Claude Code] Mock: sửa câu 403, time helper, settings, admins, jobs
 
@@ -784,7 +784,7 @@ Assistant liệt kê chi tiết 3 file và báo lỗi câu 403 trong `server.mjs
 
 Tin nhắn 6 (prompt giao việc):
 
-````text
+```text
 [KHỐI RÀNG BUỘC CHUNG — MOCK]
 - Bạn đang làm việc trong repo GradStudio (PA#3), vai trò TV1.
 - Chỉ dùng các module có sẵn của Node.js: node:http, node:fs, node:path, node:url. Không package.json, không npm install.
@@ -866,7 +866,173 @@ luận.
 5. `git diff main -- docs/api client tools` hoàn toàn trống.
 ````
 
-## 9. [TV2 · 21/11/2026 · Antigravity Assistant] Mock: data, SVG samples và 5 route files của TV2
+## 9. [TV3 · 21/11/2026 · Codex] Mock: chat, kiểm tra trùng lịch và booking
+
+Tin nhắn 1:
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy làm mock cho phần chat, kiểm tra trùng lịch và booking của GradStudio PA#3 theo kế hoạch ngày 21–22/11/2026.
+
+Ưu tiên hoàn thành mock/lib/clash.mjs trước vì Kiệt cần dùng khi xử lý thanh toán cọc. Mốc bàn giao hàm này là 18:00 ngày 21/11; phần mock TV3 cần đạt 0 FAIL trước 12:00 ngày 22/11.
+
+Tôi cho phép bạn git add và git commit phần việc này dưới tên tôi, mỗi file một commit. Đây là ngoại lệ được tôi cho phép đối với quy định không commit trong AGENTS.md. Không sửa AGENTS.md và không tự push, mở PR hoặc merge nhánh.
+
+1. Đọc tài liệu và kiểm tra trạng thái
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Đọc trước khi sửa:
+- AGENTS.md.
+- ../ke-hoach/ke-hoach/TV3-chat-booking-admin.md, nhất là mục 2, 3, 5.2 và 7.
+- docs/api/README.md.
+- docs/api/03-conversations.md.
+- docs/api/04-availability.md.
+- docs/api/05-bookings.md.
+- docs/api/10-admin-bookings.md.
+- docs/api/02-catalog.md, 06-payments.md và 08-jobs.md để hiểu dữ liệu dùng chung.
+- docs/api/13-settings.md để hiểu openingHours.
+- mock/server.mjs và mock/routes/auth.mjs.
+- tools/contract-check-README.md và tools/contract-check.mjs.
+- brief.md và phần PA#3 của AI-LOG.md.
+
+Kiểm tra git status, branch hiện tại, lịch sử commit và các file mock đã có. Không xóa, ghi đè, stash hoặc commit thay đổi có sẵn của người khác.
+
+Nếu đang ở mock/tv3 và nhánh phù hợp với task, tiếp tục dùng nhánh đó. Nếu phải tạo nhánh mới, tạo mock/tv3 từ main đã cập nhật bằng fast-forward khi working tree sạch. Không reset, rebase hoặc force push.
+
+Nếu không truy cập được remote, báo rõ và tiếp tục phần có thể làm an toàn trên checkout hiện tại.
+
+2. Phạm vi được sửa
+
+Các file TV3:
+- mock/lib/clash.mjs
+- mock/data/conversations.json
+- mock/data/resources.json
+- mock/data/bookings.json
+- mock/routes/conversations.mjs
+- mock/routes/resources.mjs
+- mock/routes/bookings.mjs
+- mock/routes/admin-bookings.mjs
+
+Được cập nhật brief.md và AI-LOG.md theo mục 7.
+
+Không sửa docs/api/, client/, tools/, AGENTS.md, mock/server.mjs hoặc file của TV1/TV2.
+
+Khung server đã tự nạp mock/data/*.json và mock/routes/*.mjs. Hãy dùng cơ chế hiện có, không viết lại server.
+
+Nếu thiếu dữ liệu hoặc có mâu thuẫn cần sửa ở phần của người khác, nêu rõ file, field và ảnh hưởng. Tiếp tục phần độc lập; không tự sửa contract cho khớp code.
+
+Chỉ dùng module có sẵn của Node.js. Không thêm package.json, dependency hoặc chạy npm install cho mock.
+
+3. Tích hợp với khung mock
+
+Đọc đúng giao diện của server:
+- Mỗi file routes export default một mảng route.
+- Route có method, path, roles và handler.
+- handler nhận ctx gồm params, query, body, rawBody, headers, user, db, fail.
+- handler trả { status, body }.
+- Dùng ctx.fail theo error shape chung.
+- Dữ liệu được nạp vào db theo tên file JSON.
+
+Tận dụng middleware có sẵn cho xác thực, vai trò, delay, log và các chế độ mock. Không xử lý lặp các chức năng này trong từng route.
+
+Mọi thay đổi nghiệp vụ ở trong bộ nhớ. Khởi động lại server phải trở về dữ liệu seed.
+
+4. Làm checkClash trước
+
+Giao diện cần bàn giao cho Kiệt:
+checkClash(db, date, items, { ignoreBooking } = {})
+→ { available, clashes, suggestions }
+
+Yêu cầu:
+- Kiểm tra trùng theo staffId và roomId.
+- Trong các trạng thái booking hiện có, chỉ booked chiếm lịch; awaiting_deposit, cancelled và completed không chặn giờ.
+- Tính cả khoảng bận cố định nếu dữ liệu tài nguyên có khai báo theo đặc tả.
+- Bỏ qua booking có mã ignoreBooking khi kiểm tra đổi lịch.
+- Hai khoảng [a,b) và [c,d) trùng khi a < d và c < b.
+- Hai ca nối tiếp tại cùng thời điểm không bị tính là trùng.
+- Không thay đổi db hoặc items đầu vào.
+- Trả reason bằng tiếng Việt và đúng cấu trúc Clash/Suggestion.
+- Gợi ý giữ nguyên thời lượng, thứ tự các ca và tuân thủ giờ mở cửa trong db.settings.openingHours.
+- Bảo đảm tình huống mẫu: Mai bận 08:00–12:00 ngày 24/10/2026; 09:00 trùng, makeup 13:00–14:00 và chụp 14:00–16:00 hợp lệ.
+
+Không thêm ignoreBooking vào body API vì contract không có field đó. Route đề xuất và đổi booking phải suy ra mã booking cần bỏ qua ở phía server.
+
+Nếu settings chưa được TV1 bàn giao, chỉ ra phụ thuộc này; không tự tạo cấu hình mặc định ngoài đặc tả.
+
+5. Dữ liệu và routes
+
+Seed:
+- Đủ 5 hội thoại c-linh, c-khoa, c-han, c-bao, c-anh, thể hiện đủ 4 trạng thái.
+- c-linh có câu hỏi của Linh và phản hồi ban đầu của studio.
+- c-han gắn GS-1023.
+- Nhân sự, phòng và trang phục theo contract.
+- Booking GS-1020 đến GS-1023, đủ field của Booking.
+- GS-1021 có ca của Mai 08:00–12:00, là nguồn gây trùng.
+- GS-1024 chỉ được tạo ở G6, không có sẵn trong seed.
+
+Routes:
+- conversations.mjs: đủ 6 endpoint của file 03.
+- resources.mjs: resources, schedule và availability/check của file 04.
+- bookings.mjs: tạo, danh sách, chi tiết booking của file 05.
+- admin-bookings.mjs: đổi lịch, hủy, final-link của file 10.
+
+Tuân thủ nguyên văn method, path, body, phân quyền, validation, status HTTP và cấu trúc response trong contract.
+
+Các điểm cần giữ đúng:
+- Customer chỉ truy cập dữ liệu được phép.
+- Request lỗi không thay đổi dữ liệu hoặc tiêu thụ ID.
+- p-1 bị khách từ chối, p-2 được đồng ý.
+- Tạo booking từ p-1 trả 409; tạo từ p-2 sinh GS-1024.
+- Booking mới là awaiting_deposit/unpaid; không giữ chỗ hoặc sinh job ở bước này.
+- Tiền được lấy và tính theo contract, không tin số tiền do client gửi.
+- Đổi lịch cần đề xuất thuộc đúng hội thoại và đã được khách đồng ý.
+- Kiểm tra trùng lại ngay trước khi áp dụng; nếu lỗi, không cập nhật dở dang booking hoặc jobs.
+- Giữ nguyên trạng thái thanh toán, số tiền và tiến độ công việc khi đổi lịch.
+- Hủy và final-link tuân thủ điều kiện của file 10.
+- Không chặn ngày trong quá khứ vì dữ liệu mẫu dùng 24/10/2026.
+
+File 10 đang nêu khoảng trống về cách xử lý jobs khi hủy booking đã có việc. Không tự thêm Job.status=cancelled hoặc chọn xóa/lưu trữ job khi chưa có quyết định. Báo rõ phần cần Hưng xác nhận; vẫn hoàn thành các trường hợp đã có đặc tả, gồm GS-1023 chưa có jobs.
+
+6. Kiểm tra
+
+Thực hiện kiểm tra phù hợp trước khi commit:
+- node --check với các file .mjs.
+- Parse các file JSON.
+- Kiểm tra checkClash: trùng nhân sự, trùng phòng, hai ca nối tiếp, ignoreBooking, awaiting_deposit không chiếm lịch và đầu vào không bị thay đổi.
+- Kiểm tra phân quyền, validation và các hành động chính qua HTTP.
+- Kiểm tra normal, slow, error, empty; token vẫn dùng được sau khi khởi động lại server.
+- Xác nhận restart khôi phục dữ liệu seed.
+- Chạy git diff --check và đọc diff.
+
+Chạy contract-check theo đúng chuỗi trên mock vừa khởi động:
+- File 03 tạo trạng thái cần cho file 05.
+- File 10 còn phụ thuộc thanh toán/gallery và phần của TV1/TV2.
+- Khi chạy từng file bằng --only, phải thực hiện các bước tiền đề trên cùng instance trước đó.
+- Không khởi động lại giữa các bước của cùng chuỗi, không chạy lại chuỗi trên dữ liệu đã bị thay đổi.
+
+Nếu đủ phần của các thành viên, chạy toàn bộ contract-check trên server mới khởi động.
+
+Nếu còn thiếu phần TV1/TV2, ghi rõ ví dụ nào bị chặn và vì sao. Không sửa file người khác, không commit fixture tạm và không tuyên bố toàn bộ đạt 0 FAIL khi chưa kiểm chứng được.
+
+Chỉ dừng các tiến trình server do bạn tạo cho task này.
+
+7. Báo cáo bàn giao
+
+Khi xong, báo:
+- Nhánh đang làm.
+- Các file đã hoàn thành và phần còn thiếu.
+- Bảng commit gồm hash, file, message, author và committer.
+- Kết quả kiểm tra thực tế, số PASS/FAIL nếu đã chạy contract-check.
+- Các phụ thuộc cần Hưng/Kiệt xử lý.
+- Cách import và gọi checkClash để Kiệt tích hợp.
+- Số mục đã ghi trong brief.md và AI-LOG.md.
+- Git status cuối cùng.
+
+Không push, mở PR hoặc gửi tin nhắn cho người khác.
+```
+
+## 10. [TV2 · 21/11/2026 · Antigravity Assistant] Mock: data, SVG samples và 5 route files của TV2
 
 Tin nhắn 1:
 
