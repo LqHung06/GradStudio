@@ -14,10 +14,13 @@ export function scheduleRows(db, date, { ignoreBooking } = {}) {
     const type = key === 'staff' ? 'staff' : 'room';
     const busy = (db.bookings || [])
       .filter((booking) => booking.status === 'booked' && booking.date === date && booking.code !== ignoreBooking)
-      .flatMap((booking) => booking.items.filter((item) => inputItem(item)[`${type}Id`] === entry.id)
+      .flatMap((booking) => (type === 'room' ? [...booking.items].sort((a, b) => Number(b.kind === 'shoot') - Number(a.kind === 'shoot')) : booking.items)
+        .filter((item) => inputItem(item)[`${type}Id`] === entry.id)
         .map((item) => ({ start: item.start, end: item.end,
           label: `${item.kind === 'makeup' ? 'Makeup' : 'Chụp'} ${booking.shootType.charAt(0).toLowerCase()}${booking.shootType.slice(1)}`,
           bookingCode: booking.code })))
+      .filter((interval, index, intervals) => intervals.findIndex((other) => other.bookingCode === interval.bookingCode
+        && other.start === interval.start && other.end === interval.end) === index)
       .sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
     // resources in 04 define no fixed-busy field. Booking GS-1021 supplies Mai's block.
     return { resource: { id: entry.id, name: entry.name, type }, busy };
