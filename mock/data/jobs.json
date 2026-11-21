@@ -1,0 +1,18 @@
+[
+  {"id": "J-GS-1021-makeup", "bookingCode": "GS-1021", "kind": "makeup", "date": "2026-10-24", "start": "08:00", "end": "12:00",
+   "room": {"id": "r-a", "name": "Phòng A"}, "staff": {"id": "u-mai", "name": "Mai"},
+   "customer": {"id": "u-bao", "name": "Hồ Gia Bảo"}, "packageName": "Gói Kỷ yếu lớp",
+   "status": "todo", "note": "Makeup cho 12 bạn lớp 12A3"},
+  {"id": "J-GS-1021-shoot", "bookingCode": "GS-1021", "kind": "shoot", "date": "2026-10-24", "start": "08:00", "end": "12:00",
+   "room": {"id": "r-a", "name": "Phòng A"}, "staff": {"id": "u-ha", "name": "Hà"},
+   "customer": {"id": "u-bao", "name": "Hồ Gia Bảo"}, "packageName": "Gói Kỷ yếu lớp",
+   "status": "todo", "note": ""},
+  {"id": "J-GS-1022-shoot", "bookingCode": "GS-1022", "kind": "shoot", "date": "2026-10-20", "start": "09:00", "end": "10:30",
+   "room": {"id": "r-b", "name": "Phòng B"}, "staff": {"id": "u-tuan", "name": "Tuấn"},
+   "customer": {"id": "u-khoa", "name": "Trần Minh Khoa"}, "packageName": "Gói Chân dung CV",
+   "status": "done", "note": ""},
+  {"id": "J-GS-1022-edit", "bookingCode": "GS-1022", "kind": "edit", "date": null, "start": null, "end": null,
+   "room": null, "staff": {"id": "u-tuan", "name": "Tuấn"},
+   "customer": {"id": "u-khoa", "name": "Trần Minh Khoa"}, "packageName": "Gói Chân dung CV",
+   "status": "todo", "note": "Chờ khách chọn ảnh"}
+]
