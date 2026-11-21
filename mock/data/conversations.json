@@ -1,0 +1,222 @@
+[
+  {
+    "id": "c-linh",
+    "customer": {
+      "id": "u-linh",
+      "name": "Linh"
+    },
+    "topic": "Gói Tốt nghiệp",
+    "status": "consulting",
+    "lastMessage": {
+      "text": "Để mình kiểm tra lịch cho bạn nhé",
+      "at": "2026-10-20T17:25:00+07:00"
+    },
+    "bookingCode": null,
+    "updatedAt": "2026-10-20T17:25:00+07:00",
+    "messages": [
+      {
+        "id": "m-1",
+        "from": "customer",
+        "author": {
+          "id": "u-linh",
+          "name": "Linh"
+        },
+        "type": "text",
+        "text": "Gói tốt nghiệp có makeup còn lịch 24/10 lúc 09:00 không?",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      },
+      {
+        "id": "m-2",
+        "from": "studio",
+        "author": {
+          "id": "u-thao",
+          "name": "Thảo"
+        },
+        "type": "text",
+        "text": "Để mình kiểm tra lịch cho bạn nhé",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      }
+    ],
+    "acceptedProposalId": null
+  },
+  {
+    "id": "c-khoa",
+    "customer": {
+      "id": "u-khoa",
+      "name": "Trần Minh Khoa"
+    },
+    "topic": "Gói Chân dung CV",
+    "status": "unanswered",
+    "lastMessage": {
+      "text": "Chụp chân dung CV mất bao lâu ạ?",
+      "at": "2026-10-20T17:25:00+07:00"
+    },
+    "bookingCode": "GS-1022",
+    "updatedAt": "2026-10-20T17:25:00+07:00",
+    "messages": [
+      {
+        "id": "m-khoa-1",
+        "from": "customer",
+        "author": {
+          "id": "u-khoa",
+          "name": "Trần Minh Khoa"
+        },
+        "type": "text",
+        "text": "Chụp chân dung CV mất bao lâu ạ?",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      }
+    ],
+    "acceptedProposalId": null
+  },
+  {
+    "id": "c-han",
+    "customer": {
+      "id": "u-han",
+      "name": "Lê Ngọc Hân"
+    },
+    "topic": "Gói Tốt nghiệp",
+    "status": "scheduled",
+    "lastMessage": {
+      "text": "Dạ mình đồng ý ngày 25/10 nhé.",
+      "at": "2026-10-20T17:25:00+07:00"
+    },
+    "bookingCode": "GS-1023",
+    "updatedAt": "2026-10-20T17:25:00+07:00",
+    "messages": [
+      {
+        "id": "m-han-1",
+        "from": "customer",
+        "author": {
+          "id": "u-han",
+          "name": "Lê Ngọc Hân"
+        },
+        "type": "text",
+        "text": "Mình muốn chụp tốt nghiệp ngày 25/10.",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      },
+      {
+        "id": "m-han-2",
+        "from": "studio",
+        "author": {
+          "id": "u-thao",
+          "name": "Thảo"
+        },
+        "type": "text",
+        "text": "Mình thống nhất ngày 25/10. Lịch chỉ được giữ sau khi cọc thành công và kiểm tra lại tài nguyên.",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      },
+      {
+        "id": "m-han-3",
+        "from": "customer",
+        "author": {
+          "id": "u-han",
+          "name": "Lê Ngọc Hân"
+        },
+        "type": "text",
+        "text": "Dạ mình đồng ý ngày 25/10 nhé.",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      }
+    ],
+    "acceptedProposalId": null
+  },
+  {
+    "id": "c-bao",
+    "customer": {
+      "id": "u-bao",
+      "name": "Hồ Gia Bảo"
+    },
+    "topic": "Kỷ yếu Lớp 12A3",
+    "status": "scheduled",
+    "lastMessage": {
+      "text": "Lớp đã đặt lịch makeup và chụp từ 08:00 đến 12:00 ngày 24/10 tại Phòng A.",
+      "at": "2026-10-20T17:25:00+07:00"
+    },
+    "bookingCode": "GS-1021",
+    "updatedAt": "2026-10-20T17:25:00+07:00",
+    "messages": [
+      {
+        "id": "m-bao-1",
+        "from": "customer",
+        "author": {
+          "id": "u-bao",
+          "name": "Hồ Gia Bảo"
+        },
+        "type": "text",
+        "text": "Lớp mình chốt 24/10 nha studio",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      },
+      {
+        "id": "m-bao-2",
+        "from": "studio",
+        "author": {
+          "id": "u-thao",
+          "name": "Thảo"
+        },
+        "type": "text",
+        "text": "Lớp đã đặt lịch makeup và chụp từ 08:00 đến 12:00 ngày 24/10 tại Phòng A.",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      }
+    ],
+    "acceptedProposalId": null
+  },
+  {
+    "id": "c-anh",
+    "customer": {
+      "id": "u-anh",
+      "name": "Phạm Hoàng Anh"
+    },
+    "topic": "Gói Tốt nghiệp",
+    "status": "done",
+    "lastMessage": {
+      "text": "Cảm ơn Anh đã tin tưởng GradStudio.",
+      "at": "2026-10-20T17:25:00+07:00"
+    },
+    "bookingCode": "GS-1020",
+    "updatedAt": "2026-10-20T17:25:00+07:00",
+    "messages": [
+      {
+        "id": "m-anh-1",
+        "from": "customer",
+        "author": {
+          "id": "u-anh",
+          "name": "Phạm Hoàng Anh"
+        },
+        "type": "text",
+        "text": "Cảm ơn studio, mình đã nhận ảnh!",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      },
+      {
+        "id": "m-anh-2",
+        "from": "studio",
+        "author": {
+          "id": "u-thao",
+          "name": "Thảo"
+        },
+        "type": "text",
+        "text": "Cảm ơn Anh đã tin tưởng GradStudio.",
+        "request": null,
+        "proposal": null,
+        "at": "2026-10-20T17:25:00+07:00"
+      }
+    ],
+    "acceptedProposalId": null
+  }
+]
