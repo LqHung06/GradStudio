@@ -454,3 +454,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Test trùng cổng: mở server thứ hai bị báo lỗi cổng bận và thoát mã 1.
   - `git diff main..HEAD -- docs/api client tools` hoàn toàn trống.
 - **Commits:** `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` · `mock(auth): users seeded data, login, me, and logout handlers`.
+
+### [TV2] 9. Mock: data, SVG samples và 5 route files của TV2 (21/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 9. Trên nhánh `mock/tv2`, viết toàn bộ dữ liệu mẫu, 36 SVG preview và 5 file route của TV2 theo `docs/api/02`, `06`, `07`, `09`, `11`; không tự ý commit hay push lên GitHub.
+- **Changed:**
+  - `mock/data/catalog.json` (file mới): 3 services, 3 packages, 2 extras, 6 portfolio (ảnh AI trong `client/public/art/`), 4 reviews.
+  - `mock/data/photos.json` (file mới): 36 ảnh mẫu của `GS-1022` (`ph-101` … `ph-136`).
+  - `mock/data/payments.json` và `mock/data/reminders.json` (file mới): mảng rỗng `[]`.
+  - `client/public/samples/preview-01.svg` … `preview-36.svg` (36 file mới): ảnh xem trước SVG minh họa nhẹ.
+  - `mock/routes/catalog.mjs`, `payments.mjs`, `reminders.mjs`, `gallery.mjs`, `receive.mjs` (5 file mới): xử lý đủ 13 endpoint của TV2; `payments.mjs` tự động kiểm tra `mock/lib/clash.mjs` khi tồn tại, sinh job `J-<code>-{makeup,shoot,edit}` và reminder `rm-n` khi cọc thành công; `gallery.mjs` lưu `selectedIds` theo từng `db` bằng `WeakMap` để không làm đổi cấu trúc đối tượng `Booking`.
+- **Rejected / lỗi phát hiện:**
+  - Lệnh one-liner đầu tiên tạo `photos.json` và SVG trên PowerShell gặp lỗi `SyntaxError: Invalid or unexpected token` do escape dấu nháy kép trong `node -e`. Đã chuyển sang truyền script qua PowerShell here-string (`@' ... '@ | node`) và chạy thành công.
+  - Không đụng chạm tới `docs/api/`, `mock/server.mjs`, `mock/routes/auth.mjs`, `mock/data/users.json`; không chạy `git add`/`git commit`/`git push`.
+- **Checked:**
+  - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001 --only 01-auth.md` → **12/12 PASS (0 FAIL)**.
+  - Chạy `node tools/contract-check.mjs --base http://localhost:3001 --only 02-catalog.md` → **8/8 PASS (0 FAIL)**.
+  - Chạy `MOCK_MODE=empty`: `GET /api/services` trả mảng rỗng, `GET /api/packages/pkg-tn-premium` vẫn giữ nguyên object `pkg-tn-premium` với `includes: []`.
+  - Các file `06`, `07`, `09`, `11` chờ TV3 merge `bookings` và `clash.mjs` cùng TV1 merge `jobs`/`settings` lên `main` để chạy full chuỗi `contract-check`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
