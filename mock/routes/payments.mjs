@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { nowIso } from '../lib/time.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clashFile = path.resolve(here, '..', 'lib', 'clash.mjs');
@@ -147,7 +148,7 @@ export default [
         amount,
         status: 'pending',
         failureReason: null,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso(),
       };
       db.payments.push(payment);
 
