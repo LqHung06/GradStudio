@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sv-ky-yeu",
+    "name": "Kỷ yếu lớp",
+    "fromPrice": 350000,
+    "priceUnit": "người",
+    "description": "Chụp tập thể lớp tại trường và ngoại cảnh, hỗ trợ concept theo yêu cầu.",
+    "image": "/art/graduation-group.png",
+    "shootTypes": [
+      "Kỷ yếu lớp",
+      "Kỷ yếu nhóm"
+    ]
+  },
+  {
+    "id": "sv-tot-nghiep",
+    "name": "Tốt nghiệp",
+    "fromPrice": 1800000,
+    "priceUnit": null,
+    "description": "Chụp cá nhân hoặc nhóm bạn ngày lễ tốt nghiệp, hỗ trợ make-up và áo cử nhân.",
+    "image": "/art/graduation-portrait.png",
+    "shootTypes": [
+      "Tốt nghiệp cá nhân",
+      "Tốt nghiệp nhóm bạn"
+    ]
+  },
+  {
+    "id": "sv-chan-dung",
+    "name": "Chân dung/CV",
+    "fromPrice": 690000,
+    "priceUnit": null,
+    "description": "Chụp chân dung cá nhân, ảnh hồ sơ CV và ảnh doanh nhân tại studio.",
+    "image": "/art/portrait-window.png",
+    "shootTypes": [
+      "Chân dung cá nhân",
+      "Ảnh CV / Profile"
+    ]
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "rv-01",
+    "author": "Hồ Gia Bảo",
+    "initials": "HB",
+    "rating": 5,
+    "text": "Studio sắp xếp lịch make-up và chụp rất rõ ràng, không phải chờ đợi.",
+    "serviceId": "sv-ky-yeu",
+    "date": "2026-06-20"
+  },
+  {
+    "id": "rv-02",
+    "author": "Phạm Hoàng Anh",
+    "initials": "PA",
+    "rating": 5,
+    "text": "Chọn ảnh ngay trên tài khoản rất tiện, nhận file đúng hẹn.",
+    "serviceId": "sv-tot-nghiep",
+    "date": "2026-08-15"
+  },
+  {
+    "id": "rv-03",
+    "author": "Trần Minh Khoa",
+    "initials": "MK",
+    "rating": 5,
+    "text": "Thợ chụp hướng dẫn tạo dáng tự nhiên, ảnh CV lên ánh sáng rất đẹp.",
+    "serviceId": "sv-chan-dung",
+    "date": "2026-10-21"
+  },
+  {
+    "id": "rv-04",
+    "author": "Lê Ngọc Hân",
+    "initials": "NH",
+    "rating": 5,
+    "text": "Tư vấn minh bạch giá từ đầu, có nhắc lịch tự động trước buổi chụp.",
+    "serviceId": "sv-tot-nghiep",
+    "date": "2026-10-22"
+  }
+]

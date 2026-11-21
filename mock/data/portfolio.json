@@ -1,0 +1,44 @@
+[
+  {
+    "id": "pf-01",
+    "title": "Tốt nghiệp · sân trường",
+    "serviceId": "sv-tot-nghiep",
+    "url": "/art/graduation-diploma.png",
+    "alt": "Minh họa: sinh viên tốt nghiệp cầm bằng trước sân trường"
+  },
+  {
+    "id": "pf-02",
+    "title": "Kỷ yếu lớp · tập thể",
+    "serviceId": "sv-ky-yeu",
+    "url": "/art/graduation-group.png",
+    "alt": "Minh họa: nhóm bạn mặc áo cử nhân chụp ảnh kỷ yếu"
+  },
+  {
+    "id": "pf-03",
+    "title": "Tốt nghiệp · chân dung",
+    "serviceId": "sv-tot-nghiep",
+    "url": "/art/graduation-portrait.png",
+    "alt": "Minh họa: chân dung tân cử nhân trong áo tốt nghiệp"
+  },
+  {
+    "id": "pf-04",
+    "title": "Chân dung · ánh sáng cửa sổ",
+    "serviceId": "sv-chan-dung",
+    "url": "/art/portrait-window.png",
+    "alt": "Minh họa: ảnh chân dung bên khung cửa sổ studio"
+  },
+  {
+    "id": "pf-05",
+    "title": "Kỷ niệm · sân vườn",
+    "serviceId": "sv-tot-nghiep",
+    "url": "/art/couple-garden.png",
+    "alt": "Minh họa: chụp ảnh kỷ niệm ngoài sân vườn"
+  },
+  {
+    "id": "pf-06",
+    "title": "Gia đình · buổi chiều",
+    "serviceId": "sv-chan-dung",
+    "url": "/art/family-afternoon.png",
+    "alt": "Minh họa: ảnh kỷ niệm gia đình trong ánh nắng chiều"
+  }
+]
