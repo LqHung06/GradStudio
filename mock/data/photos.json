@@ -1,0 +1,398 @@
+[
+  {
+    "id": "ph-101",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-01.svg",
+    "alt": "Ảnh xem trước số 1 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-102",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-02.svg",
+    "alt": "Ảnh xem trước số 2 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-103",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-03.svg",
+    "alt": "Ảnh xem trước số 3 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-104",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-04.svg",
+    "alt": "Ảnh xem trước số 4 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-105",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-05.svg",
+    "alt": "Ảnh xem trước số 5 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-106",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-06.svg",
+    "alt": "Ảnh xem trước số 6 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-107",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-07.svg",
+    "alt": "Ảnh xem trước số 7 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-108",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-08.svg",
+    "alt": "Ảnh xem trước số 8 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-109",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-09.svg",
+    "alt": "Ảnh xem trước số 9 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-110",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-10.svg",
+    "alt": "Ảnh xem trước số 10 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-111",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-11.svg",
+    "alt": "Ảnh xem trước số 11 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-112",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-12.svg",
+    "alt": "Ảnh xem trước số 12 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-113",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-13.svg",
+    "alt": "Ảnh xem trước số 13 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-114",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-14.svg",
+    "alt": "Ảnh xem trước số 14 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-115",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-15.svg",
+    "alt": "Ảnh xem trước số 15 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-116",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-16.svg",
+    "alt": "Ảnh xem trước số 16 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-117",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-17.svg",
+    "alt": "Ảnh xem trước số 17 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-118",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-18.svg",
+    "alt": "Ảnh xem trước số 18 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-119",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-19.svg",
+    "alt": "Ảnh xem trước số 19 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-120",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-20.svg",
+    "alt": "Ảnh xem trước số 20 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-121",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-21.svg",
+    "alt": "Ảnh xem trước số 21 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-122",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-22.svg",
+    "alt": "Ảnh xem trước số 22 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-123",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-23.svg",
+    "alt": "Ảnh xem trước số 23 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-124",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-24.svg",
+    "alt": "Ảnh xem trước số 24 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-125",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-25.svg",
+    "alt": "Ảnh xem trước số 25 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-126",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-26.svg",
+    "alt": "Ảnh xem trước số 26 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-127",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-27.svg",
+    "alt": "Ảnh xem trước số 27 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-128",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-28.svg",
+    "alt": "Ảnh xem trước số 28 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-129",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-29.svg",
+    "alt": "Ảnh xem trước số 29 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-130",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-30.svg",
+    "alt": "Ảnh xem trước số 30 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-131",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-31.svg",
+    "alt": "Ảnh xem trước số 31 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-132",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-32.svg",
+    "alt": "Ảnh xem trước số 32 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-133",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-33.svg",
+    "alt": "Ảnh xem trước số 33 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-134",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-34.svg",
+    "alt": "Ảnh xem trước số 34 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-135",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-35.svg",
+    "alt": "Ảnh xem trước số 35 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  },
+  {
+    "id": "ph-136",
+    "bookingCode": "GS-1022",
+    "url": "/samples/preview-36.svg",
+    "alt": "Ảnh xem trước số 36 (minh họa)",
+    "uploadedBy": {
+      "id": "u-tuan",
+      "name": "Tuấn"
+    },
+    "uploadedAt": "2026-10-20T17:00:00+07:00"
+  }
+]

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#DFEEFC"/>
+  <rect x="16" y="16" width="368" height="268" rx="8" fill="none" stroke="#2F6099" stroke-width="2" stroke-opacity="0.35"/>
+  <text x="200" y="142" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="#1D3E5C">#11</text>
+  <text x="200" y="174" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#66645F">Ảnh xem trước minh họa</text>
+</svg>
