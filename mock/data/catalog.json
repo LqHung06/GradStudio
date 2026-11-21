@@ -1,0 +1,168 @@
+{
+  "services": [
+    {
+      "id": "sv-ky-yeu",
+      "name": "Kỷ yếu lớp",
+      "fromPrice": 350000,
+      "priceUnit": "người",
+      "description": "Chụp tập thể lớp tại trường và ngoại cảnh, hỗ trợ concept theo yêu cầu.",
+      "image": "/art/graduation-group.png",
+      "shootTypes": ["Kỷ yếu lớp", "Kỷ yếu nhóm"]
+    },
+    {
+      "id": "sv-tot-nghiep",
+      "name": "Tốt nghiệp",
+      "fromPrice": 1800000,
+      "priceUnit": null,
+      "description": "Chụp cá nhân hoặc nhóm bạn ngày lễ tốt nghiệp, hỗ trợ make-up và áo cử nhân.",
+      "image": "/art/graduation-portrait.png",
+      "shootTypes": ["Tốt nghiệp cá nhân", "Tốt nghiệp nhóm bạn"]
+    },
+    {
+      "id": "sv-chan-dung",
+      "name": "Chân dung/CV",
+      "fromPrice": 690000,
+      "priceUnit": null,
+      "description": "Chụp chân dung cá nhân, ảnh hồ sơ CV và ảnh doanh nhân tại studio.",
+      "image": "/art/portrait-window.png",
+      "shootTypes": ["Chân dung cá nhân", "Ảnh CV / Profile"]
+    }
+  ],
+  "packages": [
+    {
+      "id": "pkg-tn-premium",
+      "serviceId": "sv-tot-nghiep",
+      "name": "Gói Tốt nghiệp Premium",
+      "durationHours": 2,
+      "editedPhotos": 30,
+      "price": 1800000,
+      "includes": [
+        "Make-up và làm tóc 60 phút trước giờ chụp",
+        "2 giờ chụp cùng thợ chính tại studio hoặc ngoại cảnh",
+        "30 ảnh chỉnh sửa chi tiết"
+      ]
+    },
+    {
+      "id": "pkg-ky-yeu-lop",
+      "serviceId": "sv-ky-yeu",
+      "name": "Gói Kỷ yếu Lớp Tiêu chuẩn",
+      "durationHours": 4,
+      "editedPhotos": 100,
+      "price": 350000,
+      "includes": [
+        "4 giờ chụp toàn lớp tại trường và ngoại cảnh",
+        "Hỗ trợ 2 thợ chụp và 1 thợ make-up",
+        "100 ảnh chỉnh sửa màu sắc và ánh sáng"
+      ]
+    },
+    {
+      "id": "pkg-cd-cv",
+      "serviceId": "sv-chan-dung",
+      "name": "Gói Chân dung / CV Studio",
+      "durationHours": 1,
+      "editedPhotos": 10,
+      "price": 690000,
+      "includes": [
+        "1 giờ chụp tại phòng studio ánh sáng tự nhiên",
+        "10 ảnh chân dung chỉnh sửa chi tiết",
+        "Giao file độ phân giải cao dùng cho hồ sơ"
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "id": "ex-makeup",
+      "name": "Makeup",
+      "price": 0,
+      "note": "Đã gồm trong Gói Tốt nghiệp Premium, 60 phút trước giờ chụp"
+    },
+    {
+      "id": "ex-costume",
+      "name": "Thuê áo cử nhân",
+      "price": 150000,
+      "note": "Áo cử nhân và mũ theo size, chuẩn bị sẵn trước buổi chụp"
+    }
+  ],
+  "portfolio": [
+    {
+      "id": "pf-01",
+      "title": "Tốt nghiệp · sân trường",
+      "serviceId": "sv-tot-nghiep",
+      "url": "/art/graduation-diploma.png",
+      "alt": "Minh họa: sinh viên tốt nghiệp cầm bằng trước sân trường"
+    },
+    {
+      "id": "pf-02",
+      "title": "Kỷ yếu lớp · tập thể",
+      "serviceId": "sv-ky-yeu",
+      "url": "/art/graduation-group.png",
+      "alt": "Minh họa: nhóm bạn mặc áo cử nhân chụp ảnh kỷ yếu"
+    },
+    {
+      "id": "pf-03",
+      "title": "Tốt nghiệp · chân dung",
+      "serviceId": "sv-tot-nghiep",
+      "url": "/art/graduation-portrait.png",
+      "alt": "Minh họa: chân dung tân cử nhân trong áo tốt nghiệp"
+    },
+    {
+      "id": "pf-04",
+      "title": "Chân dung · ánh sáng cửa sổ",
+      "serviceId": "sv-chan-dung",
+      "url": "/art/portrait-window.png",
+      "alt": "Minh họa: ảnh chân dung bên khung cửa sổ studio"
+    },
+    {
+      "id": "pf-05",
+      "title": "Kỷ niệm · sân vườn",
+      "serviceId": "sv-tot-nghiep",
+      "url": "/art/couple-garden.png",
+      "alt": "Minh họa: chụp ảnh kỷ niệm ngoài sân vườn"
+    },
+    {
+      "id": "pf-06",
+      "title": "Gia đình · buổi chiều",
+      "serviceId": "sv-chan-dung",
+      "url": "/art/family-afternoon.png",
+      "alt": "Minh họa: ảnh kỷ niệm gia đình trong ánh nắng chiều"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rv-01",
+      "author": "Hồ Gia Bảo",
+      "initials": "HB",
+      "rating": 5,
+      "text": "Studio sắp xếp lịch make-up và chụp rất rõ ràng, không phải chờ đợi.",
+      "serviceId": "sv-ky-yeu",
+      "date": "2026-06-20"
+    },
+    {
+      "id": "rv-02",
+      "author": "Phạm Hoàng Anh",
+      "initials": "PA",
+      "rating": 5,
+      "text": "Chọn ảnh ngay trên tài khoản rất tiện, nhận file đúng hẹn.",
+      "serviceId": "sv-tot-nghiep",
+      "date": "2026-08-15"
+    },
+    {
+      "id": "rv-03",
+      "author": "Trần Minh Khoa",
+      "initials": "MK",
+      "rating": 5,
+      "text": "Thợ chụp hướng dẫn tạo dáng tự nhiên, ảnh CV lên ánh sáng rất đẹp.",
+      "serviceId": "sv-chan-dung",
+      "date": "2026-10-21"
+    },
+    {
+      "id": "rv-04",
+      "author": "Lê Ngọc Hân",
+      "initials": "NH",
+      "rating": 5,
+      "text": "Tư vấn minh bạch giá từ đầu, có nhắc lịch tự động trước buổi chụp.",
+      "serviceId": "sv-tot-nghiep",
+      "date": "2026-10-22"
+    }
+  ]
+}
