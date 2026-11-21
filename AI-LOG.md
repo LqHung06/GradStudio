@@ -520,3 +520,24 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - 87900db — mock/routes/bookings.mjs — mock(bookings): implement booking creation and queries.
   - 797e9cc — mock/routes/admin-bookings.mjs — mock(admin-bookings): implement reschedule cancel and final link.
   - 03e65cf — AI-LOG.md — docs(ai-log): record TV3 mock implementation and checks.
+
+### [TV2] 11. Mock: data, SVG samples và 5 route files của TV2 (21/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 10. Trên nhánh `mock/tv2`, viết toàn bộ dữ liệu mẫu, 36 SVG preview và 5 file route của TV2 theo `docs/api/02`, `06`, `07`, `09`, `11`; không tự ý commit hay push lên GitHub.
+- **Changed:**
+  - `mock/data/services.json`, `packages.json`, `extras.json`, `portfolio.json`, `reviews.json` (5 file mới): 3 services, 3 packages (`pkg-tn-premium`, `pkg-ky-yeu`, `pkg-cv`), 2 extras, 6 portfolio (ảnh AI trong `client/public/art/`), 4 reviews.
+  - `mock/data/photos.json` (file mới): 36 ảnh mẫu của `GS-1022` (`ph-101` … `ph-136`).
+  - `mock/data/payments.json` và `mock/data/reminders.json` (file mới): mảng rỗng `[]`.
+  - `client/public/samples/preview-01.svg` … `preview-36.svg` (36 file mới): ảnh xem trước SVG minh họa nhẹ.
+  - `mock/routes/catalog.mjs`, `payments.mjs`, `reminders.mjs`, `gallery.mjs`, `receive.mjs` (5 file mới): xử lý đủ 13 endpoint của TV2; `payments.mjs` tự động kiểm tra `mock/lib/clash.mjs` khi tồn tại, sinh job `J-<code>-{makeup,shoot,edit}` và reminder `rm-n` khi cọc thành công; `gallery.mjs` lưu `selectedIds` theo từng `db` bằng `WeakMap` để không làm đổi cấu trúc đối tượng `Booking`.
+- **Rejected / lỗi phát hiện:**
+  - Lệnh one-liner đầu tiên tạo `photos.json` và SVG trên PowerShell gặp lỗi `SyntaxError: Invalid or unexpected token` do escape dấu nháy kép trong `node -e`. Đã chuyển sang truyền script qua PowerShell here-string (`@' ... '@ | node`) và chạy thành công.
+  - Khi ghép với `origin/main` (có TV1 + TV3) và chạy full `contract-check`:
+    1. Lần chạy đầu gặp 30 FAIL do gộp `catalog.json` khiến `conversations.mjs` và `bookings.mjs` của TV3 không thấy `db.services`/`db.packages`/`db.extras` (trả `500`). Đã tách `catalog.json` thành 5 file riêng (`services.json`, `packages.json`, `extras.json`, `portfolio.json`, `reviews.json`) và cập nhật `catalog.mjs`.
+    2. TV3 dùng ID gói `pkg-ky-yeu` và `pkg-cv` trong `bookings.json`; đã đồng bộ 2 ID và thông số gói này trong `packages.json`.
+  - Không đụng chạm tới `docs/api/`, `mock/server.mjs`, `mock/routes/auth.mjs`, `mock/data/users.json`; không chạy `git add`/`git commit`/`git push`.
+- **Checked:**
+  - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001` toàn bộ 14 file (`01` → `13`): **99/99 examples PASS, 0 FAIL, 39/39 endpoints**.
+  - Chạy `MOCK_MODE=empty`: `GET /api/services` trả mảng rỗng, `GET /api/packages/pkg-tn-premium` vẫn giữ nguyên object `pkg-tn-premium` với `includes: []`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.

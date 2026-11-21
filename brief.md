@@ -864,7 +864,7 @@ luận.
 3. Với 08-jobs.md: Thử nghiệm trên bản mock tạm có thêm 3 job của GS-1024 để xác nhận 12/12 PASS (không commit dữ liệu tạm này).
 4. MOCK_MODE=empty: {"jobs": []}, {"admins": []}, còn settings vẫn trả object.
 5. `git diff main -- docs/api client tools` hoàn toàn trống.
-```
+````
 
 ## 9. [TV3 · 21/11/2026 · Codex] Mock: chat, kiểm tra trùng lịch và booking
 
@@ -1030,4 +1030,18 @@ Khi xong, báo:
 - Git status cuối cùng.
 
 Không push, mở PR hoặc gửi tin nhắn cho người khác.
+```
+
+## 10. [TV2 · 21/11/2026 · Antigravity Assistant] Mock: data, SVG samples và 5 route files của TV2
+
+Tin nhắn 1:
+
+```text
+xong r, giờ làm gì tiếp (mà có 9 file đang untrack ấy, có sợ bị ảnh hưởng gì khi dùng các lệnh pull push,....này nọ ko, các file đó chủ yếu cho agent đọc được context)
+```
+
+Tin nhắn 2:
+
+```text
+hãy triển khai phần mock của TV2 theo đúng hợp đồng docs/api/ (02, 06, 07, 09, 11) và kế hoạch TV2-khach-hang.md. Không tự ý chạy lệnh ảnh hưởng trên github, làm xong thì dừng lại để tôi check trước khi commit
 ```

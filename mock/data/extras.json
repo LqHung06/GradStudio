@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ex-makeup",
+    "name": "Makeup",
+    "price": 0,
+    "note": "Đã gồm trong Gói Tốt nghiệp Premium, 60 phút trước giờ chụp"
+  },
+  {
+    "id": "ex-costume",
+    "name": "Thuê áo cử nhân",
+    "price": 150000,
+    "note": "Áo cử nhân và mũ theo size, chuẩn bị sẵn trước buổi chụp"
+  }
+]
