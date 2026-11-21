@@ -1,0 +1,230 @@
+[
+  {
+    "code": "GS-1020",
+    "customer": {
+      "id": "u-anh",
+      "name": "Phạm Hoàng Anh"
+    },
+    "conversationId": "c-anh",
+    "serviceName": "Tốt nghiệp",
+    "shootType": "Tốt nghiệp cá nhân",
+    "package": {
+      "id": "pkg-tn-premium",
+      "name": "Gói Tốt nghiệp Premium",
+      "durationHours": 2,
+      "editedPhotos": 30
+    },
+    "extras": [
+      {
+        "id": "ex-makeup",
+        "name": "Makeup"
+      }
+    ],
+    "date": "2026-10-18",
+    "requestedTime": null,
+    "items": [
+      {
+        "kind": "makeup",
+        "start": "13:00",
+        "end": "14:00",
+        "staff": {
+          "id": "u-mai",
+          "name": "Mai"
+        },
+        "room": null
+      },
+      {
+        "kind": "shoot",
+        "start": "14:00",
+        "end": "16:00",
+        "staff": {
+          "id": "u-tuan",
+          "name": "Tuấn"
+        },
+        "room": {
+          "id": "r-b",
+          "name": "Phòng B"
+        }
+      }
+    ],
+    "price": 1800000,
+    "deposit": 540000,
+    "remaining": 1260000,
+    "status": "completed",
+    "paymentStatus": "paid_in_full",
+    "selection": {
+      "limit": 30,
+      "selectedCount": 30
+    },
+    "finalLink": "https://drive.example.com/gs-1020",
+    "createdAt": "2026-10-15T16:00:00+07:00"
+  },
+  {
+    "code": "GS-1021",
+    "customer": {
+      "id": "u-bao",
+      "name": "Hồ Gia Bảo"
+    },
+    "conversationId": "c-bao",
+    "serviceName": "Kỷ yếu lớp",
+    "shootType": "Kỷ yếu Lớp 12A3",
+    "package": {
+      "id": "pkg-ky-yeu",
+      "name": "Gói Kỷ yếu lớp",
+      "durationHours": 4,
+      "editedPhotos": 30
+    },
+    "extras": [
+      {
+        "id": "ex-makeup",
+        "name": "Makeup"
+      }
+    ],
+    "date": "2026-10-24",
+    "requestedTime": null,
+    "items": [
+      {
+        "kind": "makeup",
+        "start": "08:00",
+        "end": "12:00",
+        "staff": {
+          "id": "u-mai",
+          "name": "Mai"
+        },
+        "room": {
+          "id": "r-a",
+          "name": "Phòng A"
+        }
+      },
+      {
+        "kind": "shoot",
+        "start": "08:00",
+        "end": "12:00",
+        "staff": {
+          "id": "u-ha",
+          "name": "Hà"
+        },
+        "room": {
+          "id": "r-a",
+          "name": "Phòng A"
+        }
+      }
+    ],
+    "price": 4200000,
+    "deposit": 1260000,
+    "remaining": 2940000,
+    "status": "booked",
+    "paymentStatus": "deposit_paid",
+    "selection": {
+      "limit": 30,
+      "selectedCount": 0
+    },
+    "finalLink": null,
+    "createdAt": "2026-10-20T16:00:00+07:00"
+  },
+  {
+    "code": "GS-1022",
+    "customer": {
+      "id": "u-khoa",
+      "name": "Trần Minh Khoa"
+    },
+    "conversationId": "c-khoa",
+    "serviceName": "Chân dung/CV",
+    "shootType": "Chân dung cá nhân",
+    "package": {
+      "id": "pkg-cv",
+      "name": "Gói Chân dung CV",
+      "durationHours": 1.5,
+      "editedPhotos": 12
+    },
+    "extras": [],
+    "date": "2026-10-20",
+    "requestedTime": null,
+    "items": [
+      {
+        "kind": "shoot",
+        "start": "09:00",
+        "end": "10:30",
+        "staff": {
+          "id": "u-tuan",
+          "name": "Tuấn"
+        },
+        "room": {
+          "id": "r-b",
+          "name": "Phòng B"
+        }
+      }
+    ],
+    "price": 690000,
+    "deposit": 207000,
+    "remaining": 483000,
+    "status": "booked",
+    "paymentStatus": "deposit_paid",
+    "selection": {
+      "limit": 12,
+      "selectedCount": 0
+    },
+    "finalLink": null,
+    "createdAt": "2026-10-20T16:00:00+07:00"
+  },
+  {
+    "code": "GS-1023",
+    "customer": {
+      "id": "u-han",
+      "name": "Lê Ngọc Hân"
+    },
+    "conversationId": "c-han",
+    "serviceName": "Tốt nghiệp",
+    "shootType": "Tốt nghiệp cá nhân",
+    "package": {
+      "id": "pkg-tn-premium",
+      "name": "Gói Tốt nghiệp Premium",
+      "durationHours": 2,
+      "editedPhotos": 30
+    },
+    "extras": [
+      {
+        "id": "ex-makeup",
+        "name": "Makeup"
+      }
+    ],
+    "date": "2026-10-25",
+    "requestedTime": null,
+    "items": [
+      {
+        "kind": "makeup",
+        "start": "13:00",
+        "end": "14:00",
+        "staff": {
+          "id": "u-mai",
+          "name": "Mai"
+        },
+        "room": null
+      },
+      {
+        "kind": "shoot",
+        "start": "14:00",
+        "end": "16:00",
+        "staff": {
+          "id": "u-tuan",
+          "name": "Tuấn"
+        },
+        "room": {
+          "id": "r-b",
+          "name": "Phòng B"
+        }
+      }
+    ],
+    "price": 1800000,
+    "deposit": 540000,
+    "remaining": 1260000,
+    "status": "awaiting_deposit",
+    "paymentStatus": "unpaid",
+    "selection": {
+      "limit": 30,
+      "selectedCount": 0
+    },
+    "finalLink": null,
+    "createdAt": "2026-10-20T16:00:00+07:00"
+  }
+]
