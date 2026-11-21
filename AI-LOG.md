@@ -249,7 +249,7 @@ Các mục kiểm thử trước trong nhật ký phản ánh báo cáo được
 - **Changed:**
   - Mở rộng thang `:root` với `--space-5: 1.25rem` (20px) và `--space-10: 2.5rem` (40px); chuyển đổi 433 khai báo khoảng cách sang `var(--space-1)` đến `var(--space-16)` trên toàn bộ 5 file `src/styles/*.css` và `src/styles.css`.
   - Xóa bỏ toàn bộ 36 khai báo `font-size` dùng `px` lẻ; nâng cỡ chữ nội dung hội thoại, form control, cảnh báo xung đột và dòng báo giá lên `1rem` (`16px`).
-  - Hiển thị trực tiếp đoạn trao đổi của Linh (*“Gói tốt nghiệp có makeup còn lịch 24/10 lúc 09:00 không?”*) và phản hồi của GradStudio (*“Để mình kiểm tra lịch cho bạn nhé”*) ngay trên thẻ dịch vụ Tốt nghiệp ở `index.html` (`src/pages/HomePage.jsx`) để nội dung luôn xuất hiện trong DOM tĩnh và ảnh chụp màn hình mà không che khuất trang.
+  - Hiển thị trực tiếp đoạn trao đổi của Linh (_“Gói tốt nghiệp có makeup còn lịch 24/10 lúc 09:00 không?”_) và phản hồi của GradStudio (_“Để mình kiểm tra lịch cho bạn nhé”_) ngay trên thẻ dịch vụ Tốt nghiệp ở `index.html` (`src/pages/HomePage.jsx`) để nội dung luôn xuất hiện trong DOM tĩnh và ảnh chụp màn hình mà không che khuất trang.
   - Thay toàn bộ 5 chỗ dùng chữ `"Đã xác nhận"` trên chú giải và các khối lịch của `studio.html` (`src/pages/StudioPage.jsx`, `src/data/fixtures.js`) thành `"Đã đặt lịch"` theo đúng bộ tên trạng thái chuẩn của đề bài.
 - **Rejected / lỗi phát hiện & khắc phục:**
   - Qua kiểm tra `grep` trên `dist/index.html` và `dist/studio.html`, phát hiện câu hỏi của Linh ở Screen 1 trước đó chỉ xuất hiện sau khi bấm mở `FloatingChat` (nên chưa có mặt trong `dist/index.html` tĩnh), và chú giải lịch tài nguyên ở `studio.html` còn sót chữ `"Đã xác nhận"`. Đã bổ sung hiển thị tĩnh trên `HomePage.jsx` và đổi nhãn lịch sang `"Đã đặt lịch"`.
@@ -363,7 +363,7 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Assistant đề nghị tự tạo commit, trái quy tắc `AGENTS.md`. Không commit; TV1 tự commit sau khi đọc diff.
 - **Checked:**
   - `git diff --name-only` chỉ có `brief.md` (trước khi ghi mục này); không đụng `docs/api/` và `mock/`.
-  - Khối code trong `brief.md` đóng mở đúng (prompt mục 2 dùng khối bốn dấu vì có chứa ```` ```http ````).
+  - Khối code trong `brief.md` đóng mở đúng (prompt mục 2 dùng khối bốn dấu vì có chứa ` ```http `).
   - Đối chiếu prompt với README và `08-jobs.md`: 39 endpoint, không có block `http` trong README, giới hạn ảnh 5 MB, `## Changes` ở cuối: khớp.
 - **Commits:** TV1 commit sau khi đọc diff.
 
@@ -410,6 +410,7 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Rà chuỗi theo README: p-1/p-2 rồi GS-1024; p-3 đặt trong file 10 sau thanh toán/gallery. Chưa có các file contract TV2 02/06/07/09/11 trong checkout nên chưa đối chiếu được ví dụ thực tế của TV2; Hưng/Kiệt cần xác nhận fixture và các giới hạn ghi là đề xuất.
   - `Test-Path mock/server.mjs` trả False: chưa chạy contract-check với mock, chưa kiểm chứng state/ID hoặc các chế độ mock; không tuyên bố 0 FAIL/runtime đạt. Không chạy kiểm tra frontend.
 - **Commits:** TV3 commit sau khi đọc diff.
+
 ### [TV2] 7. Tìm hiểu quy trình PA#3, rà soát kế hoạch & câu hỏi PO, viết 5 file contract của TV2 (20/11/2026)
 
 - **Tool:** Antigravity Assistant.
@@ -454,3 +455,46 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Test trùng cổng: mở server thứ hai bị báo lỗi cổng bận và thoát mã 1.
   - `git diff main..HEAD -- docs/api client tools` hoàn toàn trống.
 - **Commits:** `mock(core): server.mjs framework, dynamic router, 4 modes, auth middleware` · `mock(auth): users seeded data, login, me, and logout handlers`.
+
+### [TV3] 9. Mock: chat, kiểm tra trùng lịch và booking (21/11/2026)
+
+- **Tool:** Codex; skill humanizer cho văn bản ghi chép; PowerShell, Node.js (module có sẵn), Git.
+- **Request:** `brief.md` mục 9. Làm mock TV3 trên nhánh `mock/tv3`, ưu tiên bàn giao checkClash cho Kiệt; kiểm tra trước khi commit từng file bằng author và committer Lê Công Minh Nhựt, 24120211@student.hcmus.edu.vn. Xác nhận chưa chốt giới hạn validation đề xuất và cách cấp ID hội thoại mới. Người dùng duyệt seed GS-1020/1023 dùng Premium 1.800.000đ, 2 giờ, 30 ảnh; GS-1021 dùng pkg-ky-yeu, 4.200.000đ, 4 giờ, 30 ảnh; GS-1022 dùng pkg-cv, 690.000đ, 1,5 giờ, 12 ảnh.
+- **Changed:**
+  - `mock/lib/clash.mjs`: export checkClash(db, date, items, {ignoreBooking} = {}), nhận cả ScheduleItemInput và ScheduleItem. Chỉ booked chiếm lịch; kiểm tra staff/phòng theo khoảng nửa mở, bỏ qua mã booking đang đổi; không sửa đầu vào. Trả Clash/Suggestion đúng field, lời giải thích tiếng Việt; giữ thời lượng, thứ tự, khoảng cách giữa ca; gợi ý trong openingHours. Ưu tiên hai giờ trong ví dụ contract, sau đó quét bước 60 phút; thêm 09:00 hôm sau nếu trống và trong giờ mở cửa. Thiếu settings thì vẫn kiểm tra trùng, trả suggestions rỗng. scheduleRows dùng chung cho GET schedule, gộp cùng khoảng phòng của cùng booking.
+  - `mock/data/resources.json`: Mai, Tuấn, Hà; Phòng A/B; 10 áo cử nhân. Contract 04 chưa khai báo field cho khoảng bận cố định, nên không thêm schema cho field này; nguồn bận của Mai là GS-1021.
+  - `mock/data/conversations.json`: 5 hội thoại, đủ 4 trạng thái; c-linh có m-1/m-2; c-han gắn GS-1023, chưa có proposal. Tin seed các hội thoại khác dùng ID riêng để chuỗi mới tiếp tục m-3, p-1.
+  - `mock/data/bookings.json`: GS-1020 đến GS-1023 đầy đủ field Booking; GS-1021 có Mai/Hà bận 08:00–12:00 ngày 24/10; GS-1022 booked/deposit_paid; GS-1023 awaiting_deposit/unpaid. Không seed GS-1024. Các giá trị còn thiếu đã được người dùng duyệt trong phiên; Kiệt cần đồng bộ pkg-ky-yeu và pkg-cv trong catalog.
+  - `mock/routes/resources.mjs`: resources, schedule, availability/check; kiểm ngày thực, giờ, số ca, tài nguyên và lỗi field theo index. Không nhận ignoreBooking từ API. Các helper validation/enrichment được dùng lại trong routes TV3; trả ScheduleItem theo giờ.
+  - `mock/routes/conversations.mjs`: khai báo 6 endpoint, lọc theo quyền sở hữu/status, nhắn text/request, đề xuất và quyết định của khách; tên hiển thị suy ra từ catalog/token. Lỗi không cấp ID; chấp nhận đề xuất không giữ chỗ hay áp dụng đổi lịch. Nhánh tạo hội thoại thành công còn chờ quy ước ID; trả 500 SERVER_ERROR có giải thích và không thay đổi dữ liệu, không tự chọn quy ước mới.
+  - `mock/routes/bookings.mjs`: tạo GS-1024 từ p-2 đã accepted, từ chối p-1, đọc/list theo quyền. Lấy giá từ package, cọc làm tròn 1000đ, remaining = price - deposit; không nhận tiền/trạng thái từ client, không giữ chỗ hay sinh jobs. requestedTime giải thích khoảng bận từ dữ liệu. Theo dõi proposal đã áp dụng bằng WeakMap nội bộ, không thêm field vào Booking/Proposal.
+  - `mock/routes/admin-bookings.mjs`: đổi lịch từ proposal của đúng hội thoại đã được khách đồng ý, kiểm tra lại bỏ qua booking hiện tại; chuẩn bị mọi thay đổi trước khi cập nhật booking/jobs. Giữ nguyên tiền, thanh toán, selection và tiến độ jobs; edit giữ thời gian/phòng null. Hủy GS-1023 chưa có jobs; final-link HTTPS chỉ khi booked. Hủy booking có jobs còn chờ quyết định của Hưng, trả 500 có giải thích, giữ dữ liệu nguyên trạng. Khi không có đúng một ca tương ứng cho job hiện tại, cũng dừng trước khi cập nhật; cần nhóm chốt quy tắc ánh xạ cho trường hợp này.
+  - `brief.md` mục 9 và mục nhật ký này. Không sửa docs/api, client, tools, AGENTS.md, server, auth hoặc users. Không thêm dependency/package.json, không push/PR/merge.
+- **Rejected / lỗi phát hiện:**
+  - Git trong sandbox không kết nối được remote và không ghi được .git/index.lock. Đã xin quyền cho đúng lệnh rồi chạy thành công. git ls-remote cho thấy remote main = 53ad97936b1daa0718e2c4c39eccf34d233ec494, trùng HEAD ban đầu của mock/tv3; không cần đổi nhánh, reset hay rebase.
+  - Trong lúc chờ quyền commit brief, người dùng sửa file ở phiên khác: prompt mục 9 được rút ngắn, fence và whitespace mục cũ cũng thay đổi. Commit 1beca9e đã chứa bản đó. Đã hỏi lại; người dùng xác nhận đang sửa và yêu cầu giữ brief hiện tại, tự xử lý riêng. Không khôi phục hoặc ghi đè thay đổi của người dùng.
+  - Seed GS-1021 có makeup và shoot cùng Phòng A, cùng khoảng giờ. Rà kết quả schedule phát hiện phòng xuất hiện hai khoảng giống nhau; sửa thư viện bằng commit riêng 909f8b1, giữ nhãn Chụp cho khoảng phòng này.
+  - Checkout thiếu settings.json: các ví dụ có suggestions chưa thể khớp; không thêm giờ mặc định. Thiếu packages/extras/services của TV2: request có catalog và tạo GS-1024 bị chặn. Jobs/payment/gallery chưa có: chưa kiểm chứng được toàn bộ luồng G1–G11 và file 10 cần tiền đề.
+  - Giới hạn ID 100 ký tự, shootType 120, note 1000, extraIds tối đa 20/không trùng và cách cấp ID hội thoại mới vẫn là phụ thuộc theo xác nhận người dùng; chưa áp dụng các giới hạn đề xuất đó. Hủy có jobs, và đổi lịch thiếu/nhiều ca cùng loại tương ứng với một job, chưa có quy tắc hoàn chỉnh; không thêm Job.status hoặc tự xóa/lưu trữ jobs.
+- **Checked:**
+  - Working tree ban đầu sạch trên mock/tv3 tại 53ad979; đọc AGENTS, kế hoạch TV3 và contract liên quan, server/auth, hướng dẫn và mã contract-check, brief và PA#3 AI-LOG. Remote kiểm tra được sau khi cấp quyền mạng.
+  - node --check cho server và toàn bộ routes/lib .mjs hiện có; parse toàn bộ mock/data/\*.json. Kiểm tra seed: 5 hội thoại/4 trạng thái, đủ field Booking, tham chiếu user/resource/conversation, phép tính tiền, không có GS-1024, khoảng bận của Mai đúng.
+  - Script tạm ngoài repo: clash-test.mjs đạt 13/13 PASS, gồm trùng staff/phòng, ca nối tiếp, ignoreBooking, awaiting_deposit/cancelled/completed không chặn giờ, ScheduleItem dạng enriched, giờ chiều hợp lệ, không đột biến đầu vào, openingHours, settings thiếu, ca trong cùng request bị trùng.
+  - handler-test.mjs đạt 30/30 PASS: quyền sở hữu, validation, ID không bị tiêu thụ khi lỗi; p-1 declined, p-2 accepted; tạo GS-1024 đúng tiền/trạng thái và không jobs; requestTime đúng ví dụ; client không giả author/tiền; proposal khác hội thoại bị từ chối; acceptance không áp dụng lịch; giờ bị chiếm sau acceptance thì CLASH và không cập nhật dở dang; đồng bộ jobs gồm đổi staff/phòng/ngày, giữ tiến độ/tiền; ngăn áp dụng lại; hủy/final-link; các nhánh nghiệp vụ chưa chốt không sửa dữ liệu; trả ca theo giờ, giữ nguyên request.
+  - http-test.mjs chạy với server thật, cổng rảnh do script chọn, đạt 69/69 PASS. Kiểm 401/403 của cả 15 endpoint TV3 và 404 che dữ liệu người khác; validation ngày/giờ/tài nguyên/status/JSON; không cho body bỏ qua booking; đề xuất/đồng ý/hủy qua HTTP. normal có delay; slow đợi ít nhất 1950 ms; error cho login, trả đúng 500 ở endpoint khác; restart normal phục hồi request với cùng token. empty trả [] cả danh sách lồng trong object. Restart khôi phục m-1/m-2, p-1 và GS-1023 chưa hủy; file seed không đổi. Đây là kiểm API, không kiểm giao diện loading/retry.
+  - Contract-check trên checkout thật, server mới khởi động, cùng instance chạy --only lần lượt 03 → 04 → 05 → 10, không restart giữa chuỗi: 03 = 9/11 PASS, 2 FAIL; 04 = 3/4 PASS, 1 FAIL; 05 = 3/6 PASS, 3 FAIL; 10 = 5/7 PASS, 2 FAIL. Tổng 20/28 PASS, 8 FAIL. Các vị trí bị chặn: 03:213 thiếu packages/extras; 03:386 và 04:191 thiếu settings cho suggestions; 05:86 thiếu catalog, dẫn đến 05:182 list rỗng và 05:287 không có GS-1024; 10:73 thiếu settings, 10:549 chưa có GS-1024 booked sau thanh toán/gallery. Không báo toàn bộ 0 FAIL.
+  - Kiểm tra tách biệt bằng bản sao mock ngoài repo, dùng server không sửa, chỉ bổ sung fixture packages/extras/services/settings từ contract: cùng instance mới chạy 03 → 04 → 05 đạt lần lượt 11/11, 4/4, 6/6 PASS, 0 FAIL. Sau đó lưu snapshot kết quả qua GET, bổ sung trạng thái tiền đề tạm của 06–09 (GS-1024 booked, paid_in_full, selectedCount 30) và khởi động instance khác: --only 10 đạt 7/7 PASS, 0 FAIL. Đây là kiểm với fixture; không phải thanh toán/gallery thật và không phải full contract-check. Không dùng --strict-values; timestamp động được ghi NOTE theo công cụ.
+  - Script, fixture và log kiểm tra nằm ở %TEMP%/gradstudio-tv3-mock-20261121; không thêm vào repo. Chỉ dừng child server do các script này tạo. Không chạy contract-check toàn bộ vì checkout chưa đủ phần TV1/TV2.
+  - Đã đọc nội dung/diff, chạy git diff --check; so với 53ad979 xác nhận docs/api, client, tools, AGENTS.md, server/auth/users không đổi. Trước mỗi commit kiểm staged diff/check và xác nhận đúng một file; kiểm author/committer sau từng commit, đều đúng danh tính được ủy quyền. Không sửa Git global config, không amend hoặc viết lại lịch sử.
+  - Endpoint đã gọi: POST /api/auth/login, GET /api/auth/me; GET/POST /api/conversations, GET /api/conversations/:id, POST /api/conversations/:id/messages, POST /api/conversations/:id/proposals, PATCH /api/conversations/:id/proposals/:proposalId; GET /api/resources, GET /api/schedule, POST /api/availability/check; GET/POST /api/bookings, GET/PATCH /api/bookings/:code, POST /api/bookings/:code/cancel, PUT /api/bookings/:code/final-link.
+- **Commits:**
+  - 1beca9e — brief.md — docs(brief): record TV3 mock task prompt.
+  - b40b8e3 — mock/lib/clash.mjs — mock(clash): add shared resource clash checker.
+  - 087c039 — mock/data/resources.json — mock(resources): seed staff rooms and costumes.
+  - 7c13b07 — mock/data/conversations.json — mock(conversations): seed five initial conversations.
+  - 1bab30c — mock/data/bookings.json — mock(bookings): seed GS-1020 through GS-1023.
+  - 909f8b1 — mock/lib/clash.mjs — fix(mock-clash): merge duplicate room intervals for a booking.
+  - ffd6e2a — mock/routes/resources.mjs — mock(resources): implement schedule and availability routes.
+  - 1b2858e — mock/routes/conversations.mjs — mock(conversations): implement messages and time proposals.
+  - 87900db — mock/routes/bookings.mjs — mock(bookings): implement booking creation and queries.
+  - 797e9cc — mock/routes/admin-bookings.mjs — mock(admin-bookings): implement reschedule cancel and final link.
