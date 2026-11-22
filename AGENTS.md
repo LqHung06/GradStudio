@@ -44,7 +44,8 @@ PA#3 builds the **whole main flow G1–G11 for four roles** (Customer, Admin, St
 - `src/components/Layout.jsx`, `src/components/StatusBadge.jsx`, `src/components/Money.jsx` — shared shell, accessible text status badges, tabular VND amounts.
 - `src/constants/status.js` — the ONLY place that turns status codes into Vietnamese labels, plus `formatMoney` and `formatDate`.
 - `src/routes/{public,customer,admin,staff,superadmin}.jsx` — export arrays of `{ path, element }` merged by `src/App.jsx` (with `<Route path="*" element={<NotFoundPage />} />`).
-- `src/auth/AuthContext.jsx` (`useAuth()`: user, token, signIn, signOut) and `src/auth/RequireRole.jsx` (added in the G2 auth step).
+- `src/auth/AuthContext.jsx` (`useAuth()`: `{ user, token, ready, signIn, signOut }`, `ROLE_HOME`, `canRoleAccessPath`) and `src/auth/RequireRole.jsx` (`<RequireRole roles={['admin']}>`). `Layout` reads `useAuth()` automatically.
+- `src/pages/SignInPage.jsx` (`/sign-in`), `src/pages/ForbiddenPage.jsx`, `src/pages/NotFoundPage.jsx`.
 - `src/data/fixtures.js` is PA#2 legacy: new code must not import it. Its story data lives in `mock/data/`.
 
 ### Using the shared hooks and components (for TV2/TV3)

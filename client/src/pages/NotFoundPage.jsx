@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout.jsx';
 
-export function NotFoundPage({ user = null, onSignOut }) {
+export function NotFoundPage() {
   return (
-    <Layout user={user} onSignOut={onSignOut}>
+    <Layout>
       <section className="not-found-shell" aria-labelledby="not-found-heading">
         <h1 id="not-found-heading">Không tìm thấy trang</h1>
         <p>Đường dẫn bạn mở không tồn tại hoặc đã được chuyển sang địa chỉ khác.</p>

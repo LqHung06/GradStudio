@@ -1118,3 +1118,44 @@ Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước kh
     - Kiểm tra `git diff -- docs/api mock tools` hoàn toàn trống.
     - Liệt kê các file đã tạo/sửa và kết quả các lệnh kiểm tra đã chạy thật. , bạn tạo nhánh giúp tôi luôn nhé làm cho phần này , phần code được merge thì pull về nhé rồi chỉnh sửa sau
 `````
+
+
+## 12. [TV1 · 22/11/2026 · Antigravity Assistant] G2: AuthContext, RequireRole, màn đăng nhập /sign-in
+
+Tin nhắn 1 (triển khai Bước #12 — G2 trên `feat/g2-auth`):
+
+```text
+Bối cảnh: GradStudio PA#3, front end React + Vite trong client/ (trên nhánh feat/g2-auth tách từ feat/core-foundation). Trước khi viết code, đọc AGENTS.md, FRONTEND.md (mục Demo accounts, Routes), docs/api/01-auth.md và mục 5.4, 5.5, P3 trong ke-hoach/TV1-nen-tang-staff-superadmin.md.
+
+Ràng buộc bắt buộc:
+1. Chỉ gọi 3 endpoint trong docs/api/01-auth.md (`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`) thông qua `client/src/api/client.js`. Không sửa `docs/api/`, `mock/`, `tools/`, `ke-hoach/`.
+2. Không thêm thư viện mới; dùng `useForm` + `FormField`, CSS thuần trong `client/src/styles/foundation.css`.
+3. Mỗi màn đúng một `<h1>`, mọi input có `<label>`, điều hướng dùng `<Link>`/`<NavLink>`, hành động dùng `<button>`. Không hiển thị danh sách tài khoản demo hay nút chuyển vai trò lên giao diện.
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước #12 — G2):
+1. `client/src/api/auth.js`: bọc `login({ email, password })`, `fetchMe({ signal })`, `logout()`.
+2. `client/src/auth/AuthContext.jsx`:
+   - Cung cấp `AuthProvider` và hook `useAuth()` trả `{ user, token, ready, signIn, signOut }`, cùng `ROLE_HOME` và `canRoleAccessPath(role, pathname)`.
+   - Lưu token vào `localStorage` (bọc `try/catch`) để F5 không mất phiên; đăng ký handler lấy token (`Authorization: Bearer <token>`) và handler 401 (`onUnauthorized`) với `api/client.js`.
+   - Khi khởi động nếu đã có token thì gọi `GET /api/auth/me` trước khi đặt `ready = true` (401 thì xóa phiên; giữ phiên cache nếu gặp 500 ở `MOCK_MODE=error` để màn dữ liệu vẫn hiển thị lỗi + Thử lại).
+   - `signOut` gọi `POST /api/auth/logout`, xóa token/user ở context và `localStorage`, rồi chuyển về `/`.
+3. `client/src/auth/RequireRole.jsx` và `client/src/pages/ForbiddenPage.jsx`:
+   - Chờ `ready`; chưa đăng nhập → `<Navigate to="/sign-in" replace state={{ from: location }} />`.
+   - Sai vai trò → màn `<h1>Không có quyền truy cập</h1>` có link về trang chủ của vai trò đang đăng nhập.
+4. `client/src/pages/SignInPage.jsx` (`/sign-in`):
+   - `<h1>Đăng nhập</h1>`, dùng `useForm` + `FormField` với đúng 1 ô E-mail, 1 ô Mật khẩu và 1 nút submit.
+   - Validate trước khi gửi theo `01-auth.md` (email bắt buộc, đúng định dạng, ≤ 120 ký tự; password bắt buộc, 1–100 ký tự).
+   - Lỗi `401` (`Email hoặc mật khẩu không đúng`) hiện `<p role="alert">` phía trên nút submit; khi gửi khóa nút thành `"Đang đăng nhập…"`.
+   - Đăng nhập thành công: quay về `state.from` nếu vai trò hiện tại được phép truy cập route đó, ngược lại chuyển về `ROLE_HOME[user.role]` (`/my-bookings`, `/admin/conversations`, `/staff/jobs`, `/superadmin/admins`).
+5. Nối `Layout.jsx` tự đọc `useAuth()`, bọc `App.jsx` bằng `<AuthProvider>`, đặt 4 route trang chủ tạm có `<RequireRole>` trong `routes/{customer,admin,staff,superadmin}.jsx` để test G2, cập nhật `AGENTS.md`.
+```
+
+Tin nhắn 2 (sửa lỗi banner 401 không tự ẩn khi nhập lại trên `/sign-in`):
+
+```text
+Khi kiểm thử màn `/sign-in` (client/src/pages/SignInPage.jsx), sau khi submit sai tài khoản và nhận lỗi 401 ("Email hoặc mật khẩu không đúng"), banner lỗi vẫn giữ nguyên khi người dùng nhấp chuột (focus) hoặc gõ sửa lại vào ô E-mail hoặc Mật khẩu. Hãy cập nhật `client/src/hooks/useForm.js` và `SignInPage.jsx`:
+- Trong `useForm`, thêm `clearSubmitError` và tự xóa `submitError` khi người dùng thay đổi giá trị bất kỳ ô nhập nào (`setFieldValue`), nhưng giữ nguyên toàn bộ giá trị đã nhập.
+- Trong `SignInPage`, gắn `onFocus: form.clearSubmitError` cho cả 2 ô `email` và `password` để banner lỗi 401 biến mất ngay khi người dùng nhấp vào nhập lại.
+- Không sửa `docs/api/` hay `mock/`. Chạy lại `cd client && npm run build` và `git diff --check`.
+```
