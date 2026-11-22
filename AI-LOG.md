@@ -541,3 +541,33 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001` toàn bộ 14 file (`01` → `13`): **99/99 examples PASS, 0 FAIL, 39/39 endpoints**.
   - Chạy `MOCK_MODE=empty`: `GET /api/services` trả mảng rỗng, `GET /api/packages/pkg-tn-premium` vẫn giữ nguyên object `pkg-tn-premium` với `includes: []`.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+
+### [TV1] 12. Nền front end: router, api client, hooks, Layout, status (22/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 11. Kéo `origin/main`, tạo nhánh `feat/core-foundation`, dựng phần nền front end trong `client/` và đồng bộ lại `main` sau khi PR #12 (`mock/tv2`) merge (`d5bb006`), rồi kiểm tra 4 chế độ mock. Không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/package.json`, `client/package-lock.json`: cài thêm `react-router-dom` (`^7.18.6`).
+  - `client/vite.config.js`, `client/index.html`: xóa `client/studio.html` và `client/booking.html`, bỏ `build.rollupOptions.input`, giữ nguyên proxy `/api` và `base: '/'`; giữ các file PA#2 tham khảo (`HomePage.jsx`, `StudioPage.jsx`, `BookingPage.jsx`, `FloatingChat.jsx`, `fixtures.js`).
+  - `client/src/api/client.js` (mới): `ApiError`, `apiFetch` chỉ nhận `/api/...`, gắn `Authorization: Bearer`, giữ nguyên multipart cho `FormData`, hỗ trợ `registerAuthHandlers`.
+  - `client/src/hooks/useFetch.js` (mới) và `client/src/components/AsyncState.jsx` (mới): tải 1 lần với `AbortController`, hỗ trợ `reload`/`setData`, hiển thị loading (`role="status"`), lỗi kèm nút `Thử lại` (`role="alert"`), và trạng thái rỗng.
+  - `client/src/hooks/useForm.js` (mới) và `client/src/components/FormField.jsx` (mới): validate sau lần submit đầu, map `ApiError` 400 `fields`, giữ giá trị khi lỗi, khóa nút khi `submitting`, focus ô lỗi đầu tiên.
+  - `client/src/constants/status.js` (mới), `client/src/components/StatusBadge.jsx` (mới), `client/src/components/Money.jsx` (mới): ánh xạ mã trạng thái mục 2.4 sang tiếng Việt, `formatMoney`, `formatDate`.
+  - `client/src/components/Layout.jsx`: viết lại theo thiết kế Blue Theme (không import `fixtures.js`, không còn menu cứng hay ghi chú demo), có skip-link `#main`, menu theo `user?.role`, nút `Đăng xuất` / link `Đăng nhập`, footer chỉ gồm chữ/thương hiệu.
+  - `client/src/routes/{public,customer,admin,staff,superadmin}.jsx` (mới), `client/src/pages/NotFoundPage.jsx` (mới), `client/src/App.jsx` (mới), `client/src/main.jsx`, `client/src/styles/foundation.css` (mới): cấu hình `BrowserRouter`, route tạm `/` gọi `GET /api/services` và stub `/sign-in`, route `*` màn *Không tìm thấy trang*.
+  - `AGENTS.md`: bỏ ghi chú 3 HTML entry PA#2 và bổ sung hướng dẫn dùng hook/component nền cho TV2/TV3.
+- **Rejected / lỗi phát hiện:**
+  - Lần chạy kiểm tra đầu trên `44febe8` (trước khi PR #12 merge) gặp `GET /api/services → 404`; đã giữ nguyên `docs/api/` và `mock/`, không sửa mock để khớp code. Sau khi PR #12 merge (`d5bb006`) và đồng bộ `main` vào `feat/core-foundation`, `GET /api/services` trả `200` đầy đủ.
+  - Script shell kiểm tra preview ban đầu dùng biến `PPID` (biến chỉ đọc của bash) nên thoát mã 1; đã đổi sang `VPID`.
+- **Checked:**
+  - `cd client && npm run build`: thành công (`dist/index.html`, `dist/assets/*.css`, `dist/assets/*.js`).
+  - `git diff -- docs/api mock tools ke-hoach`: trống hoàn toàn; `git diff --check`: 0 lỗi.
+  - Chạy `npx vite preview --port 4173` cùng `node mock/server.mjs` ở cả 4 chế độ qua `google-chrome --headless --dump-dom`:
+    - `normal`: render đủ 3 dịch vụ (`Kỷ yếu lớp`, `Tốt nghiệp`, `Chân dung/CV`), mock log chỉ có 1 request `GET /api/services → 200`.
+    - `slow`: TV1 tự kiểm tra trực quan trên `http://localhost:4173/` thấy rõ dòng `Đang tải…` trong 2 giây rồi tải xong 3 dịch vụ (`GET /api/services → 200`, 1 request).
+    - `error`: `GET /api/services → 500`, TV1 xác nhận trên trình duyệt hiện `"Máy chủ đang gặp sự cố, vui lòng thử lại."` kèm nút `Thử lại`.
+    - `empty`: `GET /api/services → 200`, TV1 xác nhận trên trình duyệt hiện `"Hiện chưa có dịch vụ nào."`.
+    - `/unknown-route`: render `<h1 id="not-found-heading">Không tìm thấy trang</h1>` và link `Về trang chủ`.
+  - *Chưa kiểm tra:* bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
+- **Commits:** TV1 đọc diff và tự commit sau.
