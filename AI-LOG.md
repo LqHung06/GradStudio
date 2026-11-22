@@ -571,3 +571,29 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - `/unknown-route`: render `<h1 id="not-found-heading">Không tìm thấy trang</h1>` và link `Về trang chủ`.
   - *Chưa kiểm tra:* bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
 - **Commits:** TV1 đọc diff và tự commit sau.
+
+
+### [TV1] 13. G2: AuthContext, RequireRole, màn đăng nhập /sign-in (22/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 12 (Tin nhắn 1 & Tin nhắn 2). Trên nhánh `feat/g2-auth`, cài đặt `AuthContext`, `RequireRole`, màn `/sign-in`, màn *Không có quyền truy cập*, nối `Layout.jsx` với `useAuth()`, đặt route trang chủ tạm cho 4 vai trò để kiểm thử G2, và sửa lỗi ẩn banner 401 khi người dùng nhấp lại vào ô nhập. Không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/src/api/auth.js` (mới): gọi 3 endpoint trong `docs/api/01-auth.md` (`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`).
+  - `client/src/auth/AuthContext.jsx` (mới): `AuthProvider`, `useAuth()`, `ROLE_HOME`, `canRoleAccessPath`, lưu phiên vào `localStorage` để F5 không mất đăng nhập, gọi `GET /api/auth/me` khi khởi động trước khi `ready = true` (xóa phiên nếu `401`; giữ phiên cache nếu gặp `500` ở `MOCK_MODE=error`), đăng ký `Authorization: Bearer <token>` và callback `onUnauthorized` với `api/client.js`.
+  - `client/src/auth/RequireRole.jsx` (mới) và `client/src/pages/ForbiddenPage.jsx` (mới): chưa đăng nhập chuyển `/sign-in` kèm `state.from`; sai vai trò hiển thị `<h1>Không có quyền truy cập</h1>` có link về trang chính của vai trò đang đăng nhập.
+  - `client/src/pages/SignInPage.jsx` (mới): `<h1>Đăng nhập</h1>`, dùng `useForm` + `FormField`, đúng 1 ô `E-mail`, 1 ô `Mật khẩu`, 1 nút submit, không hiển thị danh sách tài khoản demo, kiểm tra định dạng/độ dài theo `01-auth.md`, khóa nút thành `"Đang đăng nhập…"` khi gửi, quay về `state.from` nếu đúng vai trò hoặc `ROLE_HOME[user.role]`.
+  - `client/src/hooks/useForm.js`: thêm `clearSubmitError` và xóa `submitError` khi người dùng thay đổi giá trị field; `SignInPage.jsx` gắn `onFocus: form.clearSubmitError` cho 2 ô nhập.
+  - `client/src/components/Layout.jsx`, `client/src/App.jsx`, `client/src/pages/NotFoundPage.jsx`, `client/src/routes/{public,customer,admin,staff,superadmin}.jsx`, `client/src/styles/foundation.css`, `AGENTS.md`: nối `Layout` đọc `useAuth()`, bọc app bằng `<AuthProvider>`, gắn 4 route trang chủ tạm có `<RequireRole>` để kiểm thử đủ 4 vai trò, bổ sung CSS cho `.auth-card` / `.form-alert` và tài liệu ngắn trong `AGENTS.md`.
+- **Rejected / lỗi phát hiện:**
+  - Khi TV1 kiểm thử trực tiếp trên `http://localhost:4173/sign-in`, lúc nhập sai tài khoản nhận lỗi `401` (`"Email hoặc mật khẩu không đúng"`), nhấp chuột lại vào ô **E-mail** hoặc **Mật khẩu** (hoặc gõ sửa lại) thì banner lỗi 401 vẫn không tự ẩn đi. Đã sửa bằng `clearSubmitError` trong `useForm.js` + `onFocus` ở `SignInPage.jsx`, chạy lại `npm run build` sạch sẽ.
+  - Không sửa bất kỳ file nào trong `docs/api/`, `mock/`, `tools/`, `ke-hoach/`.
+- **Checked:**
+  - `cd client && npm run build`: thành công sau lần sửa cuối (`dist/assets/index-*.js` 276.74 kB, `dist/assets/index-*.css` 95.44 kB).
+  - `git diff -- docs/api mock tools ke-hoach`: trống hoàn toàn; `git diff --check`: 0 lỗi.
+  - `google-chrome --headless --dump-dom` qua `npx vite preview --port 4173`: `/sign-in` render 1 `<h1>`, 1 `<input type="email">`, 1 `<input type="password">`, 1 nút submit; mở `/staff/jobs` hoặc `/admin/conversations` khi chưa đăng nhập đều chuyển về `/sign-in`.
+  - TV1 kiểm thử trực tiếp trên trình duyệt tại `http://localhost:4173/sign-in` (`MOCK_MODE=normal`):
+    - Kiểm tra validation khi bỏ trống (`Vui lòng nhập email`, `Vui lòng nhập mật khẩu`), sai định dạng (`Email không đúng định dạng`), và `401` (`Email hoặc mật khẩu không đúng`).
+    - Đăng nhập và đăng xuất lần lượt đủ 6 tài khoản demo: `linh` (`/my-bookings`), `han` (`/my-bookings`), `thao` (`/admin/conversations`), `mai` (`/staff/jobs`), `tuan` (`/staff/jobs`), `superadmin` (`/superadmin/admins`) — hiển thị đúng trang chủ, menu theo vai trò và tên người dùng trên header.
+    - Xác nhận đủ 5 ca sau lần sửa cuối: (1) banner 401 tự ẩn ngay khi focus/gõ lại ô nhập; (2) F5 giữ phiên đăng nhập (`GET /api/auth/me → 200`); (3) mở chéo route vai trò khác (Linh mở `/admin/conversations`, `/superadmin/admins`) hiện màn *Không có quyền truy cập* có nút về trang chính; (4) đăng xuất (`POST /api/auth/logout → 204`) rồi mở `/staff/jobs` → `/sign-in` → đăng nhập `tuan` quay lại đúng `/staff/jobs`, đăng nhập `linh` chuyển về `/my-bookings`; (5) mở `/trang-khong-ton-tai` hiện màn *Không tìm thấy trang*.
+  - *Chưa kiểm tra:* đo cuộn ngang và kích thước tap target 44px ở `360 / 768 / 1280px` bằng DevTools.
+- **Commits:** TV1 đọc diff và tự commit sau.
