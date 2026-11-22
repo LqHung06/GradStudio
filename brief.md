@@ -1045,3 +1045,76 @@ Tin nhắn 2:
 ```text
 hãy triển khai phần mock của TV2 theo đúng hợp đồng docs/api/ (02, 06, 07, 09, 11) và kế hoạch TV2-khach-hang.md. Không tự ý chạy lệnh ảnh hưởng trên github, làm xong thì dừng lại để tôi check trước khi commit
 ```
+
+
+## 11. [TV1 · 22/11/2026 · Antigravity Assistant] Nền front end: router, api client, hooks, Layout, status
+
+Tin nhắn 1 (yêu cầu triển khai sau khi rà tiến độ và review PR #12 `mock/tv2`):
+
+`````text
+Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước khi viết code, đọc AGENTS.md, FRONTEND.md (mục Demo accounts, Routes), docs/api/README.md và mục 2.4, 3.6, 5.4 trong
+    ke-hoach/TV1-nen-tang-staff-superadmin.md.
+
+    Ràng buộc bắt buộc:
+    1. docs/api/ là đặc tả duy nhất. Chỉ gọi endpoint có trong bảng của docs/api/README.md, đúng method, path, body và tên field. Nếu cần một endpoint hoặc field chưa có thì DỪNG LẠI và báo tôi, không
+    tự thêm.
+    2. KHÔNG sửa bất kỳ file nào trong docs/api/, mock/, tools/ và ke-hoach/.
+    3. Chỉ gọi đường dẫn tương đối /api/... thông qua client/src/api/client.js. Không viết http://localhost.
+    4. Không viết cứng dữ liệu (gói, giá, booking, tên người, tin nhắn...) trong component. Mọi thứ người dùng thấy đều lấy từ API.
+    5. Màn nào tải dữ liệu thì dùng useFetch + <AsyncState>, có đủ: đang tải, lỗi kèm nút "Thử lại", và danh sách rỗng. Mỗi thứ chỉ gửi một request; sau một hành động thì cập nhật màn hình từ câu trả
+    lời của API, không reload trang.
+    6. Điều hướng dùng <Link>/<NavLink>, hành động dùng <button>. Không có href="#", không có nút demo hay mô phỏng.
+    7. Được phép cài duy nhất gói `react-router-dom` trong client/ (đã chốt ở FRONTEND.md). Không thêm thư viện nào khác. CSS thuần đặt trong client/src/styles/.
+    8. Semantic và responsive: mỗi màn đúng một <h1>, không nhảy cấp heading, dùng landmark header/nav/main/footer, mọi input có <label>, nút và link đứng riêng cao ít nhất 44px ở 360px, không cuộn
+    ngang ở 360/768/1280px, trạng thái không thể hiện chỉ bằng màu.
+    9. Form dùng useForm + <FormField>: kiểm tra theo giới hạn ghi trong contract; sau lần submit đầu thì hiện lỗi cạnh từng field (aria-describedby, aria-invalid); lỗi 400 từ API gắn đúng vào field;
+    giữ nguyên giá trị đã nhập khi lỗi; khóa nút trong lúc đang gửi; focus vào field lỗi đầu tiên.
+    10. Tên trạng thái lấy từ client/src/constants/status.js.
+    11. Không dùng ảnh người thật; không import src/data/fixtures.js (dữ liệu PA#2) trong code mới.
+    12. KHÔNG tự chạy git add, git commit hay git push.
+
+    ---
+
+    Yêu cầu chi tiết (Bước #11 — Nền front end, CHƯA làm màn hình nghiệp vụ và chưa cần AuthContext/Sign-in thật ở task này):
+
+    1. Chuyển client/ sang SPA một entry với BrowserRouter:
+       - Cài `react-router-dom` trong `client/`.
+       - Xóa `client/studio.html`, `client/booking.html` và bỏ phần `build.rollupOptions.input` trong `client/vite.config.js` (giữ nguyên proxy `/api` và `base: '/'`).
+       - KHÔNG xóa các file tham khảo của PA#2: `client/src/pages/HomePage.jsx`, `StudioPage.jsx`, `BookingPage.jsx`, `components/FloatingChat.jsx`, `data/fixtures.js`.
+
+    2. Tạo các module nền trong `client/src/`:
+       - `api/client.js`: export `ApiError` (`{ status, code, message, fields, details }`) và `apiFetch(path, { method, body, signal })`. Chỉ nhận `path` bắt đầu bằng `/api/`. Tự gắn `Authorization:
+       Bearer <token>` (đọc qua callback/setter token đăng ký từ bên ngoài, mặc định đọc từ storage an toàn với try/catch để chưa có AuthContext vẫn hoạt động). Body thường gửi JSON; body là `FormData`
+       thì không tự đặt `Content-Type`. Gặp 401 (trừ khi caller truyền cờ bỏ qua như lúc đăng nhập) thì gọi handler `onUnauthorized` đã đăng ký.
+       - `hooks/useFetch.js`: `useFetch(path)` trả `{ data, error, loading, reload, setData }`. Mỗi lần mount hoặc đổi `path` chỉ gửi 1 request, có `AbortController` hủy khi unmount/đổi `path`. Hỗ trợ
+       `path` là `null`/`undefined` (không gọi API).
+       - `components/AsyncState.jsx`: nhận `{ loading, error, onRetry, isEmpty, emptyMessage, children }`. Đang tải: `<p role="status">Đang tải…</p>`. Lỗi: `<div role="alert">` gồm thông báo và
+       `<button type="button" onClick={onRetry}>Thử lại</button>`. Rỗng: `<p>` với `emptyMessage`.
+       - `hooks/useForm.js`: `useForm({ initial, validate, onSubmit })` trả `{ values, errors, submitting, handleChange, handleSubmit, setServerErrors, reset }`. Chỉ hiện lỗi sau lần submit đầu; khi
+       `ApiError` 400 ném từ `onSubmit` có `err.fields` thì tự gắn vào đúng field; giữ nguyên giá trị đã nhập khi lỗi; `submitting` khóa nút; focus vào field lỗi đầu tiên theo thứ tự DOM/field.
+       - `components/FormField.jsx`: render `<label htmlFor>`, control (hoặc children/inputProps), và `<p id="<name>-error" className="field-error">` khi có lỗi; gắn `aria-invalid` và
+       `aria-describedby`.
+       - `constants/status.js`: nơi duy nhất đổi toàn bộ mã trạng thái ở bảng mục 2.4 (`CONVERSATION_STATUS`, `BOOKING_STATUS`, `PAYMENT_STATUS`, `PAYMENT_ITEM_STATUS`, `PROPOSAL_STATUS`, `JOB_STATUS`,
+       `JOB_KIND`, `REMINDER_EMAIL_STATUS`) sang nhãn tiếng Việt; kèm `formatMoney(amount)` (ví dụ `1800000` -> `"1.800.000đ"`) và `formatDate(isoDate)` (ví dụ `"2026-10-24"` -> `"Thứ Bảy,
+       24/10/2026"`).
+       - `components/StatusBadge.jsx` và `components/Money.jsx`: badge luôn có chữ tiếng Việt (không chỉ chấm màu), Money dùng `tabular-nums`.
+       - `components/Layout.jsx`: viết lại dựa trên CSS/design tokens Blue Theme trong `client/src/styles/`, KHÔNG import `fixtures.js`, bỏ menu cứng (`Linh`, `Thảo`, badge `3`, "Đăng xuất chưa khả
+       dụng") và bỏ nút/ghi chú demo. Có link "Bỏ qua tới nội dung chính" (`#main`), `<header>` với logo `<Link to="/">`, `<nav aria-label="Chính">` render menu theo `user?.role` (khách vãng lai /
+       customer / admin / staff / superadmin theo `FRONTEND.md`), tên user + nút `<button>Đăng xuất</button>` khi đã đăng nhập hoặc `<Link to="/sign-in">Đăng nhập</Link>` khi chưa đăng nhập; `<main
+       id="main">`; `<footer className="site-footer">` chỉ có chữ và tên thương hiệu (không link chết).
+       - Tạo sẵn các file khung route rỗng: `routes/public.jsx`, `routes/customer.jsx`, `routes/admin.jsx`, `routes/staff.jsx`, `routes/superadmin.jsx` (mỗi file export mảng route hoặc JSX `<Route>` để
+       các thành viên tự điền).
+       - `App.jsx` + `main.jsx`: dùng `<BrowserRouter>`, ghép các file `routes/`, có route `*` hiển thị màn *Không tìm thấy trang* (đúng một `<h1>`, có `<Link>` về trang chủ). Tạm thời giữ một route
+       `/` đơn giản trong `App.jsx` (hoặc `routes/public.jsx`) dùng `Layout` + `useFetch('/api/services')` + `<AsyncState>` để test 4 chế độ mock và nút `Thử lại` (sẽ thay bằng G1 của TV2 ở bước sau).
+       - Thêm CSS nền cho `FormField`, `AsyncState`, `StatusBadge`, skip-link, màn `NotFound`, đảm bảo tap target ≥ 44px ở 360px và không cuộn ngang.
+
+    3. Cập nhật `AGENTS.md`:
+       - Sửa câu trong mục Tech stack đang ghi "(added in the front-end foundation step; until then the three PA#2 HTML entries remain)" vì bước nền đã bỏ `studio.html` và `booking.html`.
+       - Bổ sung hướng dẫn ngắn kèm ví dụ cách TV2/TV3 dùng `useFetch`, `AsyncState`, `useForm`, `FormField`, `StatusBadge`, `Money`, `constants/status.js` và `routes/*.jsx`.
+
+    Kiểm tra sau khi xong:
+    - Chạy `cd client && npm run build` thành công.
+    - Mở `npx vite preview` kiểm tra không có lỗi Console, route lạ hiện màn *Không tìm thấy trang*, không cuộn ngang ở 360/768/1280px.
+    - Kiểm tra `git diff -- docs/api mock tools` hoàn toàn trống.
+    - Liệt kê các file đã tạo/sửa và kết quả các lệnh kiểm tra đã chạy thật. , bạn tạo nhánh giúp tôi luôn nhé làm cho phần này , phần code được merge thì pull về nhé rồi chỉnh sửa sau
+`````

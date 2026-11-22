@@ -23,7 +23,7 @@ PA#3 builds the **whole main flow G1–G11 for four roles** (Customer, Admin, St
 
 ## Tech stack
 
-- React 19 and Vite 7 in `client/`. Router: `react-router-dom` with `BrowserRouter`, one entry `client/index.html` (added in the front-end foundation step; until then the three PA#2 HTML entries remain).
+- React 19 and Vite 7 in `client/`. Router: `react-router-dom` with `BrowserRouter`, single entry `client/index.html`.
 - Plain CSS in `client/src/styles/`; no CSS framework, CDN or external runtime font.
 - No form library: `src/hooks/useForm.js` + `src/components/FormField.jsx`.
 - No other dependency, framework or library without asking the user first.
@@ -35,15 +35,52 @@ PA#3 builds the **whole main flow G1–G11 for four roles** (Customer, Admin, St
 - `cd client && npm run build && npx vite preview` — the build the lecturer marks, same proxy.
 - `node tools/contract-check.mjs --base http://localhost:3001` — on a freshly restarted mock, every time.
 
-## Front-end structure (target)
+## Front-end structure
 
-- `src/api/client.js` — the only function that calls the API: relative `/api/...` paths, adds `Authorization: Bearer`, throws `ApiError { status, code, message, fields, details }`, handles 401.
-- `src/hooks/useFetch.js` — `{ data, error, loading, reload, setData }`, one request per load, aborts on unmount.
-- `src/components/AsyncState.jsx` — loading (`role="status"`), error with a **Thử lại** button (`role="alert"`), empty message.
-- `src/auth/AuthContext.jsx` (`useAuth()`: user, token, signIn, signOut) and `src/auth/RequireRole.jsx`.
-- `src/constants/status.js` — the ONLY place that turns status codes into labels.
-- `src/routes/*.jsx` per role, `src/pages/<role>/`, `src/components/chat/` (ChatThread, ProposalCard).
-- `src/data/fixtures.js` is PA#2 legacy: new code must not import it. Its story data moves to `mock/data/`.
+- `src/api/client.js` — `apiFetch(path, { method, body, signal })` and `ApiError { status, code, message, fields, details }`: relative `/api/...` paths only, adds `Authorization: Bearer`, leaves `Content-Type` unset for `FormData`, handles 401.
+- `src/hooks/useFetch.js` — `useFetch(path)` returns `{ data, error, loading, reload, setData }`, sends one request per mount/path change, aborts on unmount, skips when `path` is falsy.
+- `src/components/AsyncState.jsx` — renders loading (`role="status"`), error with a **Thử lại** button (`role="alert"`), or `emptyMessage` when `isEmpty`.
+- `src/hooks/useForm.js` + `src/components/FormField.jsx` — validates after first submit, maps API 400 `err.fields` onto fields, keeps entered values on error, blocks double submits via `submitting`, focuses first invalid field.
+- `src/components/Layout.jsx`, `src/components/StatusBadge.jsx`, `src/components/Money.jsx` — shared shell, accessible text status badges, tabular VND amounts.
+- `src/constants/status.js` — the ONLY place that turns status codes into Vietnamese labels, plus `formatMoney` and `formatDate`.
+- `src/routes/{public,customer,admin,staff,superadmin}.jsx` — export arrays of `{ path, element }` merged by `src/App.jsx` (with `<Route path="*" element={<NotFoundPage />} />`).
+- `src/auth/AuthContext.jsx` (`useAuth()`: user, token, signIn, signOut) and `src/auth/RequireRole.jsx` (added in the G2 auth step).
+- `src/data/fixtures.js` is PA#2 legacy: new code must not import it. Its story data lives in `mock/data/`.
+
+### Using the shared hooks and components (for TV2/TV3)
+
+```jsx
+// Data loading with AsyncState + StatusBadge + Money:
+const { data, error, loading, reload, setData } = useFetch('/api/bookings');
+const bookings = data?.bookings || [];
+return (
+  <Layout user={user} onSignOut={signOut}>
+    <h1>Lịch chụp của tôi</h1>
+    <AsyncState loading={loading} error={error} onRetry={reload} isEmpty={!bookings.length} emptyMessage="Bạn chưa có lịch chụp nào.">
+      {bookings.map((b) => (
+        <div key={b.code}>
+          <StatusBadge map={BOOKING_STATUS} status={b.status} />
+          <Money amount={b.price} />
+        </div>
+      ))}
+    </AsyncState>
+  </Layout>
+);
+
+// Forms with useForm + FormField:
+const form = useForm({
+  initial: { note: '' },
+  validate: (v) => (!v.note.trim() ? { note: 'Vui lòng nhập ghi chú' } : {}),
+  onSubmit: async (v) => {
+    const res = await apiFetch('/api/...', { method: 'PATCH', body: v });
+    setData(res);
+  },
+});
+// <form onSubmit={form.handleSubmit} noValidate>
+//   <FormField name="note" label="Ghi chú" value={form.values.note} error={form.errors.note} onChange={form.handleChange} />
+//   <button type="submit" disabled={form.submitting}>Lưu</button>
+// </form>
+```
 
 ## Data and API rules
 
