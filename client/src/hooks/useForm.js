@@ -38,8 +38,13 @@ export function useForm({ initial = {}, validate, onSubmit }) {
   const submittingRef = useRef(false);
   const formRef = useRef(null);
 
+  const clearSubmitError = useCallback(() => {
+    setSubmitError(null);
+  }, []);
+
   const setFieldValue = useCallback(
     (name, value) => {
+      setSubmitError(null);
       setValues((prev) => {
         const next = { ...prev, [name]: value };
         if (submitted) {
@@ -137,6 +142,7 @@ export function useForm({ initial = {}, validate, onSubmit }) {
     values,
     errors,
     submitError,
+    clearSubmitError,
     submitting,
     submitted,
     setValues,

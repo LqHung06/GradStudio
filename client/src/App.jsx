@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthContext.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 import { adminRoutes } from './routes/admin.jsx';
 import { customerRoutes } from './routes/customer.jsx';
@@ -16,11 +17,13 @@ const allRoutes = [
 
 export function App() {
   return (
-    <Routes>
-      {allRoutes.map((route) => (
-        <Route key={route.path} path={route.path} element={route.element} />
-      ))}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        {allRoutes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AuthProvider>
   );
 }

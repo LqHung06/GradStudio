@@ -1,4 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext.jsx';
 
 const NAV_BY_ROLE = {
   public: [
@@ -26,7 +27,11 @@ const NAV_BY_ROLE = {
 /**
  * Shared page shell with skip-link, role-based navigation, <main id="main"> and text-only footer.
  */
-export function Layout({ user = null, onSignOut, mainClassName = 'section-shell page-main', children }) {
+export function Layout({ user: userProp, onSignOut: onSignOutProp, mainClassName = 'section-shell page-main', children }) {
+  const auth = useAuth();
+  const user = userProp !== undefined ? userProp : auth.user;
+  const onSignOut = onSignOutProp || auth.signOut;
+
   const role = user?.role && NAV_BY_ROLE[user.role] ? user.role : 'public';
   const navItems = NAV_BY_ROLE[role];
 
