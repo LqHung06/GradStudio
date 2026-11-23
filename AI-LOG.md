@@ -712,6 +712,33 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chạy kiểm thử handler in-memory cho đủ 5 nhóm ca đối chiếu: `R10` (extras không `price`), `R08 / A07-paid-clash` (payment `succeeded` + `deposit_paid` + `awaiting_deposit` + `reservationFailure` + không sinh job/reminder + retry `409`), `R09 / A08` (chặn payment pending thứ hai `409` và chặn callback sau khi booking `cancelled` `409`), `R19` (`409` trước `shoot done`, `201` sau `shoot done`), `R04 & R05` (đổi lịch sang `26/10 09:00` sinh nhắc `queued` lúc `2026-10-25T09:00:00+07:00`, hủy bỏ nhắc `queued` và giữ nguyên lịch sử `sent`).
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
 
+### [TV1] 19. G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview — 23/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 16. Tách nhánh `feat/g8-staff` từ `fix/s1-tv1-plan-alignment` (sau khi push và mở PR #17 gửi Nhựt review), triển khai đầy đủ màn G8 (`/staff/jobs` và `/staff/jobs/:id`) theo `docs/api/08-jobs.md`, `05-bookings.md`, `09-gallery.md` và kế hoạch 23/11 (`R02`, `R06`, `R11`, `R12`). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/src/api/jobs.js` (mới): `updateJob(id, { status, note })` (`PATCH /api/jobs/:id`) và `uploadBookingPreview(bookingCode, file)` (`POST /api/bookings/:code/previews` với `FormData` field `file`).
+  - `client/src/pages/staff/StaffJobsPage.jsx` (mới): màn `/staff/jobs` (`<h1>Việc của tôi</h1>`), bộ lọc trạng thái (`Tất cả`, `Chưa bắt đầu`, `Đang làm`, `Hoàn thành`) đồng bộ query `?status=`, nhóm việc theo ngày chụp (`formatDate`) và nhóm riêng `"Chỉnh ảnh (chưa gắn ngày)"` cho việc `edit`, dùng `AsyncState`, `StatusBadge` (`JOB_STATUS` mới), link `"Xem việc"` tới `/staff/jobs/:id`.
+  - `client/src/pages/staff/StaffJobDetailPage.jsx` (mới): màn `/staff/jobs/:id` (`<h1>{Loại việc} · {bookingCode}</h1>`), xử lý `404` thân thiện (`"Không tìm thấy việc này, hoặc việc không được giao cho bạn."`), đọc trạng thái booking qua `GET /api/bookings/:code` để hiện banner **"Booking Đã hủy"** và khóa cả hai form khi `booking.status === 'cancelled'` (`R06`), form cập nhật trạng thái (`useForm` + `FormField`, 3 nhãn mới `R02`, cập nhật trực tiếp từ response không reload trang), form upload preview chỉ hiện cho `shoot`/`edit` (ẩn với `makeup`), kiểm tra trước khi gửi JPEG/PNG và `file.size <= 5.242.880` byte (`R11`), hiển thị `"Đã có {totalPhotos} ảnh trong booking"` và lưới ảnh thu nhỏ từ `GET /api/bookings/:code/photos`.
+  - `client/src/styles/staff-jobs.css` (mới): CSS thuần dùng design tokens Blue Theme, responsive không cuộn ngang ở 360 / 768 / 1280 px, nút/link cao ≥ 44px.
+  - `client/src/routes/staff.jsx`: thay `StaffHomePlaceholder` bằng `StaffJobsPage` (`/staff/jobs`) và thêm `/staff/jobs/:id` (`StaffJobDetailPage`) bọc trong `<RequireRole roles={['staff']}>`.
+  - `brief.md`: ghi mục 16 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - Ban đầu tạo object `initial` inline trong `useForm(...)` khiến hàm `reset` đổi reference mỗi lần render và dùng class `button-primary` không khớp với hệ class `.button.button-dark` của `base-and-pages.css`; đã tách `INITIAL_STATUS_FORM` / `INITIAL_UPLOAD_FORM` ra hằng số module và đồng bộ sang `button button-dark`.
+  - Script kiểm thử Chrome headless CDP ban đầu giữ tiến trình con không thoát sạch sau khi in xong kết quả PASS; đã dừng sạch tiến trình và kiểm tra các cổng `3001 / 4173 / 9229` đều trống.
+  - Không chỉnh sửa bất kỳ file nào trong `docs/api/`, `mock/`, `tools/`.
+- **Checked:**
+  - `cd client && npm run build`: thành công (`70 modules transformed`), không lỗi import/cú pháp.
+  - `git diff -- docs/api mock`: trống hoàn toàn; `git diff --check`: 0 lỗi.
+  - Kiểm thử trực tiếp trên `npx vite preview --port 4173` + `node mock/server.mjs` qua Google Chrome headless CDP:
+    - **`MOCK_MODE=normal`**: đăng nhập `tuan` vào `/staff/jobs` thấy đủ 2 nhóm ngày (`Thứ Ba, 20/10/2026` và `Chỉnh ảnh (chưa gắn ngày)`), đúng nhãn `Hoàn thành` / `Chưa bắt đầu`; lọc `Chưa bắt đầu` đồng bộ URL `/staff/jobs?status=todo` còn 1 việc; mở trực tiếp + F5 `/staff/jobs/J-GS-1022-shoot` hiện 36 ảnh và trạng thái booking `Đã đặt lịch`; `PATCH /api/jobs/J-GS-1022-edit → 200` cập nhật ngay sang `Đang làm` + thông báo `"Đã cập nhật công việc"`; upload file `.pdf` và `.png` `5 242 881` byte bị chặn ngay trên client (`"Chỉ nhận ảnh JPEG hoặc PNG"`, `"Ảnh tối đa 5 MiB"`, **0 request** tới `/previews`); upload `.png` hợp lệ (`201`) hiện `"Đã có 37 ảnh trong booking"` và tải lại lưới 37 ảnh; Tuấn mở `J-GS-1021-makeup` (`404`) hiện `"Không tìm thấy việc này, hoặc việc không được giao cho bạn."`; Mai mở `J-GS-1021-makeup` hiện đúng chi tiết + form trạng thái và **không** hiện form upload preview.
+    - **Responsive 360 / 768 / 1280 px** (qua CDP `Emulation.setDeviceMetricsOverride`) trên `/staff/jobs` và `/staff/jobs/J-GS-1022-shoot`: `scrollWidth <= innerWidth`, đúng 1 `<h1>`, mọi nút/link trong `<main>` cao ≥ 44px, **0 lỗi Console**.
+    - **`MOCK_MODE=slow`**: hiện `"Đang tải…"` rồi tải xong dữ liệu.
+    - **`MOCK_MODE=error`**: hiện `"Máy chủ đang gặp sự cố, vui lòng thử lại."` kèm nút `Thử lại`.
+    - **`MOCK_MODE=empty`**: hiện `"Bạn chưa có việc nào được giao."`.
+  - *Chưa kiểm tra:* ca hiển thị banner **"Booking Đã hủy"** (khóa cả 2 form trên UI) với booking thật bị hủy đang chờ TV3 hoàn thành `R05` (hủy booking có jobs); kiểm tra W3C Nu HTML Checker thủ công sẽ thực hiện ở mốc M6 cùng TV2.
+- **Commits:** TV1 đọc diff và tự commit sau.
+
 ### [TV1] 20. G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin) — 23/11/2026
 
 - **Tool:** Antigravity Assistant.
