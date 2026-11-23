@@ -29,7 +29,7 @@ The following limits are review proposals, **not product-owner decisions**: IDs 
 
 ## Booking and reservation rules
 
-Booking is returned in full, including requestedTime, items[].room and finalLink when null. Prices are integer VND from the package, not caller-supplied prices. For pkg-tn-premium: price 1800000, deposit 540000 (30%, rounded to nearest 1000), remaining 1260000. Remaining means price minus deposit, including after full payment; paymentStatus tells payment progress. Selection.limit comes from editedPhotos. requestedTime is null if the original time was retained, otherwise {start, note}.
+Booking is returned in full, including requestedTime, items[].room and finalLink when null. Prices are integer VND from the package, not caller-supplied prices; extras add no money. deposit = Math.round(price * 0.3), remaining = price - deposit. For pkg-tn-premium: price 1800000, deposit 540000 (30%, rounded to the nearest one VND), remaining 1260000. Remaining means price minus deposit, including after full payment; paymentStatus tells payment progress. Selection.limit comes from editedPhotos. requestedTime is null if the original time was retained, otherwise {start, note}.
 
 Creating awaiting_deposit does **not** reserve any staff or room. Only successful deposit payment with resources checked again in file 06 changes status to booked, holds time, and creates jobs/reminder. Failure keeps awaiting_deposit/unpaid. Do not create jobs here.
 
@@ -46,8 +46,8 @@ Creating awaiting_deposit does **not** reserve any staff or room. Only successfu
 | `packageId` | string | yes | Existing package; proposed maximum 100 characters |
 | `extraIds` | string[] | yes | Proposed 0–20 distinct existing IDs; [] allowed |
 
-- **201 Created:** `{booking: Booking}`. Uses the accepted proposal date/items, customer from conversation and package data from catalogue. Assigns next booking code (highest existing number + 1), sets conversation.bookingCode, status awaiting_deposit and paymentStatus unpaid. The first success is GS-1024.
-- **Errors:** inherited 401/403/500; 400 VALIDATION for missing/wrong body fields, unknown package/extra IDs; 404 NOT_FOUND for missing conversation/proposal; 409 CONFLICT when proposal is not accepted, belongs to another conversation, or conversation already has a booking. No mandatory slot reservation/check is introduced here; resource checks are enforced at proposal creation and deposit success.
+- **201 Created:** `{booking: Booking}`. Uses the accepted proposal date/items, customer from conversation and package data from catalogue. Assigns next booking code (highest existing number + 1), sets conversation.bookingCode, status awaiting_deposit and paymentStatus unpaid. The first success is GS-1024. A replacement is allowed only after the current linked booking is cancelled, using a fresh proposal created after cancellation and accepted by the customer. Never reuse a proposal used for any previous booking, or a proposal from another conversation. The old booking keeps conversationId, amounts and payment history; the new booking starts awaiting_deposit/unpaid, with no transfer of old deposits. conversation.bookingCode points to the new code. GET list/detail retains all old bookings under the existing ownership rules.
+- **Errors:** inherited 401/403/500; 400 VALIDATION for missing/wrong body fields, unknown package/extra IDs; 404 NOT_FOUND for missing conversation/proposal; 409 CONFLICT when proposal is not accepted, belongs to another conversation, proposal was used for an earlier booking or predates its cancellation, or the current linked booking is not cancelled. No mandatory slot reservation/check is introduced here; resource checks are enforced at proposal creation and deposit success.
 
 ### Examples
 
@@ -380,5 +380,7 @@ Content-Type: application/json
 ```
 
 ## Changes
+
+- 2026-11-23: R07: replacement after cancellation with a fresh accepted proposal and preserved history (group choice, plan 2.7); package-only price (PO R3), one-VND deposit rounding (group choice).
 
 - 2026-11-20: first version: complete Booking responses, p-1 rejection, GS-1024 creation, ownership and deposit reservation boundary. Owner: TV3 Lê Công Minh Nhựt (24120211).

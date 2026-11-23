@@ -4,14 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { nowIso } from '../lib/time.mjs';
+import { ensureBookingReminder } from '../lib/reminders.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clashFile = path.resolve(here, '..', 'lib', 'clash.mjs');
 
 async function recheckResources(db, booking) {
-  if (!fs.existsSync(clashFile)) return { available: true };
+  if (!fs.existsSync(clashFile)) return { available: true, clashes: [] };
   const mod = await import(pathToFileURL(clashFile).href);
-  if (typeof mod.checkClash !== 'function') return { available: true };
+  if (typeof mod.checkClash !== 'function') return { available: true, clashes: [] };
   const items = (booking.items || []).map((it) => ({
     kind: it.kind,
     start: it.start,
@@ -22,19 +23,11 @@ async function recheckResources(db, booking) {
   return mod.checkClash(db, booking.date, items, { ignoreBooking: booking.code });
 }
 
-function formatOffsetIso(dateStr, timeStr, hoursBefore) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const [hh, mm] = timeStr.split(':').map(Number);
-  // Compute in UTC+7 by shifting 7 hours, subtracting hoursBefore, then formatting back with +07:00.
-  const utcMs = Date.UTC(y, m - 1, d, hh, mm, 0) - hoursBefore * 3600 * 1000;
-  const dt = new Date(utcMs);
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:00+07:00`;
-}
-
-function formatDateVi(dateStr) {
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
+function areShootJobsDone(db, bookingCode) {
+  const shootJobs = (db.jobs || []).filter(
+    (j) => j.bookingCode === bookingCode && j.kind === 'shoot',
+  );
+  return shootJobs.length > 0 && shootJobs.every((j) => j.status === 'done');
 }
 
 function ensureBookingJobs(db, booking) {
@@ -81,24 +74,6 @@ function ensureBookingJobs(db, booking) {
   }
 }
 
-function ensureBookingReminder(db, booking) {
-  if (!Array.isArray(db.reminders)) db.reminders = [];
-  if (db.reminders.some((r) => r.bookingCode === booking.code)) return;
-  const items = [...(booking.items || [])].sort((a, b) => a.start.localeCompare(b.start));
-  const earliest = items[0];
-  if (!earliest) return;
-  const leadHours = Number(db.settings?.reminderHoursBefore ?? 24);
-  const kindLabel = earliest.kind === 'makeup' ? 'makeup' : 'chụp ảnh';
-  db.reminders.push({
-    id: `rm-${db.reminders.length + 1}`,
-    bookingCode: booking.code,
-    sendAt: formatOffsetIso(booking.date, earliest.start, leadHours),
-    channels: ['email', 'account'],
-    emailStatus: 'sent',
-    text: `Nhắc lịch: ${kindLabel} ${earliest.start} ngày ${formatDateVi(booking.date)} với ${earliest.staff?.name || 'studio'} tại GradStudio`,
-  });
-}
-
 export default [
   {
     method: 'POST',
@@ -134,6 +109,9 @@ export default [
         if (booking.status !== 'booked' || booking.paymentStatus !== 'deposit_paid') {
           return fail(409, 'CONFLICT', 'Booking chưa đặt cọc nên chưa thể thanh toán phần còn lại');
         }
+        if (!areShootJobsDone(db, booking.code)) {
+          return fail(409, 'CONFLICT', 'Chỉ có thể thanh toán 70% còn lại sau khi buổi chụp đã hoàn thành');
+        }
         if (!booking.selection || booking.selection.selectedCount <= 0) {
           return fail(409, 'CONFLICT', 'Vui lòng chọn và lưu danh sách ảnh trước khi thanh toán 70% còn lại');
         }
@@ -148,6 +126,7 @@ export default [
         amount,
         status: 'pending',
         failureReason: null,
+        reservationFailure: null,
         createdAt: nowIso(),
       };
       db.payments.push(payment);
@@ -212,23 +191,51 @@ export default [
         return fail(409, 'CONFLICT', 'Giao dịch này đã được xử lý');
       }
 
+      // R09: Re-check booking and payment state at gateway callback time.
+      if (booking.status === 'cancelled' || booking.status === 'completed') {
+        return fail(409, 'CONFLICT', 'Booking đã bị hủy hoặc hoàn thành nên không thể áp dụng kết quả thanh toán');
+      }
+
       if (result === 'failed') {
         payment.status = 'failed';
         payment.failureReason = 'Giao dịch bị từ chối (thử nghiệm)';
+        payment.reservationFailure = null;
       } else if (payment.kind === 'deposit') {
+        if (booking.paymentStatus !== 'unpaid' || booking.status !== 'awaiting_deposit') {
+          return fail(409, 'CONFLICT', 'Khoản đặt cọc của booking này đã được ghi nhận trước đó');
+        }
         const clashResult = await recheckResources(db, booking);
         if (!clashResult.available) {
-          payment.status = 'failed';
-          payment.failureReason = 'Khung giờ vừa có người đặt. Studio sẽ liên hệ bạn';
+          // PO #8 / R08: Payment succeeded and deposit is recorded, but slot is not held.
+          payment.status = 'succeeded';
+          payment.failureReason = null;
+          payment.reservationFailure = {
+            message: 'Khung giờ vừa có người đặt. Studio sẽ liên hệ bạn',
+            clashes: clashResult.clashes || [],
+          };
+          booking.paymentStatus = 'deposit_paid';
         } else {
           payment.status = 'succeeded';
+          payment.failureReason = null;
+          payment.reservationFailure = null;
           booking.status = 'booked';
           booking.paymentStatus = 'deposit_paid';
           ensureBookingJobs(db, booking);
           ensureBookingReminder(db, booking);
         }
       } else {
+        if (booking.status !== 'booked' || booking.paymentStatus !== 'deposit_paid') {
+          return fail(409, 'CONFLICT', 'Booking không ở trạng thái hợp lệ để ghi nhận thanh toán 70% còn lại');
+        }
+        if (!areShootJobsDone(db, booking.code)) {
+          return fail(409, 'CONFLICT', 'Chỉ có thể thanh toán 70% còn lại sau khi buổi chụp đã hoàn thành');
+        }
+        if (!booking.selection || booking.selection.selectedCount <= 0) {
+          return fail(409, 'CONFLICT', 'Vui lòng chọn và lưu danh sách ảnh trước khi thanh toán 70% còn lại');
+        }
         payment.status = 'succeeded';
+        payment.failureReason = null;
+        payment.reservationFailure = null;
         booking.paymentStatus = 'paid_in_full';
       }
 

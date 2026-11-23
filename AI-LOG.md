@@ -542,7 +542,6 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chạy `MOCK_MODE=empty`: `GET /api/services` trả mảng rỗng, `GET /api/packages/pkg-tn-premium` vẫn giữ nguyên object `pkg-tn-premium` với `includes: []`.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
 
-
 ### [TV1] 12. Nền front end: router, api client, hooks, Layout, status (22/11/2026)
 
 - **Tool:** Antigravity Assistant.
@@ -555,7 +554,7 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `client/src/hooks/useForm.js` (mới) và `client/src/components/FormField.jsx` (mới): validate sau lần submit đầu, map `ApiError` 400 `fields`, giữ giá trị khi lỗi, khóa nút khi `submitting`, focus ô lỗi đầu tiên.
   - `client/src/constants/status.js` (mới), `client/src/components/StatusBadge.jsx` (mới), `client/src/components/Money.jsx` (mới): ánh xạ mã trạng thái mục 2.4 sang tiếng Việt, `formatMoney`, `formatDate`.
   - `client/src/components/Layout.jsx`: viết lại theo thiết kế Blue Theme (không import `fixtures.js`, không còn menu cứng hay ghi chú demo), có skip-link `#main`, menu theo `user?.role`, nút `Đăng xuất` / link `Đăng nhập`, footer chỉ gồm chữ/thương hiệu.
-  - `client/src/routes/{public,customer,admin,staff,superadmin}.jsx` (mới), `client/src/pages/NotFoundPage.jsx` (mới), `client/src/App.jsx` (mới), `client/src/main.jsx`, `client/src/styles/foundation.css` (mới): cấu hình `BrowserRouter`, route tạm `/` gọi `GET /api/services` và stub `/sign-in`, route `*` màn *Không tìm thấy trang*.
+  - `client/src/routes/{public,customer,admin,staff,superadmin}.jsx` (mới), `client/src/pages/NotFoundPage.jsx` (mới), `client/src/App.jsx` (mới), `client/src/main.jsx`, `client/src/styles/foundation.css` (mới): cấu hình `BrowserRouter`, route tạm `/` gọi `GET /api/services` và stub `/sign-in`, route `*` màn _Không tìm thấy trang_.
   - `AGENTS.md`: bỏ ghi chú 3 HTML entry PA#2 và bổ sung hướng dẫn dùng hook/component nền cho TV2/TV3.
 - **Rejected / lỗi phát hiện:**
   - Lần chạy kiểm tra đầu trên `44febe8` (trước khi PR #12 merge) gặp `GET /api/services → 404`; đã giữ nguyên `docs/api/` và `mock/`, không sửa mock để khớp code. Sau khi PR #12 merge (`d5bb006`) và đồng bộ `main` vào `feat/core-foundation`, `GET /api/services` trả `200` đầy đủ.
@@ -569,14 +568,13 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - `error`: `GET /api/services → 500`, TV1 xác nhận trên trình duyệt hiện `"Máy chủ đang gặp sự cố, vui lòng thử lại."` kèm nút `Thử lại`.
     - `empty`: `GET /api/services → 200`, TV1 xác nhận trên trình duyệt hiện `"Hiện chưa có dịch vụ nào."`.
     - `/unknown-route`: render `<h1 id="not-found-heading">Không tìm thấy trang</h1>` và link `Về trang chủ`.
-  - *Chưa kiểm tra:* bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
+  - _Chưa kiểm tra:_ bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
 - **Commits:** TV1 đọc diff và tự commit sau.
-
 
 ### [TV1] 13. G2: AuthContext, RequireRole, màn đăng nhập /sign-in (22/11/2026)
 
 - **Tool:** Antigravity Assistant.
-- **Request:** `brief.md` mục 12 (Tin nhắn 1 & Tin nhắn 2). Trên nhánh `feat/g2-auth`, cài đặt `AuthContext`, `RequireRole`, màn `/sign-in`, màn *Không có quyền truy cập*, nối `Layout.jsx` với `useAuth()`, đặt route trang chủ tạm cho 4 vai trò để kiểm thử G2, và sửa lỗi ẩn banner 401 khi người dùng nhấp lại vào ô nhập. Không tự `git add`/`commit`/`push`.
+- **Request:** `brief.md` mục 12 (Tin nhắn 1 & Tin nhắn 2). Trên nhánh `feat/g2-auth`, cài đặt `AuthContext`, `RequireRole`, màn `/sign-in`, màn _Không có quyền truy cập_, nối `Layout.jsx` với `useAuth()`, đặt route trang chủ tạm cho 4 vai trò để kiểm thử G2, và sửa lỗi ẩn banner 401 khi người dùng nhấp lại vào ô nhập. Không tự `git add`/`commit`/`push`.
 - **Changed:**
   - `client/src/api/auth.js` (mới): gọi 3 endpoint trong `docs/api/01-auth.md` (`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`).
   - `client/src/auth/AuthContext.jsx` (mới): `AuthProvider`, `useAuth()`, `ROLE_HOME`, `canRoleAccessPath`, lưu phiên vào `localStorage` để F5 không mất đăng nhập, gọi `GET /api/auth/me` khi khởi động trước khi `ready = true` (xóa phiên nếu `401`; giữ phiên cache nếu gặp `500` ở `MOCK_MODE=error`), đăng ký `Authorization: Bearer <token>` và callback `onUnauthorized` với `api/client.js`.
@@ -594,8 +592,8 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - TV1 kiểm thử trực tiếp trên trình duyệt tại `http://localhost:4173/sign-in` (`MOCK_MODE=normal`):
     - Kiểm tra validation khi bỏ trống (`Vui lòng nhập email`, `Vui lòng nhập mật khẩu`), sai định dạng (`Email không đúng định dạng`), và `401` (`Email hoặc mật khẩu không đúng`).
     - Đăng nhập và đăng xuất lần lượt đủ 6 tài khoản demo: `linh` (`/my-bookings`), `han` (`/my-bookings`), `thao` (`/admin/conversations`), `mai` (`/staff/jobs`), `tuan` (`/staff/jobs`), `superadmin` (`/superadmin/admins`) — hiển thị đúng trang chủ, menu theo vai trò và tên người dùng trên header.
-    - Xác nhận đủ 5 ca sau lần sửa cuối: (1) banner 401 tự ẩn ngay khi focus/gõ lại ô nhập; (2) F5 giữ phiên đăng nhập (`GET /api/auth/me → 200`); (3) mở chéo route vai trò khác (Linh mở `/admin/conversations`, `/superadmin/admins`) hiện màn *Không có quyền truy cập* có nút về trang chính; (4) đăng xuất (`POST /api/auth/logout → 204`) rồi mở `/staff/jobs` → `/sign-in` → đăng nhập `tuan` quay lại đúng `/staff/jobs`, đăng nhập `linh` chuyển về `/my-bookings`; (5) mở `/trang-khong-ton-tai` hiện màn *Không tìm thấy trang*.
-  - *Chưa kiểm tra:* đo cuộn ngang và kích thước tap target 44px ở `360 / 768 / 1280px` bằng DevTools.
+    - Xác nhận đủ 5 ca sau lần sửa cuối: (1) banner 401 tự ẩn ngay khi focus/gõ lại ô nhập; (2) F5 giữ phiên đăng nhập (`GET /api/auth/me → 200`); (3) mở chéo route vai trò khác (Linh mở `/admin/conversations`, `/superadmin/admins`) hiện màn _Không có quyền truy cập_ có nút về trang chính; (4) đăng xuất (`POST /api/auth/logout → 204`) rồi mở `/staff/jobs` → `/sign-in` → đăng nhập `tuan` quay lại đúng `/staff/jobs`, đăng nhập `linh` chuyển về `/my-bookings`; (5) mở `/trang-khong-ton-tai` hiện màn _Không tìm thấy trang_.
+  - _Chưa kiểm tra:_ đo cuộn ngang và kích thước tap target 44px ở `360 / 768 / 1280px` bằng DevTools.
 - **Commits:** TV1 đọc diff và tự commit sau.
 
 ### [TV3] 14. Component chat dùng chung — 23/11/2026
@@ -639,7 +637,82 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - *Chưa kiểm tra:* màn hình G8 và G11 chưa triển khai (thuộc bước tiếp theo `R12`), và `A04` qua HTTP sau hủy thực tế chờ TV3 hoàn thành `R05` (`#S3`).
 - **Commits:** TV1 đọc diff và tự commit sau.
 
-### [TV1] 16. G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview — 23/11/2026
+### [TV3] 15. Sửa contract và mock theo báo cáo đối chiếu — 23/11/2026
+
+- **Tool:** Tôi dùng Codex để sửa code và chạy kiểm tra.
+- **Request:** Tôi giao task trong brief.md mục 15. Tôi giữ phạm vi contract/mock TV3 và chưa làm giao diện R14.
+- **Changed:**
+  - Tôi cập nhật main bằng fast-forward từ fca4607 tới 37da2bf sau khi fetch origin; working tree ban đầu sạch. Tôi tạo nhánh fix/tv3-booking-rules, giữ email Git hiện tại lecongminhnhut6533@gmail.com, dùng tên Lê Công Minh Nhựt theo từng lệnh commit và không đổi global config.
+  - Tôi commit prompt trước, rồi contract 03/05/10 và phần README liên quan đến TV3 trước các commit mock. Contract phân biệt quyết định PO về đổi lịch G10 trực tiếp với lựa chọn nhóm về hủy, booking thay thế, ID c-số và cọc làm tròn một đồng. Chuỗi chính vẫn tạo GS-1024; các ca thay thế chạy sau phần đổi/hủy/link của G10.
+  - Tôi sửa conversations.mjs để tạo hội thoại 201 với chủ lấy từ token, ID c-số, tin đầu và timestamps nhất quán; Admin trả lời đầu chuyển consulting. Tôi cho gửi đề xuất mới sau khi booking cũ bị hủy.
+  - Tôi sửa bookings.mjs để booking thay thế có mã mới, yêu cầu proposal mới được khách đồng ý, không tái dùng proposal cũ hoặc chuyển cọc cũ. Tôi giữ liên kết conversationId cho lịch sử và tính deposit = Math.round(price \* 0.3), remaining = price - deposit từ giá gói; extras không cộng tiền.
+  - Tôi sửa admin-bookings.mjs để PATCH nhận date/items, validate và kiểm tra trùng ngay lúc lưu, tự bỏ qua booking đang sửa; các lỗi không ghi một phần dữ liệu. Tôi cập nhật job theo loại ca khi ánh xạ được một-một, giữ tiến độ/ghi chú và các trường null của edit. Tôi bỏ nhánh 500 khi hủy booking có jobs, giữ việc/tiền, nhả người/phòng và giữ hội thoại scheduled; hủy lại hoặc hủy completed trả 409. Tôi vô hiệu hóa quyền dùng các proposal có trước lần hủy cho booking thay thế mà vẫn giữ nguyên lịch sử tin nhắn.
+  - Tôi sửa ví dụ AGENTS thành body decision, bổ sung quyết định và Not done của TV3 trong FRONTEND, thêm bộ test Node built-in cùng hướng dẫn chạy lại tại tools/tv3-booking-rules-README.md. Tôi không sửa seed, server, frontend, dependencies hoặc routes/contract của TV1/TV2.
+- **Rejected / lỗi phát hiện:**
+  - Tôi xác minh các lỗi R03/R05/R07/R15 trong báo cáo vẫn còn trên main mới; tôi không dùng kết quả 99/99 cũ để kết luận đã sửa.
+  - Test hủy GS-1021 ban đầu của tôi kỳ vọng cả hai ca cũ cùng khả dụng trong một request. Kiểm tra này sai vì seed có makeup và shoot cùng giờ, cùng Phòng A nên checkClash phát hiện trùng nội bộ giữa hai ca. Tôi sửa test kiểm từng ca riêng để xác nhận booking đã hủy không còn chiếm người/phòng; tôi không sửa seed hoặc checkClash để làm test xanh.
+  - Khi stage test mới, git diff --cached --check phát hiện một dòng trống cuối file. Tôi bỏ dòng đó và BOM rồi kiểm lại trước commit. Lệnh kiểm JSON bằng node -e ban đầu bị PowerShell làm mất dấu nháy; tôi chuyển sang script tạm và parse lại thành công.
+  - Tôi không sao chép ensureBookingReminder hoặc tạo helper no-op. Source chỉ có hàm nội bộ trong payments; Kiệt chưa bàn giao helper tính/dừng nhắc hay schema phiên bản lịch. Tôi giữ R04 và phần ngừng nhắc của R05 ở trạng thái còn phụ thuộc.
+- **Checked:**
+  - Tôi chạy node --test tools/tv3-booking-rules.test.mjs: 19 ca, 15 PASS, 0 FAIL, 4 TODO. Bốn callback TODO có chạy và đang không đạt: reminder chưa đổi giờ/nội dung, queued reminder chưa dừng sau hủy, Staff PATCH job trả 200 và upload trả 201 sau hủy thay vì 409. Tôi không tính các TODO là PASS và không sửa file TV1/TV2.
+  - Các ca PASS xác minh đổi lịch trực tiếp và bỏ qua chính booking; giữ nguyên toàn bộ db khi clash/validation lỗi; cập nhật job với staff/room mới và edit null; hủy GS-1021 giữ lịch sử việc/payment và nhả giờ; chặn quyền khách; booking thay thế giữ tiền cũ, dùng proposal/mã mới và đúng sở hữu; tạo hội thoại và trả lời đầu; giá gói không bị client ghi đè. Với giá test riêng 1.800.005đ, tôi nhận cọc 540.002đ và remaining 1.260.003đ.
+  - Tôi chạy toàn bộ tools/contract-check.mjs trên mock normal vừa khởi động riêng ở cổng 33491: 101/101 ví dụ, 0 FAIL, đủ 39/39 endpoint. Tôi không dùng --only. Checker so status/field names mặc định; tôi chưa chạy strict-values. Tôi đã xem các note timestamp và độ dài danh sách; kiểm tra nghiệp vụ riêng dùng assertion giá trị.
+  - Tôi chạy HTTP trên mock mới cho từng chế độ normal/slow/error/empty: tạo/đọc hội thoại, slow có độ trễ, error trả SERVER_ERROR, empty trả danh sách rỗng. Các ca HTTP normal còn kiểm quyền, đổi lịch trực tiếp, Admin trả lời và hủy có việc/hủy lại. Tôi chưa kiểm toàn bộ thao tác booking trong cả bốn mode hoặc luồng frontend.
+  - Tôi kiểm cú pháp 16 module mock và module test bằng node --check; parse 14 JSON seed và 45 body JSON thực thi trong contract 03/05/10; chạy git diff --check và xác nhận các file ngoài phạm vi không đổi. Tôi không chạy build frontend hoặc W3C cho task backend này.
+- **Bàn giao / giới hạn:** Tôi cần Kiệt chốt contract 07 và helper chuẩn bị cập nhật reminder không làm đổi db trước khi commit thao tác; đề xuất để thảo luận là prepareBookingReminders(db, previousBooking, nextBooking). Cần schema phân biệt phiên bản lịch, dừng nhắc chưa gửi, giữ sent, chạy lại không trùng và tính từ mốc sớm nhất theo settings. Tôi cần Hưng chốt ánh xạ jobs cho nhiều ca cùng loại/thêm-bớt loại ca và hoàn thành R06 chặn ghi việc/upload sau hủy. Hiện trường hợp không ánh xạ được trả 409 và không ghi dữ liệu; đây là giới hạn tích hợp, không phải quy tắc PO. Tôi chưa xác nhận cả luồng đổi/hủy hoàn tất. Kiệt có thể review theo thứ tự contract → mutation boundaries → test → bốn TODO, hướng dẫn chi tiết ở tools/tv3-booking-rules-README.md.
+- **Evidence:** Tôi giữ output cục bộ tại Temp/gs-tv3-regression.log, Temp/gs-tv3-contract-check.log, Temp/gs-tv3-contract-check.json và Temp/gs-tv3-contract-server.log. Bộ test và hướng dẫn chạy lại đã được lưu trong repo. Tôi không dựng lại bằng chứng cũ.
+- **Commits:** Tôi commit riêng từng file: brief e21da62; contract 03 3ebb367, 05 5e26285, 10 d131fdc, README 1f843cd; mock conversations b6335dd, bookings 6126344, admin-bookings f7b55ad; AGENTS 6b5b394; FRONTEND cd2dcfa; test 512614b; hướng dẫn test bb48869. Tôi commit mục AI-LOG này cuối cùng. Tôi không amend/reset/rebase, push, mở PR hoặc gửi tin nhắn cho thành viên khác.
+
+### [TV3] 16. R14: kiểm tra tiền đề triển khai màn Admin — 23/11/2026
+
+- **Tool:** Tôi dùng Codex để kiểm tra checkout và đối chiếu source.
+- **Request:** Tôi giao task R14 trong brief.md mục 16: triển khai bốn route Admin sau khi contract/mock đổi, hủy và booking thay thế đã có trên main.
+- **Changed:** Tôi tạo nhánh feat/tv3-admin-flow từ main 37da2bf sau khi kiểm tra working tree sạch và fetch origin thành công. Tôi sửa riêng dòng Routes và Not done của TV3 trong FRONTEND.md để phân biệt placeholder hiện có với ba route chưa đăng ký. Tôi chưa viết UI hoặc API wrapper theo đặc tả cũ; tôi không sửa contract/mock hay mang code từ nhánh fix sang.
+- **Rejected / lỗi phát hiện:** Tôi xác nhận tiền đề chưa đạt. Main vẫn có PATCH booking nhận proposalId và yêu cầu khách đồng ý lại; cancel booking có jobs trả dependency 500; POST bookings chặn mọi hội thoại đã có bookingCode. Các sửa đổi mới vẫn ở nhánh fix/tv3-booking-rules, chưa thuộc main. R08 của TV2 cũng chưa có reservationFailure trong contract 06 trên main; helper tính lại/dừng nhắc chưa được bàn giao. Tôi không dựng dữ liệu hay tự sửa API để UI chạy.
+- **Checked:** Tôi chạy git status --short, git branch --show-current, git remote -v, git log và git config user.email; fetch origin và cập nhật main bằng fast-forward (kết quả Already up to date). Tôi chạy git merge-base --is-ancestor e6909c8 main, nhận mã 1; git log main..fix/tv3-booking-rules --oneline liệt kê 14 commit chưa tích hợp. Tôi đọc contract 05/10, handlers conversations/bookings/admin-bookings, tìm reservationFailure và helper nhắc trong contract/routes 06/07, đối chiếu routes/admin.jsx: hiện chỉ có /admin/conversations placeholder. Tôi kiểm tra diff staged và git diff --check. Tôi chưa chạy build, bốn route/F5/phân quyền, flow G4–G6/G10, mock modes, responsive, Console hoặc W3C vì UI R14 chưa triển khai. Tôi không lấy bằng chứng component hoặc mock ở task trước để kết luận UI đạt; lượt này không gọi endpoint nghiệp vụ.
+- **Phụ thuộc:** Tôi cần các commit contract/mock TV3 được tích hợp vào main trước khi nối đổi/hủy/thay thế. Kiệt cần bàn giao R08 và helper/schema reminders; Hưng cần chốt ánh xạ nhiều ca cùng loại/thêm-bớt loại ca và R06. Sau khi main có tiền đề, tôi phải đọc lại shared shapes và hooks, triển khai bốn route, rồi kiểm tra trên bản build theo brief. R14 chưa hoàn thành luồng nào trong lượt này.
+- **Commits:** Tôi commit từng file với author/committer Lê Công Minh Nhựt <lecongminhnhut6533@gmail.com>, dùng cấu hình từng lệnh: brief mục 16 cabf2cb; FRONTEND 2a17ebd. Tôi giữ nguyên các chỉnh định dạng khác phát sinh trong brief ở working tree, không đưa chúng vào commit task. Tôi không push, mở PR, merge nhánh khác, amend hoặc viết lại lịch sử.
+
+### [TV2] 17. Contract S2: cập nhật 02-catalog, 06-payments, 07-reminders, 09-gallery theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 17. Trên nhánh `contract/tv2-po-updates` (tách từ `main` `37da2bf`), cập nhật 4 file contract của TV2 theo các quyết định PO và quy ước nhóm mới chốt (`R04`, `R05`, `R08`, `R09`, `R10`, `R19`), ghi `## Changes` ở cuối mỗi file.
+- **Changed:**
+  - `docs/api/02-catalog.md`: bỏ trường `price` khỏi `Extra` và ví dụ `GET /api/extras` (PO #6 / `R10`), thêm dòng `## Changes`.
+  - `docs/api/06-payments.md`: thêm `reservationFailure` vào `Payment` (`null` hoặc `{"message", "clashes"}`) cho ca cọc đã thu tiền nhưng trùng giờ (`R08`); ghi rõ kiểm tra lại `booking.status`/`paymentStatus` tại `POST /api/test-gateway/:paymentId` (`R09`); bổ sung điều kiện toàn bộ job `shoot` phải `done` trước khi tạo thanh toán `remaining` (`R19`); cập nhật các ví dụ `PAY-1`/`PAY-2` và thêm dòng `## Changes`.
+  - `docs/api/07-reminders.md`: mô tả cơ chế tính lại nhắc lịch `queued` khi đổi lịch (`R04`) và dừng gửi nhắc `queued` khi hủy booking (`R05`), giữ lịch sử `sent`; thêm dòng `## Changes`.
+  - `docs/api/09-gallery.md`: đồng bộ `reservationFailure: null` cho `PAY-3`, bổ sung ví dụ `400` ảnh không thuộc booking (`ph-999`) và `409` khóa sửa lựa chọn sau khi trả 70% (PO #9); thêm dòng `## Changes`.
+  - `brief.md` mục 17 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Lần viết đầu tiên ở `docs/api/09-gallery.md` đặt ví dụ `ph-999` (`400`) **sau** bước thanh toán `PAY-3` (`paid_in_full`), sẽ khiến mock trả `409` thay vì `400` khi chạy chuỗi tuần tự. Đã dời ví dụ `ph-999` (`400`) và ví dụ sửa lựa chọn trước thanh toán (`200`) lên trước `PAY-3`, chỉ giữ ví dụ khóa sửa (`409`) sau `PAY-3`.
+  - Không đụng tới `mock/`, `client/`, hay contract của TV1/TV3 (`README.md`, `01`, `03`, `04`, `05`, `08`, `10`, `12`, `13`).
+  - Lưu ý: khi TV2 chưa sửa `mock/` (bước mock kế tiếp), chạy `contract-check` với mock cũ trên `main` sẽ báo lệch field `price` của `Extra` và `reservationFailure` của `Payment` (đúng quy trình contract đi trước mock).
+- **Checked:**
+  - Kiểm tra `08-jobs.md:242`: đã đặt `J-GS-1024-shoot` thành `"status": "done"`, nên điều kiện `R19` khớp liền mạch với chuỗi ví dụ `08` → `09`.
+  - Kiểm tra `git diff --stat` và `git status -sb`: chỉ sửa đúng 4 file contract của TV2, `brief.md` và `AI-LOG.md`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV2] 18. Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant, Node.js (built-in modules).
+- **Request:** `brief.md` mục 18. Trên nhánh `mock/tv2-po-updates` (tách từ `contract/tv2-po-updates`), cập nhật mock của TV2 theo các mục `R04`, `R05`, `R08`, `R09`, `R10`, `R19` và kiểm tra kỹ toàn bộ `contract-check` lẫn các ca đối chiếu.
+- **Changed:**
+  - `mock/data/extras.json` (**R10**): bỏ trường `price` khỏi `ex-makeup` và `ex-costume`.
+  - `mock/lib/reminders.mjs` (file mới — **R04, R05**): tách các hàm dùng chung `buildReminderPayload`, `ensureBookingReminder`, `recalculateBookingReminders` (tính lại nhắc `queued` theo mốc mới, giữ lịch sử `sent`, tránh trùng) và `stopBookingReminders` (ngừng nhắc `queued` khi hủy, giữ lịch sử `sent`) để bàn giao cho TV3 gọi trong `admin-bookings.mjs`.
+  - `mock/routes/payments.mjs` (**R08, R09, R19**):
+    - Thêm `reservationFailure: null` vào mọi object `payment`.
+    - `R08`: khi cọc `success` nhưng `checkClash` thấy trùng → giữ `payment.status = "succeeded"`, `failureReason = null`, gán `reservationFailure = { message, clashes }`, đặt `booking.paymentStatus = "deposit_paid"`, giữ `booking.status = "awaiting_deposit"`, không tạo job/reminder.
+    - `R09`: kiểm tra lại `booking.status` (`cancelled`/`completed` → `409`) và `booking.paymentStatus` (khoản đã thu → `409`) tại `POST /api/test-gateway/:paymentId`.
+    - `R19`: yêu cầu toàn bộ job `shoot` của booking trong `db.jobs` đạt `status === "done"` trước khi tạo hoặc áp dụng thanh toán `remaining` (`409` nếu chưa xong).
+  - `brief.md` mục 18 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa `docs/api/`, `client/`, `tools/`, `mock/server.mjs` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001` toàn bộ 14 file (`01` → `13`): **102/102 examples PASS, 0 FAIL, 39/39 endpoints**.
+  - Chạy kiểm thử handler in-memory cho đủ 5 nhóm ca đối chiếu: `R10` (extras không `price`), `R08 / A07-paid-clash` (payment `succeeded` + `deposit_paid` + `awaiting_deposit` + `reservationFailure` + không sinh job/reminder + retry `409`), `R09 / A08` (chặn payment pending thứ hai `409` và chặn callback sau khi booking `cancelled` `409`), `R19` (`409` trước `shoot done`, `201` sau `shoot done`), `R04 & R05` (đổi lịch sang `26/10 09:00` sinh nhắc `queued` lúc `2026-10-25T09:00:00+07:00`, hủy bỏ nhắc `queued` và giữ nguyên lịch sử `sent`).
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV1] 19. G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview — 23/11/2026
 
 - **Tool:** Antigravity Assistant.
 - **Request:** `brief.md` mục 16. Tách nhánh `feat/g8-staff` từ `fix/s1-tv1-plan-alignment` (sau khi push và mở PR #17 gửi Nhựt review), triển khai đầy đủ màn G8 (`/staff/jobs` và `/staff/jobs/:id`) theo `docs/api/08-jobs.md`, `05-bookings.md`, `09-gallery.md` và kế hoạch 23/11 (`R02`, `R06`, `R11`, `R12`). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.
