@@ -34,6 +34,9 @@ export default [
       if (!user || user.password === null || user.password !== password) {
         return fail(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không đúng');
       }
+      if (user.active === false) {
+        return fail(403, 'FORBIDDEN', 'Tài khoản đã bị khóa');
+      }
       return { status: 200, body: { token: `token-${user.id}`, user: publicUser(user) } };
     },
   },
