@@ -11,7 +11,9 @@
 
 - Starts empty: `[]`.
 - Before a customer has any booked shoot, `GET /api/reminders` returns `{"reminders": []}`.
-- When a deposit succeeds (`06-payments.md`), the mock creates a reminder scheduled `db.settings.reminderHoursBefore` hours before the earliest milestone of the booking, with `emailStatus: "sent"` (in PA#4, the server sends the real e-mail).
+- When a deposit succeeds and holds the slot (`06-payments.md`), the mock creates a reminder scheduled `db.settings.reminderHoursBefore` hours before the earliest milestone of the booking, with `emailStatus: "sent"` (in PA#4, the server sends the real e-mail).
+- **Rescheduling (`10-admin-bookings.md`):** any `queued` reminder for that booking is recalculated from the earliest milestone of the new schedule minus `db.settings.reminderHoursBefore` (updating `sendAt` and `text`); existing `sent` history is preserved and new schedule version reminders avoid duplicate sends.
+- **Cancellation (`10-admin-bookings.md`):** any `queued` reminder for that booking is stopped and will not be sent; existing `sent` history is preserved. No status beyond `queued`, `sent`, `failed` is added.
 
 ---
 
@@ -99,3 +101,4 @@ Content-Type: application/json
 ## Changes
 
 - 2026-11-20: initial version: customer reminders list with emailStatus. (TV2)
+- 2026-11-23: documented reminder recalculation on reschedule (R04) and stopping queued reminders on cancel while preserving sent history (R05). (TV2)
