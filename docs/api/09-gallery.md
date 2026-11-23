@@ -118,7 +118,54 @@ Content-Type: application/json
 }
 ```
 
-3. Linh selects 30 photos and saves:
+3. Error — Linh tries to send a photo ID that does not belong to `GS-1024` (while booking is `deposit_paid`):
+
+```http
+PUT /api/bookings/GS-1024/selection
+Authorization: Bearer {{token:linh}}
+Content-Type: application/json
+
+{"photoIds": ["ph-999"]}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "VALIDATION",
+    "message": "Dữ liệu chưa hợp lệ",
+    "fields": {
+      "photoIds": "Ảnh ph-999 không thuộc booking GS-1024"
+    },
+    "details": null
+  }
+}
+```
+
+4. Linh saves an initial selection before paying the remaining 70%:
+
+```http
+PUT /api/bookings/GS-1024/selection
+Authorization: Bearer {{token:linh}}
+Content-Type: application/json
+
+{"photoIds": ["ph-01", "ph-02"]}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "bookingCode": "GS-1024",
+  "limit": 30,
+  "selectedIds": ["ph-01", "ph-02"]
+}
+```
+
+5. Linh updates her selection to 30 photos before paying the remaining 70% (PO #9 allows editing until `paid_in_full`):
 
 ```http
 PUT /api/bookings/GS-1024/selection
@@ -155,7 +202,7 @@ Content-Type: application/json
 }
 ```
 
-4. Linh pays the remaining 70% (`PAY-3`, endpoints defined in `06-payments.md`):
+6. Linh pays the remaining 70% (`PAY-3`, endpoints defined in `06-payments.md`):
 
 ```http
 POST /api/bookings/GS-1024/payments
@@ -177,6 +224,7 @@ Content-Type: application/json
     "amount": 1260000,
     "status": "pending",
     "failureReason": null,
+    "reservationFailure": null,
     "createdAt": "…"
   },
   "redirectUrl": "/test-gateway/PAY-3"
@@ -217,6 +265,7 @@ Content-Type: application/json
     "amount": 1260000,
     "status": "succeeded",
     "failureReason": null,
+    "reservationFailure": null,
     "createdAt": "…"
   },
   "booking": {
@@ -227,7 +276,31 @@ Content-Type: application/json
 }
 ```
 
-5. Error — Linh tries to read Khoa's booking photos (`GS-1022`):
+7. Error — Linh tries to change her selection after paying the remaining 70% (`paid_in_full` locks selection):
+
+```http
+PUT /api/bookings/GS-1024/selection
+Authorization: Bearer {{token:linh}}
+Content-Type: application/json
+
+{"photoIds": ["ph-01", "ph-02"]}
+```
+
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "CONFLICT",
+    "message": "Không thể thay đổi lựa chọn ảnh sau khi đã thanh toán 70% còn lại",
+    "fields": {},
+    "details": null
+  }
+}
+```
+
+8. Error — Linh tries to read Khoa's booking photos (`GS-1022`):
 
 ```http
 GET /api/bookings/GS-1022/photos
@@ -251,3 +324,4 @@ Content-Type: application/json
 ## Changes
 
 - 2026-11-20: initial version: booking photos, 30-photo selection limit, remaining 70% payment chain. (TV2)
+- 2026-11-23: aligned `PAY-3` with `reservationFailure` field, added unknown photo ID (`400`) and post-70%-payment selection lock (`409`) examples (PO #9). (TV2)

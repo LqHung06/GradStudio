@@ -673,7 +673,46 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Phụ thuộc:** Tôi cần các commit contract/mock TV3 được tích hợp vào main trước khi nối đổi/hủy/thay thế. Kiệt cần bàn giao R08 và helper/schema reminders; Hưng cần chốt ánh xạ nhiều ca cùng loại/thêm-bớt loại ca và R06. Sau khi main có tiền đề, tôi phải đọc lại shared shapes và hooks, triển khai bốn route, rồi kiểm tra trên bản build theo brief. R14 chưa hoàn thành luồng nào trong lượt này.
 - **Commits:** Tôi commit từng file với author/committer Lê Công Minh Nhựt <lecongminhnhut6533@gmail.com>, dùng cấu hình từng lệnh: brief mục 16 cabf2cb; FRONTEND 2a17ebd. Tôi giữ nguyên các chỉnh định dạng khác phát sinh trong brief ở working tree, không đưa chúng vào commit task. Tôi không push, mở PR, merge nhánh khác, amend hoặc viết lại lịch sử.
 
-### [TV1] 17. G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin) — 23/11/2026
+### [TV2] 17. Contract S2: cập nhật 02-catalog, 06-payments, 07-reminders, 09-gallery theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 17. Trên nhánh `contract/tv2-po-updates` (tách từ `main` `37da2bf`), cập nhật 4 file contract của TV2 theo các quyết định PO và quy ước nhóm mới chốt (`R04`, `R05`, `R08`, `R09`, `R10`, `R19`), ghi `## Changes` ở cuối mỗi file.
+- **Changed:**
+  - `docs/api/02-catalog.md`: bỏ trường `price` khỏi `Extra` và ví dụ `GET /api/extras` (PO #6 / `R10`), thêm dòng `## Changes`.
+  - `docs/api/06-payments.md`: thêm `reservationFailure` vào `Payment` (`null` hoặc `{"message", "clashes"}`) cho ca cọc đã thu tiền nhưng trùng giờ (`R08`); ghi rõ kiểm tra lại `booking.status`/`paymentStatus` tại `POST /api/test-gateway/:paymentId` (`R09`); bổ sung điều kiện toàn bộ job `shoot` phải `done` trước khi tạo thanh toán `remaining` (`R19`); cập nhật các ví dụ `PAY-1`/`PAY-2` và thêm dòng `## Changes`.
+  - `docs/api/07-reminders.md`: mô tả cơ chế tính lại nhắc lịch `queued` khi đổi lịch (`R04`) và dừng gửi nhắc `queued` khi hủy booking (`R05`), giữ lịch sử `sent`; thêm dòng `## Changes`.
+  - `docs/api/09-gallery.md`: đồng bộ `reservationFailure: null` cho `PAY-3`, bổ sung ví dụ `400` ảnh không thuộc booking (`ph-999`) và `409` khóa sửa lựa chọn sau khi trả 70% (PO #9); thêm dòng `## Changes`.
+  - `brief.md` mục 17 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Lần viết đầu tiên ở `docs/api/09-gallery.md` đặt ví dụ `ph-999` (`400`) **sau** bước thanh toán `PAY-3` (`paid_in_full`), sẽ khiến mock trả `409` thay vì `400` khi chạy chuỗi tuần tự. Đã dời ví dụ `ph-999` (`400`) và ví dụ sửa lựa chọn trước thanh toán (`200`) lên trước `PAY-3`, chỉ giữ ví dụ khóa sửa (`409`) sau `PAY-3`.
+  - Không đụng tới `mock/`, `client/`, hay contract của TV1/TV3 (`README.md`, `01`, `03`, `04`, `05`, `08`, `10`, `12`, `13`).
+  - Lưu ý: khi TV2 chưa sửa `mock/` (bước mock kế tiếp), chạy `contract-check` với mock cũ trên `main` sẽ báo lệch field `price` của `Extra` và `reservationFailure` của `Payment` (đúng quy trình contract đi trước mock).
+- **Checked:**
+  - Kiểm tra `08-jobs.md:242`: đã đặt `J-GS-1024-shoot` thành `"status": "done"`, nên điều kiện `R19` khớp liền mạch với chuỗi ví dụ `08` → `09`.
+  - Kiểm tra `git diff --stat` và `git status -sb`: chỉ sửa đúng 4 file contract của TV2, `brief.md` và `AI-LOG.md`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV2] 18. Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant, Node.js (built-in modules).
+- **Request:** `brief.md` mục 18. Trên nhánh `mock/tv2-po-updates` (tách từ `contract/tv2-po-updates`), cập nhật mock của TV2 theo các mục `R04`, `R05`, `R08`, `R09`, `R10`, `R19` và kiểm tra kỹ toàn bộ `contract-check` lẫn các ca đối chiếu.
+- **Changed:**
+  - `mock/data/extras.json` (**R10**): bỏ trường `price` khỏi `ex-makeup` và `ex-costume`.
+  - `mock/lib/reminders.mjs` (file mới — **R04, R05**): tách các hàm dùng chung `buildReminderPayload`, `ensureBookingReminder`, `recalculateBookingReminders` (tính lại nhắc `queued` theo mốc mới, giữ lịch sử `sent`, tránh trùng) và `stopBookingReminders` (ngừng nhắc `queued` khi hủy, giữ lịch sử `sent`) để bàn giao cho TV3 gọi trong `admin-bookings.mjs`.
+  - `mock/routes/payments.mjs` (**R08, R09, R19**):
+    - Thêm `reservationFailure: null` vào mọi object `payment`.
+    - `R08`: khi cọc `success` nhưng `checkClash` thấy trùng → giữ `payment.status = "succeeded"`, `failureReason = null`, gán `reservationFailure = { message, clashes }`, đặt `booking.paymentStatus = "deposit_paid"`, giữ `booking.status = "awaiting_deposit"`, không tạo job/reminder.
+    - `R09`: kiểm tra lại `booking.status` (`cancelled`/`completed` → `409`) và `booking.paymentStatus` (khoản đã thu → `409`) tại `POST /api/test-gateway/:paymentId`.
+    - `R19`: yêu cầu toàn bộ job `shoot` của booking trong `db.jobs` đạt `status === "done"` trước khi tạo hoặc áp dụng thanh toán `remaining` (`409` nếu chưa xong).
+  - `brief.md` mục 18 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa `docs/api/`, `client/`, `tools/`, `mock/server.mjs` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001` toàn bộ 14 file (`01` → `13`): **102/102 examples PASS, 0 FAIL, 39/39 endpoints**.
+  - Chạy kiểm thử handler in-memory cho đủ 5 nhóm ca đối chiếu: `R10` (extras không `price`), `R08 / A07-paid-clash` (payment `succeeded` + `deposit_paid` + `awaiting_deposit` + `reservationFailure` + không sinh job/reminder + retry `409`), `R09 / A08` (chặn payment pending thứ hai `409` và chặn callback sau khi booking `cancelled` `409`), `R19` (`409` trước `shoot done`, `201` sau `shoot done`), `R04 & R05` (đổi lịch sang `26/10 09:00` sinh nhắc `queued` lúc `2026-10-25T09:00:00+07:00`, hủy bỏ nhắc `queued` và giữ nguyên lịch sử `sent`).
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV1] 20. G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin) — 23/11/2026
 
 - **Tool:** Antigravity Assistant.
 - **Request:** `brief.md` mục 17. Đẩy PR #21 cho `feat/g8-staff`, kéo `origin/main` (`705d019`, đã có PR #17 `#S1`), tách nhánh `feat/g11-superadmin`, triển khai G11 (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin theo R01). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.

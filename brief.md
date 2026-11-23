@@ -1728,7 +1728,36 @@ Khi xong, báo:
 - Mục brief/AI-LOG đã thêm và git status cuối.
 ```
 
-## 17. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
+## 17. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
+
+Tin nhắn 1 (đọc kế hoạch mới và báo cáo đối chiếu):
+
+```text
+Hiện tại nhóm vừa họp lại, và dựa theo những yêu cầu, những câu trả lời của nhóm Product Owner mà sửa lại kế hoạch và time line, đọc kĩ các file và cho biết công việc hiện tại tôi phải làm
+```
+
+Tin nhắn 2:
+
+```text
+nghĩa là sao, đọc cái báo cáo đối chiếu kế hoạch mã nguồn nó bảo lỗi gì hay sao
+```
+
+Tin nhắn 3 (sau khi tự kéo `main`, cài `npm ci` và tạo nhánh `contract/tv2-po-updates`):
+
+```text
+Giờ hãy đưa ra lệnh để tôi tự chạy terminal đi
+```
+*(Đã chạy thành công trên nhánh `contract/tv2-po-updates` và gửi kết quả terminal để assistant triển khai cập nhật 4 file contract `S2`).*
+
+## 18. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
+
+Tin nhắn 1:
+
+```text
+Triền khai phần mock theo đúng yêu cầu đề và kế hoạch mà nhóm đã đưa ra, tự chạy lệnh kiểm tra kĩ lại và đối chiếu lại xem mock có bị lệch hay thiếu hay dư so với yêu cầu PA3 và kế hoạch nhóm hay không
+```
+
+## 20. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
 
 ```text
 Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g11-superadmin`. Contract và mock cho G11 đã hoàn thiện trên `main` (đã có `PATCH /api/admins/:id` từ Bước #S1). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/12-admins.md`, `docs/api/13-settings.md`, `docs/api/01-auth.md` và mục 5.2, 5.5 (G11), 5.10 (R01) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
