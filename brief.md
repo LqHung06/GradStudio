@@ -1748,3 +1748,11 @@ Tin nhắn 3 (sau khi tự kéo `main`, cài `npm ci` và tạo nhánh `contract
 Giờ hãy đưa ra lệnh để tôi tự chạy terminal đi
 ```
 *(Đã chạy thành công trên nhánh `contract/tv2-po-updates` và gửi kết quả terminal để assistant triển khai cập nhật 4 file contract `S2`).*
+
+## 18. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
+
+Tin nhắn 1:
+
+```text
+Triền khai phần mock theo đúng yêu cầu đề và kế hoạch mà nhóm đã đưa ra, tự chạy lệnh kiểm tra kĩ lại và đối chiếu lại xem mock có bị lệch hay thiếu hay dư so với yêu cầu PA3 và kế hoạch nhóm hay không
+```
