@@ -57,10 +57,10 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/payments/PAY-1/result` | customer | G7, G9 | GET `/api/payments/:id` | after G7 |
 | `/notifications` | customer | G7 | GET `/api/reminders` | |
 | `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
-| `/admin/conversations` | admin | G4 | GET `/api/conversations` | |
-| `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule`, POST `/api/availability/check`, GET `/api/packages`, `/api/extras`, POST `/api/bookings` | |
-| `/admin/bookings` | admin | G10 | GET `/api/bookings` | |
-| `/admin/bookings/GS-1023` | admin | G10 | GET `/api/bookings/:code`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link`, POST `/api/availability/check`, GET `/api/resources` | GS-1024: after G6 |
+| `/admin/conversations` | admin | G4 | GET `/api/conversations` (dự kiến) | Hiện chỉ có placeholder G2, chưa gọi API hội thoại |
+| `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule`, POST `/api/availability/check`, GET `/api/packages`, `/api/extras`, POST `/api/bookings` (dự kiến) | Chưa đăng ký route chi tiết |
+| `/admin/bookings` | admin | G10 | GET `/api/bookings` (dự kiến) | Chưa đăng ký route |
+| `/admin/bookings/GS-1023` | admin | G10 | GET `/api/bookings/:code`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link`, POST `/api/availability/check`, GET `/api/resources` (dự kiến) | Chưa đăng ký route chi tiết; GS-1024 chỉ có sau G6 |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
 | `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
 | `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins` | |
@@ -90,3 +90,22 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 ## 7. Not done
 
 Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
+
+### TV3 — tiền đề R14 ngày 23/11/2026
+
+Sau fetch, main vẫn ở 37da2bf. Contract/mock mới của TV3 nằm trên nhánh cục bộ
+fix/tv3-booking-rules (tới e6909c8), chưa tích hợp vào main. Main vẫn yêu cầu
+proposalId và khách đồng ý lại khi đổi lịch, chặn hủy có jobs bằng 500 và chặn
+booking thay thế trong cùng hội thoại. Do đó chưa triển khai UI R14 theo API cũ;
+không tự merge hoặc sửa mock trong task frontend.
+
+R08 của TV2 cũng chưa có trên main: Payment chưa có reservationFailure. Helper
+tính lại/dừng nhắc chưa được bàn giao. Hưng còn cần thống nhất ánh xạ jobs cho
+nhiều ca cùng loại/thêm-bớt loại ca và chặn Staff ghi sau hủy (R06). Chưa kiểm
+build/luồng Admin/F5/phân quyền/bốn mode/responsive/Console/W3C trong task R14.
+Không dùng kết quả kiểm tra component hoặc mock ở task trước để đánh dấu UI đạt.
+
+Kiểm tra lại trước khi tiếp tục: fetch origin, xác nhận các commit contract/mock
+TV3 đã thuộc main và đọc lại contract 06/07 cho phần TV2 bàn giao. Lệnh đối chiếu:
+`git log main..fix/tv3-booking-rules --oneline` và
+`git merge-base --is-ancestor e6909c8 main` (lượt này trả mã 1).
