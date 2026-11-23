@@ -1757,7 +1757,101 @@ Tin nhắn 1:
 Triền khai phần mock theo đúng yêu cầu đề và kế hoạch mà nhóm đã đưa ra, tự chạy lệnh kiểm tra kĩ lại và đối chiếu lại xem mock có bị lệch hay thiếu hay dư so với yêu cầu PA3 và kế hoạch nhóm hay không
 ```
 
-## 20. [TV2 · 23/11/2026 · Antigravity Assistant] Front end #14b: G1 (Trang chủ, Chi tiết gói) và G3 + G6 phía khách (/chat)
+## 20. [TV1 · 23/11/2026 · Antigravity Assistant] G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview
+
+```text
+Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g8-staff` (tách từ sau Bước #S1 đã có `JOB_STATUS` mới, chặn việc sau hủy 409, và giới hạn upload 5 MiB = 5.242.880 byte). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/08-jobs.md`, `docs/api/05-bookings.md` (GET `/api/bookings/:code`), `docs/api/09-gallery.md` (GET `/api/bookings/:code/photos`) và mục 5.5 (G8) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
+
+Ràng buộc bắt buộc:
+1. Chỉ gọi đúng 6 endpoint đã có trong contract thông qua `client/src/api/client.js` (relative `/api/...`):
+   - `GET /api/jobs` (có query tùy chọn `?status=todo|in_progress|done`)
+   - `GET /api/jobs/:id`
+   - `PATCH /api/jobs/:id`
+   - `POST /api/bookings/:code/previews` (`multipart/form-data`, field `file`)
+   - `GET /api/bookings/:code` (để đọc `booking.status` kiểm tra booking Đã hủy theo R06)
+   - `GET /api/bookings/:code/photos` (hiển thị lưới ảnh preview đã có)
+   KHÔNG sửa `docs/api/`, `mock/`, `tools/`, hay file của TV2/TV3. Không thêm thư viện mới; dùng CSS thuần theo design tokens Blue Theme trong `client/src/styles/`.
+2. Tái sử dụng toàn bộ nền đã có: `Layout`, `RequireRole` (`roles={['staff']}`), `useFetch`, `AsyncState`, `useForm`, `FormField`, `StatusBadge`, `JOB_STATUS`, `JOB_KIND`, `BOOKING_STATUS`, `formatDate`. Không hard-code dữ liệu nghiệp vụ, không import `src/data/fixtures.js`.
+3. Tuân thủ accessibility & responsive: mỗi màn đúng một `<h1>`, heading không nhảy cấp, mọi ô nhập có `<label>`, điều hướng dùng `<Link>`, hành động dùng `<button>`, không cuộn ngang ở 360 / 768 / 1280 px, nút/link đứng riêng cao ≥ 44px ở 360px, trạng thái luôn hiển thị bằng chữ (không chỉ màu).
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước G8 — Staff):
+1. `client/src/api/jobs.js`:
+   - `updateJob(id, { status, note })` gọi `PATCH /api/jobs/:id`.
+   - `uploadBookingPreview(bookingCode, file)` tạo `FormData` gắn field `file` và gọi `POST /api/bookings/:code/previews` (không tự set `Content-Type`).
+2. `client/src/pages/staff/StaffJobsPage.jsx` (`/staff/jobs`):
+   - `<h1>Việc của tôi</h1>`, có bộ lọc trạng thái (`Tất cả`, `Chưa bắt đầu`, `Đang làm`, `Hoàn thành` — đồng bộ query `?status=` gọi `GET /api/jobs` hoặc `GET /api/jobs?status=...`).
+   - Nhóm danh sách việc theo ngày chụp (`formatDate(job.date)`), riêng các việc `edit` (`date: null`) đặt ở nhóm riêng (ví dụ `"Chỉnh ảnh (chưa gắn ngày)"`) ở cuối giống thứ tự API.
+   - Mỗi thẻ/mục việc hiển thị rõ: loại việc (`JOB_KIND`), khung giờ (`start–end` nếu có), phòng (`room?.name` nếu có), khách hàng (`customer.name`), mã booking (`bookingCode`), tên gói (`packageName`), số ảnh preview (`previewCount`), trạng thái bằng `StatusBadge` với `JOB_STATUS` (**Chưa bắt đầu / Đang làm / Hoàn thành**), và `<Link>` **"Xem việc"** tới `/staff/jobs/:id`.
+   - Dùng `AsyncState` cho loading, lỗi kèm nút **Thử lại**, và trạng thái rỗng: `"Bạn chưa có việc nào được giao."` (khi lọc rỗng báo rõ không có việc ở trạng thái đó).
+3. `client/src/pages/staff/StaffJobDetailPage.jsx` (`/staff/jobs/:id`):
+   - Link quay lại `/staff/jobs`. Tải `GET /api/jobs/:id` bằng `useFetch`.
+   - Nếu API trả `404` (việc không tồn tại hoặc của nhân viên khác): hiện rõ `"Không tìm thấy việc này, hoặc việc không được giao cho bạn."` kèm link về `/staff/jobs` (không hiện màn trắng).
+   - Khi có `job`:
+     - `<h1>` dạng `"{Loại việc} · {bookingCode}"` (ví dụ `"Chụp ảnh · GS-1024"`).
+     - Gọi `GET /api/bookings/:code` để đọc trạng thái booking; gọi `GET /api/bookings/:code/photos` (khi `job.kind === 'shoot' || job.kind === 'edit'`) để hiển thị ảnh xem trước hiện có.
+     - Khối chi tiết: khi nào (ngày, giờ hoặc chỉnh ảnh sau chọn), ở đâu (phòng hoặc chưa xếp phòng), làm gì (loại việc, gói dịch vụ), với ai (khách hàng, mã booking), trạng thái hiện tại của việc và của booking.
+     - **Chặn thao tác khi booking Đã hủy (R06):** nếu `booking?.status === 'cancelled'`, giữ nguyên thông tin lịch sử việc, hiển thị thông báo nổi bật **"Booking Đã hủy"** kèm lý do lịch sử chỉ đọc, và khóa toàn bộ form cập nhật trạng thái và form upload preview.
+     - **Form Cập nhật trạng thái** (dùng `useForm` + `FormField`): `<select>` có `<label>` với đúng 3 lựa chọn `todo` (*Chưa bắt đầu*), `in_progress` (*Đang làm*), `done` (*Hoàn thành*), và `<textarea>` ghi chú (≤ 500 ký tự). Gửi `PATCH /api/jobs/:id`, cập nhật trực tiếp từ response `res.job` (không reload trang), hiển thị `<p role="status">Đã cập nhật công việc</p>`, hiển thị lỗi 400 theo field hoặc 409 bằng `role="alert"`.
+     - **Form Thêm ảnh preview** (CHỈ hiển thị khi `job.kind === 'shoot' || job.kind === 'edit'`; ẩn hoàn toàn với việc `makeup`):
+       + `<input type="file" accept="image/jpeg,image/png">` có `<label>` rõ ràng, dòng hướng dẫn `"Chỉ nhận ảnh JPEG hoặc PNG, tối đa 5 MiB (5.242.880 byte)."`
+       + Kiểm tra **trước khi gửi**: bắt buộc chọn file (`"Vui lòng chọn ảnh"`), đúng loại `image/jpeg` hoặc `image/png` (`"Chỉ nhận ảnh JPEG hoặc PNG"`), đúng ngưỡng `file.size <= 5242880` (`"Ảnh tối đa 5 MiB"`). Lỗi hiển thị ngay cạnh ô nhập (`aria-describedby`, `aria-invalid`).
+       + Nếu API trả 400 (`err.fields.file`) hoặc 409 (booking đã hủy), hiển thị đúng lỗi; khóa nút trong khi đang tải lên.
+       + Upload thành công (`201`): hiển thị `<p role="status">Đã có {totalPhotos} ảnh trong booking</p>`, cập nhật `previewCount` trên `job` và tải lại `GET /api/bookings/:code/photos` để hiện lưới ảnh thu nhỏ (mỗi `<img>` có `alt` từ `photo.alt`).
+4. `client/src/routes/staff.jsx`: thay `StaffHomePlaceholder` bằng `StaffJobsPage` (`/staff/jobs`) và thêm route `/staff/jobs/:id` (`StaffJobDetailPage`), cả hai bọc trong `<RequireRole roles={['staff']}>`.
+5. Kiểm tra sau khi viết xong:
+   - `cd client && npm run build` và `git diff --check` (0 lỗi), xác nhận `git diff -- docs/api mock` trống hoàn toàn.
+   - Kiểm tra thực tế trên `vite preview` + mock ở cả 4 chế độ (`normal`, `slow`, `error`, `empty`) với tài khoản `tuan@gradstudio.test` (`J-GS-1022-shoot`, `J-GS-1022-edit`, mở thử việc của `mai` nhận thông báo 404) và `mai@gradstudio.test` (`J-GS-1021-makeup` không hiện form upload), mở trực tiếp `/staff/jobs/J-GS-1022-shoot` và F5.
+```
+
+## 21. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
+
+```text
+Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g11-superadmin`. Contract và mock cho G11 đã hoàn thiện trên `main` (đã có `PATCH /api/admins/:id` từ Bước #S1). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/12-admins.md`, `docs/api/13-settings.md`, `docs/api/01-auth.md` và mục 5.2, 5.5 (G11), 5.10 (R01) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
+
+Ràng buộc bắt buộc:
+1. Chỉ gọi đúng 5 endpoint trong contract thông qua `client/src/api/client.js` (relative `/api/...`):
+   - `GET /api/admins`
+   - `POST /api/admins`
+   - `PATCH /api/admins/:id` (body `{"active": boolean}`)
+   - `GET /api/settings`
+   - `PUT /api/settings`
+   KHÔNG sửa `docs/api/`, `mock/`, `tools/`, hay file của TV2/TV3. Không thêm thư viện mới; dùng CSS thuần theo design tokens Blue Theme trong `client/src/styles/`.
+2. Tái sử dụng toàn bộ nền đã có: `Layout`, `RequireRole` (`roles={['superadmin']}`), `useFetch`, `AsyncState`, `useForm`, `FormField`, `StatusBadge`. Không hard-code dữ liệu nghiệp vụ, không import `src/data/fixtures.js`.
+3. Tuân thủ accessibility & responsive: mỗi màn đúng một `<h1>`, heading không nhảy cấp, mọi input có `<label>`, bảng có `<caption>` và `<th scope="col">`, điều hướng dùng `<Link>`, hành động dùng `<button>`, không cuộn ngang ở 360 / 768 / 1280 px, nút/link đứng riêng cao ≥ 44px ở 360px, trạng thái luôn hiển thị bằng chữ.
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước G11 — Superadmin):
+1. `client/src/api/superadmin.js`:
+   - `createAdmin({ name, email, password })` gọi `POST /api/admins`.
+   - `setAdminActive(id, active)` gọi `PATCH /api/admins/:id` với `{ active }`.
+   - `saveSettings(settings)` gọi `PUT /api/settings`.
+2. `client/src/pages/superadmin/SuperadminAdminsPage.jsx` (`/superadmin/admins`):
+   - `<h1>Tài khoản Admin</h1>`.
+   - Tải danh sách bằng `useFetch('/api/admins')` + `AsyncState` (`emptyMessage="Chưa có tài khoản Admin nào."`).
+   - Bảng danh sách `<table>` có `<caption>Danh sách tài khoản Admin</caption>` và `<th scope="col">` (Họ tên, E-mail, Ngày tạo, Trạng thái, Thao tác). Ở màn hình nhỏ (≤ 767px / 360px), dùng CSS chuyển bảng sang dạng thẻ (mỗi hàng thành card có nhãn `data-label`) để **không cuộn ngang**.
+   - Mỗi dòng hiển thị trạng thái bằng chữ (`Đang hoạt động` / `Đã khóa` qua `StatusBadge`) và nút **Khóa** (khi `active === true`) hoặc **Mở khóa** (khi `active === false`) gọi `PATCH /api/admins/:id`. Khóa nút riêng của dòng đang xử lý, cập nhật trực tiếp dòng đó từ response `{ admin }` (không reload toàn danh sách), báo `<p role="status">` hoặc `role="alert"` nếu lỗi. **Không** thêm sửa thông tin hoặc xóa Admin.
+   - Form **Tạo Admin** (`useForm` + `FormField`): gồm `Họ tên` (`name`: trim 2–80 ký tự), `E-mail` (`email`: đúng định dạng, ≤ 120 ký tự), `Mật khẩu` (`password`: 8–100 ký tự).
+   - Khi submit thành công (`201`): thêm ngay `res.admin` vào cuối bảng (qua `setData`), xóa trắng form (`reset`) và hiện `<p role="status">Đã tạo tài khoản Admin mới</p>`. Khi API trả `409 EMAIL_TAKEN` có `err.fields` (hoặc `400`), gắn thông báo lỗi ngay dưới ô **E-mail** qua `setServerErrors(err.fields)` và giữ nguyên giá trị đã nhập.
+3. `client/src/pages/superadmin/SuperadminSettingsPage.jsx` (`/superadmin/settings`):
+   - `<h1>Cài đặt hệ thống</h1>`.
+   - Tải `GET /api/settings` bằng `useFetch` + `AsyncState`.
+   - Form chỉnh sửa đồng bộ giá trị từ API khi tải xong (`useForm` + `FormField`):
+     + 2 ô `<input type="time">` có `<label>`: **Giờ mở cửa** (`open`, định dạng `HH:mm`) và **Giờ đóng cửa** (`close`, phải sau giờ mở cửa).
+     + 1 ô `<input type="number" min={1} max={168} step={1}>` có `<label>`: **Gửi nhắc lịch trước (giờ)** (`reminderHoursBefore`, số nguyên từ `1` đến `168`, mặc định `24`), kèm ghi chú rõ nhắc lịch gửi qua cả e-mail và tài khoản.
+   - Validate trước khi gửi đúng theo `13-settings.md` và map chính xác lỗi `400` từ API (`openingHours.open`, `openingHours.close`, `reminderHoursBefore`) vào đúng `FormField`.
+   - Lưu thành công (`200`): cập nhật state từ `res.settings` và hiện đúng `<p role="status">Đã lưu cài đặt</p>`.
+4. `client/src/styles/superadmin.css`: CSS thuần dùng design tokens Blue Theme cho bảng→thẻ 360px, form tạo Admin và form cài đặt.
+5. `client/src/routes/superadmin.jsx`: thay `SuperadminHomePlaceholder` bằng `SuperadminAdminsPage` (`/superadmin/admins`) và đăng ký `/superadmin/settings` (`SuperadminSettingsPage`), cả hai bọc trong `<RequireRole roles={['superadmin']}>`.
+6. Kiểm tra sau khi viết xong:
+   - `cd client && npm run build`, `git diff -- docs/api mock` trống, `git diff --check` 0 lỗi.
+   - Kiểm tra trực tiếp trên `vite preview` + `node mock/server.mjs` cả 4 chế độ (`normal`, `slow`, `error`, `empty`), responsive 360 / 768 / 1280 px (0 cuộn ngang, tap target ≥ 44px, 0 lỗi Console):
+     + Đăng nhập `superadmin@gradstudio.test` mở `/superadmin/admins` và `/superadmin/settings` (F5 + mở trực tiếp).
+     + Test luồng **R01**: tạo Admin mới → thử tạo trùng email (`409` hiện dưới ô E-mail) → bấm **Khóa** → đăng xuất → thử đăng nhập bằng Admin vừa khóa (bị từ chối `403 "Tài khoản đã bị khóa"`) → đăng nhập lại Superadmin → bấm **Mở khóa** → đăng xuất → đăng nhập lại bằng Admin mới (thành công `200`).
+     + Test `/superadmin/settings`: thử sai giờ đóng/mở và `0`/`169`/`24.5` giờ (báo lỗi tại field), lưu hợp lệ `07:30–21:00` và `48` giờ (hiện `"Đã lưu cài đặt"`, F5 vẫn còn giá trị mới).
+```
+
+## 22. [TV2 · 23/11/2026 · Antigravity Assistant] Front end #14b: G1 (Trang chủ, Chi tiết gói) và G3 + G6 phía khách (/chat)
 
 Tin nhắn 1:
 

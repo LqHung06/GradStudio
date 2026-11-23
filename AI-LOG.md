@@ -712,23 +712,75 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chạy kiểm thử handler in-memory cho đủ 5 nhóm ca đối chiếu: `R10` (extras không `price`), `R08 / A07-paid-clash` (payment `succeeded` + `deposit_paid` + `awaiting_deposit` + `reservationFailure` + không sinh job/reminder + retry `409`), `R09 / A08` (chặn payment pending thứ hai `409` và chặn callback sau khi booking `cancelled` `409`), `R19` (`409` trước `shoot done`, `201` sau `shoot done`), `R04 & R05` (đổi lịch sang `26/10 09:00` sinh nhắc `queued` lúc `2026-10-25T09:00:00+07:00`, hủy bỏ nhắc `queued` và giữ nguyên lịch sử `sent`).
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
 
-### [TV2] 20. Front end #14b: G1 (Trang chủ, Chi tiết gói) và G3 + G6 phía khách (/chat) (23/11/2026)
+### [TV1] 20. G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview — 23/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 16. Tách nhánh `feat/g8-staff` từ `fix/s1-tv1-plan-alignment` (sau khi push và mở PR #17 gửi Nhựt review), triển khai đầy đủ màn G8 (`/staff/jobs` và `/staff/jobs/:id`) theo `docs/api/08-jobs.md`, `05-bookings.md`, `09-gallery.md` và kế hoạch 23/11 (`R02`, `R06`, `R11`, `R12`). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/src/api/jobs.js` (mới): `updateJob(id, { status, note })` (`PATCH /api/jobs/:id`) và `uploadBookingPreview(bookingCode, file)` (`POST /api/bookings/:code/previews` với `FormData` field `file`).
+  - `client/src/pages/staff/StaffJobsPage.jsx` (mới): màn `/staff/jobs` (`<h1>Việc của tôi</h1>`), bộ lọc trạng thái (`Tất cả`, `Chưa bắt đầu`, `Đang làm`, `Hoàn thành`) đồng bộ query `?status=`, nhóm việc theo ngày chụp (`formatDate`) và nhóm riêng `"Chỉnh ảnh (chưa gắn ngày)"` cho việc `edit`, dùng `AsyncState`, `StatusBadge` (`JOB_STATUS` mới), link `"Xem việc"` tới `/staff/jobs/:id`.
+  - `client/src/pages/staff/StaffJobDetailPage.jsx` (mới): màn `/staff/jobs/:id` (`<h1>{Loại việc} · {bookingCode}</h1>`), xử lý `404` thân thiện (`"Không tìm thấy việc này, hoặc việc không được giao cho bạn."`), đọc trạng thái booking qua `GET /api/bookings/:code` để hiện banner **"Booking Đã hủy"** và khóa cả hai form khi `booking.status === 'cancelled'` (`R06`), form cập nhật trạng thái (`useForm` + `FormField`, 3 nhãn mới `R02`, cập nhật trực tiếp từ response không reload trang), form upload preview chỉ hiện cho `shoot`/`edit` (ẩn với `makeup`), kiểm tra trước khi gửi JPEG/PNG và `file.size <= 5.242.880` byte (`R11`), hiển thị `"Đã có {totalPhotos} ảnh trong booking"` và lưới ảnh thu nhỏ từ `GET /api/bookings/:code/photos`.
+  - `client/src/styles/staff-jobs.css` (mới): CSS thuần dùng design tokens Blue Theme, responsive không cuộn ngang ở 360 / 768 / 1280 px, nút/link cao ≥ 44px.
+  - `client/src/routes/staff.jsx`: thay `StaffHomePlaceholder` bằng `StaffJobsPage` (`/staff/jobs`) và thêm `/staff/jobs/:id` (`StaffJobDetailPage`) bọc trong `<RequireRole roles={['staff']}>`.
+  - `brief.md`: ghi mục 16 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - Ban đầu tạo object `initial` inline trong `useForm(...)` khiến hàm `reset` đổi reference mỗi lần render và dùng class `button-primary` không khớp với hệ class `.button.button-dark` của `base-and-pages.css`; đã tách `INITIAL_STATUS_FORM` / `INITIAL_UPLOAD_FORM` ra hằng số module và đồng bộ sang `button button-dark`.
+  - Script kiểm thử Chrome headless CDP ban đầu giữ tiến trình con không thoát sạch sau khi in xong kết quả PASS; đã dừng sạch tiến trình và kiểm tra các cổng `3001 / 4173 / 9229` đều trống.
+  - Không chỉnh sửa bất kỳ file nào trong `docs/api/`, `mock/`, `tools/`.
+- **Checked:**
+  - `cd client && npm run build`: thành công (`70 modules transformed`), không lỗi import/cú pháp.
+  - `git diff -- docs/api mock`: trống hoàn toàn; `git diff --check`: 0 lỗi.
+  - Kiểm thử trực tiếp trên `npx vite preview --port 4173` + `node mock/server.mjs` qua Google Chrome headless CDP:
+    - **`MOCK_MODE=normal`**: đăng nhập `tuan` vào `/staff/jobs` thấy đủ 2 nhóm ngày (`Thứ Ba, 20/10/2026` và `Chỉnh ảnh (chưa gắn ngày)`), đúng nhãn `Hoàn thành` / `Chưa bắt đầu`; lọc `Chưa bắt đầu` đồng bộ URL `/staff/jobs?status=todo` còn 1 việc; mở trực tiếp + F5 `/staff/jobs/J-GS-1022-shoot` hiện 36 ảnh và trạng thái booking `Đã đặt lịch`; `PATCH /api/jobs/J-GS-1022-edit → 200` cập nhật ngay sang `Đang làm` + thông báo `"Đã cập nhật công việc"`; upload file `.pdf` và `.png` `5 242 881` byte bị chặn ngay trên client (`"Chỉ nhận ảnh JPEG hoặc PNG"`, `"Ảnh tối đa 5 MiB"`, **0 request** tới `/previews`); upload `.png` hợp lệ (`201`) hiện `"Đã có 37 ảnh trong booking"` và tải lại lưới 37 ảnh; Tuấn mở `J-GS-1021-makeup` (`404`) hiện `"Không tìm thấy việc này, hoặc việc không được giao cho bạn."`; Mai mở `J-GS-1021-makeup` hiện đúng chi tiết + form trạng thái và **không** hiện form upload preview.
+    - **Responsive 360 / 768 / 1280 px** (qua CDP `Emulation.setDeviceMetricsOverride`) trên `/staff/jobs` và `/staff/jobs/J-GS-1022-shoot`: `scrollWidth <= innerWidth`, đúng 1 `<h1>`, mọi nút/link trong `<main>` cao ≥ 44px, **0 lỗi Console**.
+    - **`MOCK_MODE=slow`**: hiện `"Đang tải…"` rồi tải xong dữ liệu.
+    - **`MOCK_MODE=error`**: hiện `"Máy chủ đang gặp sự cố, vui lòng thử lại."` kèm nút `Thử lại`.
+    - **`MOCK_MODE=empty`**: hiện `"Bạn chưa có việc nào được giao."`.
+  - *Chưa kiểm tra:* ca hiển thị banner **"Booking Đã hủy"** (khóa cả 2 form trên UI) với booking thật bị hủy đang chờ TV3 hoàn thành `R05` (hủy booking có jobs); kiểm tra W3C Nu HTML Checker thủ công sẽ thực hiện ở mốc M6 cùng TV2.
+- **Commits:** TV1 đọc diff và tự commit sau.
+
+### [TV1] 21. G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin) — 23/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 17. Đẩy PR #21 cho `feat/g8-staff`, kéo `origin/main` (`705d019`, đã có PR #17 `#S1`), tách nhánh `feat/g11-superadmin`, triển khai G11 (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin theo R01). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/src/api/superadmin.js` (mới): `createAdmin` (`POST /api/admins`), `setAdminActive` (`PATCH /api/admins/:id`), `saveSettings` (`PUT /api/settings`).
+  - `client/src/pages/superadmin/SuperadminAdminsPage.jsx` (mới): `<h1>Tài khoản Admin</h1>`, tải danh sách qua `useFetch('/api/admins')` + `AsyncState`, bảng `<table>` có `<caption>` và `<th scope="col">`, hiển thị trạng thái chữ `Đang hoạt động` / `Đã khóa` qua `StatusBadge`, nút `Khóa` / `Mở khóa` khóa riêng dòng đang gửi và cập nhật trực tiếp từ response, form `Tạo Admin` (`useForm` + `FormField`) thêm ngay dòng mới từ `201`, xóa trắng form và map lỗi `409 EMAIL_TAKEN` ngay dưới ô `E-mail` (giữ nguyên giá trị đã nhập).
+  - `client/src/pages/superadmin/SuperadminSettingsPage.jsx` (mới): `<h1>Cài đặt hệ thống</h1>`, tải `GET /api/settings` qua `useFetch` + `AsyncState`, đồng bộ 2 ô `type="time"` (*Giờ mở cửa*, *Giờ đóng cửa*) và ô `type="number"` (*Gửi nhắc lịch trước (giờ)* `1–168`, mặc định `24`), validate theo `13-settings.md`, map lỗi `400` (`openingHours.open`, `openingHours.close`, `reminderHoursBefore`) về đúng `FormField`, hiển thị `<p role="status">Đã lưu cài đặt</p>`.
+  - `client/src/styles/superadmin.css` (mới): CSS thuần theo design tokens Blue Theme, chuyển bảng Admins sang dạng card có `data-label` ở màn hình `<= 767px` để không cuộn ngang.
+  - `client/src/routes/superadmin.jsx`: thay `SuperadminHomePlaceholder` bằng `SuperadminAdminsPage` (`/superadmin/admins`) và đăng ký `/superadmin/settings` (`SuperadminSettingsPage`) bọc `<RequireRole roles={['superadmin']}>`.
+  - `brief.md`: ghi mục 17 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - `useForm.js` mặc định chỉ map `err.fields` khi `err.status === 400`, nên lỗi `409 EMAIL_TAKEN` ở `POST /api/admins` nếu không bắt riêng sẽ rơi vào `submitError`; đã xử lý trong `onSubmit` của `SuperadminAdminsPage.jsx` để gọi `setServerErrors(err.fields)` đưa lỗi về đúng ô `E-mail`.
+  - Ở `SuperadminSettingsPage.jsx`, khóa `openingHours.open` / `openingHours.close` từ API được map sang tên field `open` / `close` giúp HTML ID đơn giản và đồng nhất với client validation.
+  - Lần chạy đầu của script kiểm thử CDP đụng tiến trình mock cũ còn giữ cổng `3001`; đã dọn sạch tiến trình nền, dùng `process.kill(-p.pid)` để đóng sạch mọi tiến trình con và chạy lại toàn bộ bài kiểm thử từ đầu đạt 100%.
+- **Checked:**
+  - `cd client && npm run build`: thành công (`70 modules transformed`, `✓ built in 7.94s`).
+  - `git diff -- docs/api mock`: trống hoàn toàn; `git diff --check`: 0 lỗi; cổng `3001 / 4173 / 9232` sạch sau kiểm thử.
+  - Kiểm thử trực tiếp trên `npx vite preview --port 4173` + `node mock/server.mjs` qua Google Chrome headless CDP:
+    - **`MOCK_MODE=normal`**: đăng nhập `superadmin@gradstudio.test` vào `/superadmin/admins` (`200`), F5 giữ phiên (`GET /api/auth/me → 200`); tạo `Ngô Minh Quân` (`201`) thêm ngay dòng và xóa trắng form; gửi trùng `quan@gradstudio.test` (`409`) hiện `"Email này đã được dùng"` ngay dưới ô E-mail; bấm `Khóa` (`PATCH → 200`) chuyển `Đã khóa` → đăng xuất → thử đăng nhập `quan` bị từ chối (`403 "Tài khoản đã bị khóa"`) → đăng nhập lại `superadmin` bấm `Mở khóa` (`PATCH → 200`) → đăng xuất → đăng nhập lại `quan` thành công (`200` vào `/admin/conversations`); mở thẳng và F5 `/superadmin/settings`, kiểm tra lỗi `20:00 >= 08:00`, `0`, `169`, `24.5` giờ, lưu `07:30–21:00` và `48` giờ (`200`, hiện `"Đã lưu cài đặt"`), F5 giữ nguyên giá trị mới.
+    - **Responsive `360 / 768 / 1280 px`** trên `/superadmin/admins` và `/superadmin/settings`: `scrollWidth <= innerWidth`, đúng 1 `<h1>`, mọi nút/link trong `<main>` cao ≥ 44px, `0` runtime exceptions.
+    - **`MOCK_MODE=slow` / `error` / `empty`**: đều PASS (`"Đang tải…"` → tải xong; lỗi + nút Thử lại ở cả 2 trang; `"Chưa có tài khoản Admin nào."`).
+  - *Chưa kiểm tra:* kiểm tra W3C Nu HTML Checker thủ công (thuộc mốc M6); cập nhật tổng hợp `FRONTEND.md` (mục Routes / Not done) và `SELF_ASSESSMENT_REPORT.md` làm ở bước tổng hợp riêng.
+- **Commits:** TV1 đọc diff và tự commit sau.
+
+### [TV2] 22. Front end #14b: G1 (Trang chủ, Chi tiết gói) và G3 + G6 phía khách (/chat) (23/11/2026)
 
 - **Tool:** Antigravity Assistant, React 19, Vite 7.
-- **Request:** `brief.md` mục 20. Trên nhánh `feat/g1-g3-customer` (tách từ `mock/tv2-po-updates` đã có đầy đủ `main` + mock S2), triển khai G1 (`/`, `/packages/:id`) và G3 + G6 phía khách (`/chat`) nối toàn bộ API theo contract.
+- **Request:** `brief.md` mục 22. Trên nhánh `feat/g1-g3-customer` (tách từ `mock/tv2-po-updates` đã có đầy đủ `main` + mock S2), triển khai G1 (`/`, `/packages/:id`) và G3 + G6 phía khách (`/chat`) nối toàn bộ API theo contract.
 - **Changed:**
   - `client/src/styles/customer-pages.css` (file mới): CSS thuần dùng bộ token Blue Theme và thang `--space-*`, dùng `--font-display-vi: 'Cambria', 'Times New Roman', Georgia, serif` để dấu tiếng Việt hiển thị sắc nét trên Windows, không `!important`, không khung chat nổi, không thanh cuộn lồng nhau, tap target ≥44px.
   - `client/src/pages/public/HomePage.jsx` (file mới — **G1**): thay trang tạm ở `/`, gồm 6 mục có `<h2>` và `<AsyncState>` (`GET /api/services`, `/api/packages`, `/api/extras`, `/api/portfolio`, `/api/reviews` + quy trình 4 bước *"Đặt cọc 30% để giữ lịch"*), bỏ `FloatingChat`, không hiển thị giá riêng cho extras, không import `fixtures.js`.
   - `client/src/pages/public/PackageDetailPage.jsx` (file mới — **G1**): màn `/packages/:id` gọi `GET /api/packages/:id` và `GET /api/extras`, xử lý `404` có thông báo rõ và nút quay lại trang chủ, hiển thị giá trọn gói, cọc 30%, còn lại 70%.
   - `client/src/pages/customer/CustomerChatPage.jsx` (file mới — **G3 + G6 phía khách**): màn `/chat` tích hợp `<ChatThread>` và `<ProposalCard>` của TV3 qua `renderProposal`; gọi `GET /api/conversations`, `POST /api/conversations`, `GET /api/conversations/:id`, `POST /api/conversations/:id/messages` (tin nhắn thường và form yêu cầu đặt lịch dùng `useForm` + `FormField` + `<fieldset>`/`<legend>` cho extras, không chặn ngày quá khứ), và `PATCH /api/conversations/:id/proposals/:proposalId` (`Đồng ý giờ này` / `Từ chối` với `{ decision }`), cập nhật trực tiếp từ response API và ghi rõ chưa giữ lịch khi mới đồng ý giờ.
   - `client/src/routes/public.jsx` và `client/src/routes/customer.jsx`: nối `/`, `/packages/:id`, `/chat` (`RequireRole roles={['customer']}`).
-  - `brief.md` mục 20 và `AI-LOG.md` mục này (đồng thời chỉnh lại thứ tự 16–20 cho hết trùng hai mục 15).
+  - `brief.md` mục 22 và `AI-LOG.md` mục này (giữ nguyên toàn bộ mục G8, G11 của TV1 và đánh số liền mạch 15–22).
 - **Rejected / lỗi phát hiện:**
   - Khi rà lại `PackageDetailPage.jsx`, phát hiện thẻ `<h1>` ban đầu đặt bên trong nhánh `{pkg && (...)}` nên lúc đang tải/lỗi sẽ thiếu `<h1>`. Đã đưa `<h1>` lên cố định trong khung trang để mọi trạng thái đều có đúng một `<h1>`.
   - Khi xem trực quan bản build trên Windows, phát hiện 2 lỗi giao diện: (1) font `Georgia` kèm `letter-spacing: -0.035em` làm vỡ dấu tiếng Việt 2 dấu (`ắ`, `ố`, `ấ`, `ử`), đã chuyển tiêu đề TV2 sang `'Cambria', 'Times New Roman', Georgia, serif` với `letter-spacing: -0.015em`; (2) class `.process-grid` trùng rule PA#2 trong `base-and-pages.css` làm thẻ Bước 01–04 bị chia 3 cột chật, đã đổi tên sang `.journey-steps-grid` / `.journey-step-card`.
   - Không sửa `docs/api/`, `mock/`, file nền của TV1 hay `components/chat/` của TV3; không thêm dependency.
 - **Checked:**
-  - `cd client && npm run build`: **PASS** (73 modules, built in 2.58s sau khi sửa font và layout, 0 lỗi).
+  - `cd client && npm run build`: **PASS** sau khi gộp `origin/main` (gồm G8, G11 của TV1 và G1, G3/G6 của TV2), 0 lỗi.
   - Kiểm tra trực quan trên `http://localhost:4173`: xác nhận dấu tiếng Việt sắc nét và trạng thái lỗi `AsyncState` + nút **Thử lại** hoạt động khi mock chưa chạy.
   - Kiểm tra tĩnh (`Select-String`) trên toàn bộ file mới/sửa của TV2: 0 `localhost`, 0 `fixtures.js`, 0 `!important`, 0 `href="#"`, 0 `position: fixed`.
   - `git diff -- docs/api mock`: trống.
