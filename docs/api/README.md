@@ -407,16 +407,12 @@ The examples of all files run in this order on one freshly started mock. Every f
    - Selecting 31 photos gives **400**; selecting 30 gives **200**.
    - Linh pays the remaining 70% (`PAY-3`, gateway `success`): `paid_in_full`.
 10. **`10-admin-bookings`:**
-    - Thảo proposes rescheduling GS-1023 to 24/10 09:00 with Mai in `c-han` → **409 `CLASH`**.
-    - Thảo proposes 25/10 09:00 in `c-han` → **201**, proposal `p-3`.
-    - Thảo sends `PATCH /api/bookings/GS-1023` with `{"proposalId": "p-3"}` before Hân accepts → **409 `CONFLICT`**.
-    - Hân accepts `p-3` in `c-han`.
-    - Thảo applies `p-3` again with `PATCH /api/bookings/GS-1023` → **200**.
-    - Thảo cancels GS-1023.
-    - Thảo sets the final link of GS-1024.
-    - *(Note: per PO #5 and 23/11 plan R03/R05, TV3 will update `10-admin-bookings.md` to direct rescheduling without customer re-acceptance and cancelling booked bookings with jobs; `Payment.reservationFailure` in `06-payments.md` is owned by TV2 per R08.)*
+    - Thảo PATCHes GS-1023 with date/items for 24/10 09:00 → **409 CLASH**, no mutation.
+    - Thảo PATCHes date/items for 25/10 09:00 → **200**, no customer re-acceptance (G10, PO).
+    - Thảo cancels GS-1023 and sets the final link of GS-1024.
+    - Supplemental examples: repeat cancel → 409; propose a fresh p-3 after cancellation, Hân accepts (G6), create replacement GS-1025 in c-han. This does not change GS-1024.
+    - Payment.reservationFailure remains a TV2 handoff (R08).
 
-    A proposal refused with 409 gets no id, so the next id after `p-2` is `p-3`.
 11. **`11-receive`:** Linh receives the photos of GS-1024; the booking becomes `completed`.
 12. **`12-admins`, `13-settings`:** the Superadmin lists, creates, locks/unlocks Admins (verifying locked sign-in refusal `403`, locked token refusal `401`, and unlocked sign-in `200`), then reads and saves the settings.
 
@@ -456,7 +452,7 @@ The mock is **lenient**. It refuses only what the flow needs to show:
 | Locked Admin signing in | `403 FORBIDDEN` (`"Tài khoản đã bị khóa"`); existing token on protected endpoints → `401 UNAUTHENTICATED` |
 | A staff member or room is busy | `409 CLASH` |
 | Creating a booking before the customer accepted the proposal | `409` |
-| Applying a reschedule before the customer accepted the proposal | `409` |
+| Rescheduling cancelled/completed, or cancelling again | `409` |
 | Updating a job or uploading previews for a `cancelled` booking | `409 CONFLICT` |
 | Uploading a preview larger than 5 MiB (`5 242 880` bytes of file content) or wrong file type | `400 VALIDATION` |
 | Selecting more photos than the package allows | `400` |
@@ -466,6 +462,8 @@ The mock is **lenient**. It refuses only what the flow needs to show:
 The mock does not invent other rules.
 
 ## Changes
+
+- 2026-11-23: TV3 sync only: direct G10 date/items (PO); replacement after cancellation and one-VND deposit rounding (group choices, plan 2.7). File 03 appends a new c-1 after the canonical proposal chain.
 
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 

@@ -114,22 +114,21 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
 
-### TV3 — tiền đề R14 ngày 23/11/2026
 
-Sau fetch, main vẫn ở 37da2bf. Contract/mock mới của TV3 nằm trên nhánh cục bộ
-fix/tv3-booking-rules (tới e6909c8), chưa tích hợp vào main. Main vẫn yêu cầu
-proposalId và khách đồng ý lại khi đổi lịch, chặn hủy có jobs bằng 500 và chặn
-booking thay thế trong cùng hội thoại. Do đó chưa triển khai UI R14 theo API cũ;
-không tự merge hoặc sửa mock trong task frontend.
+### TV3: phần còn chờ sau sửa nghiệp vụ 23/11/2026
 
-R08 của TV2 cũng chưa có trên main: Payment chưa có reservationFailure. Helper
-tính lại/dừng nhắc chưa được bàn giao. Hưng còn cần thống nhất ánh xạ jobs cho
-nhiều ca cùng loại/thêm-bớt loại ca. R06 chặn Staff ghi sau hủy đã có trên main
-5061b7d được đồng bộ khi giải quyết conflict; quy tắc đó được giữ nguyên. Build sau khi đồng bộ main thành công; chưa kiểm
-luồng Admin/F5/phân quyền/bốn mode/responsive/Console/W3C trong task R14.
-Không dùng kết quả kiểm tra component hoặc mock ở task trước để đánh dấu UI đạt.
+R04 và phần ngừng nhắc của R05 chưa tích hợp: chờ TV2 bàn giao helper chuẩn bị thay đổi reminders cùng schema phiên bản lịch/dừng nhắc chưa gửi (contract 07). Hiện chỉ có ensureBookingReminder nội bộ payments. Chờ TV1 quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca; tạm trả 409 không ghi dữ liệu cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy đã được TV1 bàn giao qua main; bộ hồi quy TV3 kiểm tra lại như gate bắt buộc sau khi đồng bộ. R14 giao diện Admin không nằm trong task. Kiểm tra hồi quy TV3: `node --test tools/tv3-booking-rules.test.mjs`; ca TODO thể hiện phần bàn giao còn thiếu, không tính là PASS.
 
-Kiểm tra lại trước khi tiếp tục: fetch origin, xác nhận các commit contract/mock
-TV3 đã thuộc main và đọc lại contract 06/07 cho phần TV2 bàn giao. Lệnh đối chiếu:
-`git log main..fix/tv3-booking-rules --oneline` và
-`git merge-base --is-ancestor e6909c8 main` (lượt này trả mã 1).
+### TV3 — trạng thái R14 sau khi PR #18 vào main
+
+PR #18 đã được tích hợp vào main tại deb7884: contract/mock mới cho đổi lịch
+trực tiếp, hủy giữ lịch sử và booking thay thế đã có. Điều kiện thiếu backend
+được ghi ở lần kiểm tra ban đầu của task R14 nay đã được gỡ.
+
+Giao diện R14 vẫn chưa triển khai: /admin/conversations chỉ là placeholder;
+chi tiết hội thoại, danh sách và chi tiết booking chưa đăng ký. Không dùng
+kết quả kiểm tra mock hoặc build để kết luận các luồng Admin đã hoàn thành.
+R08/reservationFailure và helper/schema reminders của TV2 còn chờ bàn giao;
+Hưng cần chốt ánh xạ jobs cho nhiều ca cùng loại/thêm-bớt loại ca. R06 đã có
+trên main và được giữ nguyên. Cần triển khai rồi nghiệm thu bốn route trên
+bản build theo brief mục 16; chưa có kết quả flow/F5/responsive/W3C của R14.

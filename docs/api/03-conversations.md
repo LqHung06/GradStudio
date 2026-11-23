@@ -88,12 +88,12 @@ Content-Type: application/json
 |---|---|---|---|
 | `text` | string | yes | 1–1000 characters; non-blank |
 
-- **201 Created:** `{conversation: ConversationDetail}`, with the first text Message, unanswered status, bookingCode and acceptedProposalId null. Exact new conversation ID allocation is not specified by README; confirm with Hưng before a success fixture is added.
+- **201 Created:** `{conversation: ConversationDetail}`, with the first text Message, unanswered status, bookingCode and acceptedProposalId null. IDs are c-1, c-2, …: maximum numeric suffix among existing c-<digits> IDs plus one (c-linh/c-han do not participate). The owner comes from the token. topic is the first text; the first message, lastMessage and updatedAt share one timestamp. No one-conversation-per-customer restriction. Validation failures consume no IDs.
 - **Errors:** inherited 401/403/500; 400 VALIDATION with fields.text. No resource lookup or state conflict, so no 404/409.
 
 ### Example
 
-Only a validation failure is executed here: no conversation or message ID is consumed and c-linh remains the main thread.
+The validation example consumes no ID. The successful create runs after the main c-linh chain below, preserving its message/proposal IDs.
 
 ```http
 POST /api/conversations
@@ -376,8 +376,8 @@ Content-Type: application/json
 | `note` | string | no | Proposed 0–1000 characters; default empty string |
 
 - **201 Created:** `{proposal: Proposal, message: Message}`; the proposal is pending, and a studio Message of type proposal is appended. Its text is the proposal note; request is null. This does not hold a slot.
-- If bookingCode exists, this is a reschedule proposal for that booking. Check clashes ignoring that booking. Acceptance alone never changes its schedule.
-- **Errors:** inherited 401/403/500; 404 NOT_FOUND for missing conversation; 400 VALIDATION for date, items, items.N.kind/start/end/staffId/roomId or note (unknown resource IDs are field errors); 409 CLASH with clashes and suggestions in error.details; 409 CONFLICT for a linked completed/cancelled booking. A failed proposal allocates neither proposal nor message ID.
+- A proposal is for G5/G6 booking creation, including a replacement after cancellation; G10 changes date/items directly. Check clashes ignoring a linked booking where applicable. Acceptance alone never changes a booking schedule.
+- **Errors:** inherited 401/403/500; 404 NOT_FOUND for missing conversation; 400 VALIDATION for date, items, items.N.kind/start/end/staffId/roomId or note (unknown resource IDs are field errors); 409 CLASH with clashes and suggestions in error.details; 409 CONFLICT for a linked completed booking. A failed proposal allocates neither proposal nor message ID.
 
 ### Examples
 
@@ -861,6 +861,29 @@ Content-Type: application/json
 }
 ```
 
+## Replacement after cancellation
+
+PO: proposals settle G5/G6 before creating a booking; G10 reschedules directly via PATCH booking, without another customer decision. Group choice: a cancelled linked booking permits a new proposal and acceptance for a replacement in the same conversation; completed remains 409 CONFLICT. Cancellation keeps the conversation scheduled. Proposals already present at cancellation cannot create its replacement; create a new proposal afterwards and obtain customer acceptance. Existing proposal responses and decision body stay unchanged.
+
+### Successful new conversation (after the main chain)
+
+```http
+POST /api/conversations
+Authorization: Bearer {{token:linh}}
+Content-Type: application/json
+
+{"text":"Tôi muốn tư vấn một lịch chụp mới"}
+```
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{"conversation":{"id":"c-1","customer":{"id":"u-linh","name":"Linh"},"topic":"Tôi muốn tư vấn một lịch chụp mới","status":"unanswered","lastMessage":{"text":"Tôi muốn tư vấn một lịch chụp mới","at":"…"},"bookingCode":null,"updatedAt":"…","messages":[{"id":"m-7","from":"customer","author":{"id":"u-linh","name":"Linh"},"type":"text","text":"Tôi muốn tư vấn một lịch chụp mới","request":null,"proposal":null,"at":"…"}],"acceptedProposalId":null}}
+```
+
 ## Changes
+
+- 2026-11-23: R15: numeric conversation IDs and executable 201 (group implementation choice, plan 2.7); R07: new proposals after cancellation (group choice), G10 direct changes (PO, plan 2.5).
 
 - 2026-11-20: first version: six endpoints, booking request, clash, decline p-1 and accept p-2; shared objects unchanged. Owner: TV3 Lê Công Minh Nhựt (24120211).
