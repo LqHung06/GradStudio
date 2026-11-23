@@ -1756,3 +1756,50 @@ Tin nhắn 1:
 ```text
 Triền khai phần mock theo đúng yêu cầu đề và kế hoạch mà nhóm đã đưa ra, tự chạy lệnh kiểm tra kĩ lại và đối chiếu lại xem mock có bị lệch hay thiếu hay dư so với yêu cầu PA3 và kế hoạch nhóm hay không
 ```
+
+## 19. [TV1 · 23/11/2026 · Antigravity Assistant] G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview
+
+```text
+Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g8-staff` (tách từ sau Bước #S1 đã có `JOB_STATUS` mới, chặn việc sau hủy 409, và giới hạn upload 5 MiB = 5.242.880 byte). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/08-jobs.md`, `docs/api/05-bookings.md` (GET `/api/bookings/:code`), `docs/api/09-gallery.md` (GET `/api/bookings/:code/photos`) và mục 5.5 (G8) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
+
+Ràng buộc bắt buộc:
+1. Chỉ gọi đúng 6 endpoint đã có trong contract thông qua `client/src/api/client.js` (relative `/api/...`):
+   - `GET /api/jobs` (có query tùy chọn `?status=todo|in_progress|done`)
+   - `GET /api/jobs/:id`
+   - `PATCH /api/jobs/:id`
+   - `POST /api/bookings/:code/previews` (`multipart/form-data`, field `file`)
+   - `GET /api/bookings/:code` (để đọc `booking.status` kiểm tra booking Đã hủy theo R06)
+   - `GET /api/bookings/:code/photos` (hiển thị lưới ảnh preview đã có)
+   KHÔNG sửa `docs/api/`, `mock/`, `tools/`, hay file của TV2/TV3. Không thêm thư viện mới; dùng CSS thuần theo design tokens Blue Theme trong `client/src/styles/`.
+2. Tái sử dụng toàn bộ nền đã có: `Layout`, `RequireRole` (`roles={['staff']}`), `useFetch`, `AsyncState`, `useForm`, `FormField`, `StatusBadge`, `JOB_STATUS`, `JOB_KIND`, `BOOKING_STATUS`, `formatDate`. Không hard-code dữ liệu nghiệp vụ, không import `src/data/fixtures.js`.
+3. Tuân thủ accessibility & responsive: mỗi màn đúng một `<h1>`, heading không nhảy cấp, mọi ô nhập có `<label>`, điều hướng dùng `<Link>`, hành động dùng `<button>`, không cuộn ngang ở 360 / 768 / 1280 px, nút/link đứng riêng cao ≥ 44px ở 360px, trạng thái luôn hiển thị bằng chữ (không chỉ màu).
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước G8 — Staff):
+1. `client/src/api/jobs.js`:
+   - `updateJob(id, { status, note })` gọi `PATCH /api/jobs/:id`.
+   - `uploadBookingPreview(bookingCode, file)` tạo `FormData` gắn field `file` và gọi `POST /api/bookings/:code/previews` (không tự set `Content-Type`).
+2. `client/src/pages/staff/StaffJobsPage.jsx` (`/staff/jobs`):
+   - `<h1>Việc của tôi</h1>`, có bộ lọc trạng thái (`Tất cả`, `Chưa bắt đầu`, `Đang làm`, `Hoàn thành` — đồng bộ query `?status=` gọi `GET /api/jobs` hoặc `GET /api/jobs?status=...`).
+   - Nhóm danh sách việc theo ngày chụp (`formatDate(job.date)`), riêng các việc `edit` (`date: null`) đặt ở nhóm riêng (ví dụ `"Chỉnh ảnh (chưa gắn ngày)"`) ở cuối giống thứ tự API.
+   - Mỗi thẻ/mục việc hiển thị rõ: loại việc (`JOB_KIND`), khung giờ (`start–end` nếu có), phòng (`room?.name` nếu có), khách hàng (`customer.name`), mã booking (`bookingCode`), tên gói (`packageName`), số ảnh preview (`previewCount`), trạng thái bằng `StatusBadge` với `JOB_STATUS` (**Chưa bắt đầu / Đang làm / Hoàn thành**), và `<Link>` **"Xem việc"** tới `/staff/jobs/:id`.
+   - Dùng `AsyncState` cho loading, lỗi kèm nút **Thử lại**, và trạng thái rỗng: `"Bạn chưa có việc nào được giao."` (khi lọc rỗng báo rõ không có việc ở trạng thái đó).
+3. `client/src/pages/staff/StaffJobDetailPage.jsx` (`/staff/jobs/:id`):
+   - Link quay lại `/staff/jobs`. Tải `GET /api/jobs/:id` bằng `useFetch`.
+   - Nếu API trả `404` (việc không tồn tại hoặc của nhân viên khác): hiện rõ `"Không tìm thấy việc này, hoặc việc không được giao cho bạn."` kèm link về `/staff/jobs` (không hiện màn trắng).
+   - Khi có `job`:
+     - `<h1>` dạng `"{Loại việc} · {bookingCode}"` (ví dụ `"Chụp ảnh · GS-1024"`).
+     - Gọi `GET /api/bookings/:code` để đọc trạng thái booking; gọi `GET /api/bookings/:code/photos` (khi `job.kind === 'shoot' || job.kind === 'edit'`) để hiển thị ảnh xem trước hiện có.
+     - Khối chi tiết: khi nào (ngày, giờ hoặc chỉnh ảnh sau chọn), ở đâu (phòng hoặc chưa xếp phòng), làm gì (loại việc, gói dịch vụ), với ai (khách hàng, mã booking), trạng thái hiện tại của việc và của booking.
+     - **Chặn thao tác khi booking Đã hủy (R06):** nếu `booking?.status === 'cancelled'`, giữ nguyên thông tin lịch sử việc, hiển thị thông báo nổi bật **"Booking Đã hủy"** kèm lý do lịch sử chỉ đọc, và khóa toàn bộ form cập nhật trạng thái và form upload preview.
+     - **Form Cập nhật trạng thái** (dùng `useForm` + `FormField`): `<select>` có `<label>` với đúng 3 lựa chọn `todo` (*Chưa bắt đầu*), `in_progress` (*Đang làm*), `done` (*Hoàn thành*), và `<textarea>` ghi chú (≤ 500 ký tự). Gửi `PATCH /api/jobs/:id`, cập nhật trực tiếp từ response `res.job` (không reload trang), hiển thị `<p role="status">Đã cập nhật công việc</p>`, hiển thị lỗi 400 theo field hoặc 409 bằng `role="alert"`.
+     - **Form Thêm ảnh preview** (CHỈ hiển thị khi `job.kind === 'shoot' || job.kind === 'edit'`; ẩn hoàn toàn với việc `makeup`):
+       + `<input type="file" accept="image/jpeg,image/png">` có `<label>` rõ ràng, dòng hướng dẫn `"Chỉ nhận ảnh JPEG hoặc PNG, tối đa 5 MiB (5.242.880 byte)."`
+       + Kiểm tra **trước khi gửi**: bắt buộc chọn file (`"Vui lòng chọn ảnh"`), đúng loại `image/jpeg` hoặc `image/png` (`"Chỉ nhận ảnh JPEG hoặc PNG"`), đúng ngưỡng `file.size <= 5242880` (`"Ảnh tối đa 5 MiB"`). Lỗi hiển thị ngay cạnh ô nhập (`aria-describedby`, `aria-invalid`).
+       + Nếu API trả 400 (`err.fields.file`) hoặc 409 (booking đã hủy), hiển thị đúng lỗi; khóa nút trong khi đang tải lên.
+       + Upload thành công (`201`): hiển thị `<p role="status">Đã có {totalPhotos} ảnh trong booking</p>`, cập nhật `previewCount` trên `job` và tải lại `GET /api/bookings/:code/photos` để hiện lưới ảnh thu nhỏ (mỗi `<img>` có `alt` từ `photo.alt`).
+4. `client/src/routes/staff.jsx`: thay `StaffHomePlaceholder` bằng `StaffJobsPage` (`/staff/jobs`) và thêm route `/staff/jobs/:id` (`StaffJobDetailPage`), cả hai bọc trong `<RequireRole roles={['staff']}>`.
+5. Kiểm tra sau khi viết xong:
+   - `cd client && npm run build` và `git diff --check` (0 lỗi), xác nhận `git diff -- docs/api mock` trống hoàn toàn.
+   - Kiểm tra thực tế trên `vite preview` + mock ở cả 4 chế độ (`normal`, `slow`, `error`, `empty`) với tài khoản `tuan@gradstudio.test` (`J-GS-1022-shoot`, `J-GS-1022-edit`, mở thử việc của `mai` nhận thông báo 404) và `mai@gradstudio.test` (`J-GS-1021-makeup` không hiện form upload), mở trực tiếp `/staff/jobs/J-GS-1022-shoot` và F5.
+```
