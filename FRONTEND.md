@@ -63,17 +63,40 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/admin/bookings/GS-1023` | admin | G10 | GET `/api/bookings/:code`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link`, POST `/api/availability/check`, GET `/api/resources` | GS-1024: after G6 |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
 | `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
-| `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins` | |
+| `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins`, PATCH `/api/admins/:id` | |
 | `/superadmin/settings` | superadmin | G11 | GET `/api/settings`, PUT `/api/settings` | |
 | path bất kỳ khác | | | | Màn "Không tìm thấy trang" |
 
 ## 5. Product owner decisions
 
-Câu hỏi đặt dưới bài *GradStudio — questions for the product owners* (#WAD2431) trong group Facebook của môn. Mỗi quyết định nhóm dựa vào ghi một dòng:
+Câu hỏi đặt dưới bài *GradStudio — questions for the product owners* (#WAD2431) trong group Facebook của môn. Đường dẫn tới bài trả lời PO chưa được cung cấp (sẽ bổ sung khi có, không tự tạo link).
 
-| Ngày | Link tới comment | Câu hỏi | Quyết định | Áp dụng ở |
+### 5.1 Phản hồi 10 mục từ Product Owner
+
+| Ngày | Link tới comment | Mục / Câu hỏi | Quyết định | Áp dụng ở |
 |---|---|---|---|---|
-| | | | | |
+| 23/11/2026 | Chưa có link | #1 Phạm vi quản lý Admin (G11) | Superadmin chỉ xem và tạo Admin; không sửa thông tin, không xóa. *(Nhóm chọn bổ sung khóa/mở khóa ở mục 5.2.)* | `12-admins.md`, `01-auth.md`, G11 |
+| 23/11/2026 | Chưa có link | #2 Trạng thái việc Staff (G8) | Makeup, chụp ảnh, chỉnh ảnh dùng chung 3 nhãn **Chưa bắt đầu** (`todo`), **Đang làm** (`in_progress`), **Hoàn thành** (`done`). Staff chỉ sửa việc của mình; cập nhật việc không tự đổi trạng thái booking/hội thoại. | `README.md`, `08-jobs.md`, `status.js`, G8 |
+| 23/11/2026 | Chưa có link | #3 Hủy booking (G10/G7) | Chỉ Admin hủy booking `Chờ cọc 30%` hoặc `Đã đặt lịch` (`Hoàn thành` trả 409). Cả Admin và khách thấy **Đã hủy** (`cancelled`); khách yêu cầu hủy qua chat. Hủy nhả người/phòng, ngừng nhắc lịch, giữ khoản đã thu; hoàn tiền xử lý ngoài hệ thống. | `05-bookings.md`, `08-jobs.md`, `10-admin-bookings.md`, G7, G8, G10 |
+| 23/11/2026 | Chưa có link | #4 Vòng đời hội thoại (G4/G9) | Hội thoại tự chuyển `Chưa trả lời` → `Đang tư vấn` khi Admin trả lời lần đầu; → `Đã chốt lịch` khi khách đồng ý đề xuất giờ; giữ `Đã chốt lịch` đến khi bấm *Nhận ảnh* mới chuyển `Hoàn thành`. Admin không đặt tay. | `03-conversations.md`, `11-receive.md`, G4, G9 |
+| 23/11/2026 | Chưa có link | #5 Đổi lịch booking (G10) | Admin đổi lịch trực tiếp có kiểm tra trùng (trùng trả 409 kèm lý do), **không** bắt khách đồng ý lại proposal. Giữ trạng thái booking/tiền, cập nhật việc và tính lại nhắc lịch từ mốc sớm nhất mới. | `10-admin-bookings.md`, G10 |
+| 23/11/2026 | Chưa có link | #6 Giá gói và extras (G6/G7) | Máy chủ lấy giá gói để tính cọc 30% và 70% còn lại; Admin không sửa giá/giảm giá. Extras không có giá riêng, chỉ ghi để bố trí người/trang phục. GS-1024 giữ 1.800.000đ (cọc 540.000đ, còn 1.260.000đ). | `02-catalog.md`, `05-bookings.md`, `06-payments.md`, G1, G6, G7 |
+| 23/11/2026 | Chưa có link | #7 Thanh toán thất bại & thử lại (G7/G9) | Thanh toán thất bại giữ nguyên trạng thái booking và tiền đã thu, báo rõ khoản đang chờ và cho thử lại không giới hạn. Khoản đã thành công không được thanh toán lại (409). | `06-payments.md`, G7, G9 |
+| 23/11/2026 | Chưa có link | #8 Cọc đã xác nhận nhưng trùng giờ (G7/G10) | Hai booking cùng chờ cọc chưa giữ chỗ. Khoản cọc xác nhận trước và còn trống sẽ giữ chỗ; khoản sau đã nhận tiền nhưng trùng vẫn ghi nhận tiền đã thu, giữ booking `Chờ cọc 30%`, báo lý do, không sinh việc/nhắc lịch, không tự hoàn tiền và không mời trả cọc lại. | `06-payments.md`, `10-admin-bookings.md`, G7, G10 |
+| 23/11/2026 | Chưa có link | #9 Chỉnh sửa danh sách chọn ảnh (G9) | Khách được sửa lựa chọn trong giới hạn của gói cho đến trước khi trả xong 70%; sau khi trả đủ 70% thì khóa lựa chọn (API trả 409). | `09-gallery.md`, G9 |
+| 23/11/2026 | Chưa có link | #10 Kiểm tra trùng trang phục (G5/G10) | Chỉ kiểm tra trùng nhân sự và phòng. Thuê trang phục chỉ là extra, không kiểm tra tồn kho / số lượng trang phục. | `04-availability.md`, `02-catalog.md`, G5, G10 |
+
+### 5.2 Các lựa chọn bổ sung và quy ước triển khai của nhóm (chốt 23/11/2026 — không phải phản hồi PO)
+
+| Mục | Quyết định của nhóm | Áp dụng ở |
+|---|---|---|
+| Khóa/mở khóa Admin | Thêm `PATCH /api/admins/:id` (`{"active": boolean}`) cho Superadmin; tài khoản bị khóa bị từ chối đăng nhập (`403 FORBIDDEN`) và bị từ chối token cũ (`401 UNAUTHENTICATED`). Không mở sửa thông tin hay xóa Admin. | `README.md`, `01-auth.md`, `12-admins.md`, `server.mjs`, G11 |
+| Việc của Staff sau khi hủy booking | Giữ nguyên lịch sử việc (`GET` vẫn trả, không thêm `job.status = "cancelled"`), hiển thị booking Đã hủy và chặn Staff cập nhật việc / đăng preview (`409 CONFLICT`). | `08-jobs.md`, `10-admin-bookings.md`, G8 |
+| Hội thoại & booking thay thế sau hủy | Khi booking bị hủy, hội thoại giữ trạng thái `Đã chốt lịch` (`scheduled`) và hiển thị riêng booking Đã hủy. Cho phép chốt giờ mới và tạo mã booking thay thế trong cùng hội thoại; giữ nguyên lịch sử và tiền đã thu của booking cũ. | `03-conversations.md`, `05-bookings.md`, `10-admin-bookings.md`, G4, G6, G7, G10 |
+| 4a / 4b Upload ảnh preview | Chỉ nhận JPEG/PNG (`image/jpeg`, `image/png`), mỗi request 1 file, tối đa đúng **5 MiB = 5.242.880 byte** phần nội dung file (cùng ngưỡng ở contract, form `file.size` và server). PA#4 kiểm tra thêm chữ ký file theo S5. | `08-jobs.md`, `mock/routes/jobs.mjs`, G8 |
+| 4c / 4d Nhắc lịch & cài đặt | Trạng thái e-mail `queued` / `sent` / `failed` (PA#4: `sent` khi SMTP chấp nhận). Nhắc qua cả e-mail và tài khoản; số giờ nhắc trước là số nguyên 1–168, mặc định 24, tính từ mốc sớm nhất; nhắc chờ gửi được tính lại khi đổi lịch và dừng gửi khi hủy. | `07-reminders.md`, `13-settings.md`, G7, G11 |
+| 4e Đại diện lớp (kỷ yếu) | Một tài khoản đại diện lớp sở hữu booking kỷ yếu và dùng trọn luồng Customer; không thêm chia tiền hay nhiều tài khoản đồng quản lý. | Toàn bộ luồng Customer & kiểm tra chủ sở hữu |
+| Quy ước kỹ thuật mục 2.7 | Làm tròn cọc `Math.round(price * 0.3)` (VND nguyên); Payment cọc trùng dùng `succeeded` + `deposit_paid` + `reservationFailure`; điều kiện trả 70% yêu cầu mọi job `shoot` của booking đã `done`; ID hội thoại mới sinh dạng `c-1`, `c-2`… | `README.md`, `03`, `06`, `08`, `10` |
 
 ## 6. Libraries
 

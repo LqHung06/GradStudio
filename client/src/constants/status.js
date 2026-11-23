@@ -33,9 +33,9 @@ export const PROPOSAL_STATUS = {
 };
 
 export const JOB_STATUS = {
-  todo: 'Sắp tới',
+  todo: 'Chưa bắt đầu',
   in_progress: 'Đang làm',
-  done: 'Đã xong',
+  done: 'Hoàn thành',
 };
 
 export const JOB_KIND = {

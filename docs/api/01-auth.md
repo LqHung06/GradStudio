@@ -49,6 +49,7 @@ Signs a user in and returns a token.
 |---|---|---|---|
 | 400 | `VALIDATION` | `email` or `password` is missing, empty, too long, or `email` is not an e-mail address | One message per invalid field |
 | 401 | `INVALID_CREDENTIALS` | No account with this e-mail and password, or the account cannot sign in | `{}` |
+| 403 | `FORBIDDEN` | The account is locked (`active: false`). Message: `"Tài khoản đã bị khóa"`. Executable lock → refused sign-in → unlock sequence is in `12-admins.md`. | `{}` |
 
 - This endpoint keeps working when the mock runs in `MOCK_MODE=error`, so the error screens can be reached after signing in.
 
@@ -162,7 +163,7 @@ Returns the user the token belongs to. The front end calls it when the app opens
 
 | Status | `error.code` | When |
 |---|---|---|
-| 401 | `UNAUTHENTICATED` | No `Authorization` header, or a token that matches no user |
+| 401 | `UNAUTHENTICATED` | No `Authorization` header, a token that matches no user, or a token belonging to a locked account (`active: false`) |
 
 ### Examples
 
@@ -230,7 +231,7 @@ Ends the session.
 
 | Status | `error.code` | When |
 |---|---|---|
-| 401 | `UNAUTHENTICATED` | No token, or a token that matches no user |
+| 401 | `UNAUTHENTICATED` | No token, a token that matches no user, or a token belonging to a locked account (`active: false`) |
 
 - **Mock:** mock tokens (`token-<userId>`) are not stored, so signing out does not invalidate them. The same token works again after sign-out. Later examples in the chain depend on that, because `contract-check` keeps using the token it got first. In PA#4 the real server invalidates the token; the front end behaves the same either way.
 
@@ -262,3 +263,4 @@ Every change to this file, once front-end code uses it, gets a line here: the da
 
 - 2026-11-19: first version. (TV1)
 - 2026-11-20: `u-han` can now sign in (`han-demo`) to accept rescheduling proposal `p-3` for `GS-1023`. (TV1)
+- 2026-11-23: document locked-account handling (R01): `POST /api/auth/login` answers `403 FORBIDDEN` (`"Tài khoản đã bị khóa"`) when `active` is `false`; protected endpoints answer `401 UNAUTHENTICATED` for tokens belonging to locked accounts. (TV1)

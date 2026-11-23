@@ -7,6 +7,7 @@
 |---|---|---|
 | GET | `/api/admins` | superadmin |
 | POST | `/api/admins` | superadmin |
+| PATCH | `/api/admins/:id` | superadmin |
 
 ## Admin object
 
@@ -19,7 +20,7 @@
 | `id` | string | The user id. New Admins get `u-admin-1`, `u-admin-2`, … in the mock. |
 | `name` | string | Display name |
 | `email` | string | Sign-in e-mail, stored in lower case |
-| `active` | boolean | Always `true` in PA#3 (no endpoint deactivates an Admin) |
+| `active` | boolean | Whether the Admin account is active (`true`) or locked (`false`). A locked Admin cannot sign in (`403 FORBIDDEN`) or use an existing token (`401 UNAUTHENTICATED`). |
 | `createdAt` | moment | When the account was created |
 
 The password is never returned.
@@ -197,8 +198,166 @@ Content-Type: application/json
 {"error": {"code": "FORBIDDEN", "message": "Bạn không có quyền truy cập chức năng này", "fields": {}, "details": null}}
 ```
 
+---
+
+## PATCH /api/admins/:id
+
+Locks or unlocks an Admin account (team decision added on top of PO #1). Editing `name`, `email`, or `password` is not allowed, and there is no delete endpoint.
+
+- **Roles:** superadmin.
+- **Path:** `id`, an Admin user id such as `u-admin-1`.
+- **Body:**
+
+| Field | Type | Required | Limits |
+|---|---|---|---|
+| `active` | boolean | yes | `false` to lock, `true` to unlock. No other fields (such as `name`, `email`, `password`) may be sent. |
+
+- **200 OK:** `{"admin": Admin}`. The front end updates the row from this answer without reloading the list.
+- **Errors:**
+
+| Status | `error.code` | When | `error.fields` |
+|---|---|---|---|
+| 400 | `VALIDATION` | `active` is missing or not a boolean, or disallowed fields are included | One message per invalid/disallowed field |
+| 401 | `UNAUTHENTICATED` | No token | `{}` |
+| 403 | `FORBIDDEN` | The caller is not the Superadmin | `{}` |
+| 404 | `NOT_FOUND` | No Admin account with this `id` | `{}` |
+
+### Examples
+
+The Superadmin locks `u-admin-1`:
+
+```http
+PATCH /api/admins/u-admin-1
+Authorization: Bearer {{token:superadmin}}
+Content-Type: application/json
+
+{"active": false}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"admin": {"id": "u-admin-1", "name": "Ngô Minh Quân", "email": "quan@gradstudio.test", "active": false, "createdAt": "…"}}
+```
+
+The locked Admin tries to sign in and is refused:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{"email": "quan@gradstudio.test", "password": "quan-demo-123"}
+```
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{"error": {"code": "FORBIDDEN", "message": "Tài khoản đã bị khóa", "fields": {}, "details": null}}
+```
+
+The locked Admin's previously issued token is also refused on protected endpoints:
+
+```http
+GET /api/auth/me
+Authorization: Bearer token-u-admin-1
+```
+
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{"error": {"code": "UNAUTHENTICATED", "message": "Tài khoản đã bị khóa hoặc phiên không còn hợp lệ", "fields": {}, "details": null}}
+```
+
+The Superadmin unlocks `u-admin-1`:
+
+```http
+PATCH /api/admins/u-admin-1
+Authorization: Bearer {{token:superadmin}}
+Content-Type: application/json
+
+{"active": true}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"admin": {"id": "u-admin-1", "name": "Ngô Minh Quân", "email": "quan@gradstudio.test", "active": true, "createdAt": "…"}}
+```
+
+The unlocked Admin can sign in again:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{"email": "quan@gradstudio.test", "password": "quan-demo-123"}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"token": "…", "user": {"id": "u-admin-1", "name": "Ngô Minh Quân", "role": "admin"}}
+```
+
+Invalid `active` type and disallowed fields (`name`, `email`, `password` cannot be edited):
+
+```http
+PATCH /api/admins/u-admin-1
+Authorization: Bearer {{token:superadmin}}
+Content-Type: application/json
+
+{"active": "no", "name": "Tên mới"}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"error": {"code": "VALIDATION", "message": "Dữ liệu chưa hợp lệ", "fields": {"active": "Trạng thái khóa phải là true hoặc false", "name": "Chỉ được cập nhật trạng thái hoạt động (active)"}, "details": null}}
+```
+
+Unknown Admin id:
+
+```http
+PATCH /api/admins/u-admin-999
+Authorization: Bearer {{token:superadmin}}
+Content-Type: application/json
+
+{"active": false}
+```
+
+```http
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{"error": {"code": "NOT_FOUND", "message": "Không tìm thấy tài khoản Admin này", "fields": {}, "details": null}}
+```
+
+An Admin cannot lock or unlock Admin accounts:
+
+```http
+PATCH /api/admins/u-admin-1
+Authorization: Bearer {{token:thao}}
+Content-Type: application/json
+
+{"active": false}
+```
+
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{"error": {"code": "FORBIDDEN", "message": "Bạn không có quyền truy cập chức năng này", "fields": {}, "details": null}}
+```
+
 ## Changes
 
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 
 - 2026-11-19: first version. (TV1)
+- 2026-11-23: add `PATCH /api/admins/:id` to lock/unlock Admin accounts (R01, team decision on PO #1); `active` reflects real account status; add sequential examples for lock → login refused (`403`) → old token refused (`401`) → unlock → login succeeded (`200`). (TV1)
