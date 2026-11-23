@@ -1803,3 +1803,50 @@ Yêu cầu chi tiết (Bước G8 — Staff):
    - `cd client && npm run build` và `git diff --check` (0 lỗi), xác nhận `git diff -- docs/api mock` trống hoàn toàn.
    - Kiểm tra thực tế trên `vite preview` + mock ở cả 4 chế độ (`normal`, `slow`, `error`, `empty`) với tài khoản `tuan@gradstudio.test` (`J-GS-1022-shoot`, `J-GS-1022-edit`, mở thử việc của `mai` nhận thông báo 404) và `mai@gradstudio.test` (`J-GS-1021-makeup` không hiện form upload), mở trực tiếp `/staff/jobs/J-GS-1022-shoot` và F5.
 ```
+
+## 20. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
+
+```text
+Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g11-superadmin`. Contract và mock cho G11 đã hoàn thiện trên `main` (đã có `PATCH /api/admins/:id` từ Bước #S1). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/12-admins.md`, `docs/api/13-settings.md`, `docs/api/01-auth.md` và mục 5.2, 5.5 (G11), 5.10 (R01) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
+
+Ràng buộc bắt buộc:
+1. Chỉ gọi đúng 5 endpoint trong contract thông qua `client/src/api/client.js` (relative `/api/...`):
+   - `GET /api/admins`
+   - `POST /api/admins`
+   - `PATCH /api/admins/:id` (body `{"active": boolean}`)
+   - `GET /api/settings`
+   - `PUT /api/settings`
+   KHÔNG sửa `docs/api/`, `mock/`, `tools/`, hay file của TV2/TV3. Không thêm thư viện mới; dùng CSS thuần theo design tokens Blue Theme trong `client/src/styles/`.
+2. Tái sử dụng toàn bộ nền đã có: `Layout`, `RequireRole` (`roles={['superadmin']}`), `useFetch`, `AsyncState`, `useForm`, `FormField`, `StatusBadge`. Không hard-code dữ liệu nghiệp vụ, không import `src/data/fixtures.js`.
+3. Tuân thủ accessibility & responsive: mỗi màn đúng một `<h1>`, heading không nhảy cấp, mọi input có `<label>`, bảng có `<caption>` và `<th scope="col">`, điều hướng dùng `<Link>`, hành động dùng `<button>`, không cuộn ngang ở 360 / 768 / 1280 px, nút/link đứng riêng cao ≥ 44px ở 360px, trạng thái luôn hiển thị bằng chữ.
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước G11 — Superadmin):
+1. `client/src/api/superadmin.js`:
+   - `createAdmin({ name, email, password })` gọi `POST /api/admins`.
+   - `setAdminActive(id, active)` gọi `PATCH /api/admins/:id` với `{ active }`.
+   - `saveSettings(settings)` gọi `PUT /api/settings`.
+2. `client/src/pages/superadmin/SuperadminAdminsPage.jsx` (`/superadmin/admins`):
+   - `<h1>Tài khoản Admin</h1>`.
+   - Tải danh sách bằng `useFetch('/api/admins')` + `AsyncState` (`emptyMessage="Chưa có tài khoản Admin nào."`).
+   - Bảng danh sách `<table>` có `<caption>Danh sách tài khoản Admin</caption>` và `<th scope="col">` (Họ tên, E-mail, Ngày tạo, Trạng thái, Thao tác). Ở màn hình nhỏ (≤ 767px / 360px), dùng CSS chuyển bảng sang dạng thẻ (mỗi hàng thành card có nhãn `data-label`) để **không cuộn ngang**.
+   - Mỗi dòng hiển thị trạng thái bằng chữ (`Đang hoạt động` / `Đã khóa` qua `StatusBadge`) và nút **Khóa** (khi `active === true`) hoặc **Mở khóa** (khi `active === false`) gọi `PATCH /api/admins/:id`. Khóa nút riêng của dòng đang xử lý, cập nhật trực tiếp dòng đó từ response `{ admin }` (không reload toàn danh sách), báo `<p role="status">` hoặc `role="alert"` nếu lỗi. **Không** thêm sửa thông tin hoặc xóa Admin.
+   - Form **Tạo Admin** (`useForm` + `FormField`): gồm `Họ tên` (`name`: trim 2–80 ký tự), `E-mail` (`email`: đúng định dạng, ≤ 120 ký tự), `Mật khẩu` (`password`: 8–100 ký tự).
+   - Khi submit thành công (`201`): thêm ngay `res.admin` vào cuối bảng (qua `setData`), xóa trắng form (`reset`) và hiện `<p role="status">Đã tạo tài khoản Admin mới</p>`. Khi API trả `409 EMAIL_TAKEN` có `err.fields` (hoặc `400`), gắn thông báo lỗi ngay dưới ô **E-mail** qua `setServerErrors(err.fields)` và giữ nguyên giá trị đã nhập.
+3. `client/src/pages/superadmin/SuperadminSettingsPage.jsx` (`/superadmin/settings`):
+   - `<h1>Cài đặt hệ thống</h1>`.
+   - Tải `GET /api/settings` bằng `useFetch` + `AsyncState`.
+   - Form chỉnh sửa đồng bộ giá trị từ API khi tải xong (`useForm` + `FormField`):
+     + 2 ô `<input type="time">` có `<label>`: **Giờ mở cửa** (`open`, định dạng `HH:mm`) và **Giờ đóng cửa** (`close`, phải sau giờ mở cửa).
+     + 1 ô `<input type="number" min={1} max={168} step={1}>` có `<label>`: **Gửi nhắc lịch trước (giờ)** (`reminderHoursBefore`, số nguyên từ `1` đến `168`, mặc định `24`), kèm ghi chú rõ nhắc lịch gửi qua cả e-mail và tài khoản.
+   - Validate trước khi gửi đúng theo `13-settings.md` và map chính xác lỗi `400` từ API (`openingHours.open`, `openingHours.close`, `reminderHoursBefore`) vào đúng `FormField`.
+   - Lưu thành công (`200`): cập nhật state từ `res.settings` và hiện đúng `<p role="status">Đã lưu cài đặt</p>`.
+4. `client/src/styles/superadmin.css`: CSS thuần dùng design tokens Blue Theme cho bảng→thẻ 360px, form tạo Admin và form cài đặt.
+5. `client/src/routes/superadmin.jsx`: thay `SuperadminHomePlaceholder` bằng `SuperadminAdminsPage` (`/superadmin/admins`) và đăng ký `/superadmin/settings` (`SuperadminSettingsPage`), cả hai bọc trong `<RequireRole roles={['superadmin']}>`.
+6. Kiểm tra sau khi viết xong:
+   - `cd client && npm run build`, `git diff -- docs/api mock` trống, `git diff --check` 0 lỗi.
+   - Kiểm tra trực tiếp trên `vite preview` + `node mock/server.mjs` cả 4 chế độ (`normal`, `slow`, `error`, `empty`), responsive 360 / 768 / 1280 px (0 cuộn ngang, tap target ≥ 44px, 0 lỗi Console):
+     + Đăng nhập `superadmin@gradstudio.test` mở `/superadmin/admins` và `/superadmin/settings` (F5 + mở trực tiếp).
+     + Test luồng **R01**: tạo Admin mới → thử tạo trùng email (`409` hiện dưới ô E-mail) → bấm **Khóa** → đăng xuất → thử đăng nhập bằng Admin vừa khóa (bị từ chối `403 "Tài khoản đã bị khóa"`) → đăng nhập lại Superadmin → bấm **Mở khóa** → đăng xuất → đăng nhập lại bằng Admin mới (thành công `200`).
+     + Test `/superadmin/settings`: thử sai giờ đóng/mở và `0`/`169`/`24.5` giờ (báo lỗi tại field), lưu hợp lệ `07:30–21:00` và `48` giờ (hiện `"Đã lưu cài đặt"`, F5 vẫn còn giá trị mới).
+```

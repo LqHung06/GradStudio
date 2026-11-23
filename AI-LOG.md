@@ -738,3 +738,28 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - **`MOCK_MODE=empty`**: hiện `"Bạn chưa có việc nào được giao."`.
   - *Chưa kiểm tra:* ca hiển thị banner **"Booking Đã hủy"** (khóa cả 2 form trên UI) với booking thật bị hủy đang chờ TV3 hoàn thành `R05` (hủy booking có jobs); kiểm tra W3C Nu HTML Checker thủ công sẽ thực hiện ở mốc M6 cùng TV2.
 - **Commits:** TV1 đọc diff và tự commit sau.
+
+### [TV1] 20. G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin) — 23/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 17. Đẩy PR #21 cho `feat/g8-staff`, kéo `origin/main` (`705d019`, đã có PR #17 `#S1`), tách nhánh `feat/g11-superadmin`, triển khai G11 (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin theo R01). Không sửa `docs/api/`, `mock/`, `tools/`; không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `client/src/api/superadmin.js` (mới): `createAdmin` (`POST /api/admins`), `setAdminActive` (`PATCH /api/admins/:id`), `saveSettings` (`PUT /api/settings`).
+  - `client/src/pages/superadmin/SuperadminAdminsPage.jsx` (mới): `<h1>Tài khoản Admin</h1>`, tải danh sách qua `useFetch('/api/admins')` + `AsyncState`, bảng `<table>` có `<caption>` và `<th scope="col">`, hiển thị trạng thái chữ `Đang hoạt động` / `Đã khóa` qua `StatusBadge`, nút `Khóa` / `Mở khóa` khóa riêng dòng đang gửi và cập nhật trực tiếp từ response, form `Tạo Admin` (`useForm` + `FormField`) thêm ngay dòng mới từ `201`, xóa trắng form và map lỗi `409 EMAIL_TAKEN` ngay dưới ô `E-mail` (giữ nguyên giá trị đã nhập).
+  - `client/src/pages/superadmin/SuperadminSettingsPage.jsx` (mới): `<h1>Cài đặt hệ thống</h1>`, tải `GET /api/settings` qua `useFetch` + `AsyncState`, đồng bộ 2 ô `type="time"` (*Giờ mở cửa*, *Giờ đóng cửa*) và ô `type="number"` (*Gửi nhắc lịch trước (giờ)* `1–168`, mặc định `24`), validate theo `13-settings.md`, map lỗi `400` (`openingHours.open`, `openingHours.close`, `reminderHoursBefore`) về đúng `FormField`, hiển thị `<p role="status">Đã lưu cài đặt</p>`.
+  - `client/src/styles/superadmin.css` (mới): CSS thuần theo design tokens Blue Theme, chuyển bảng Admins sang dạng card có `data-label` ở màn hình `<= 767px` để không cuộn ngang.
+  - `client/src/routes/superadmin.jsx`: thay `SuperadminHomePlaceholder` bằng `SuperadminAdminsPage` (`/superadmin/admins`) và đăng ký `/superadmin/settings` (`SuperadminSettingsPage`) bọc `<RequireRole roles={['superadmin']}>`.
+  - `brief.md`: ghi mục 17 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - `useForm.js` mặc định chỉ map `err.fields` khi `err.status === 400`, nên lỗi `409 EMAIL_TAKEN` ở `POST /api/admins` nếu không bắt riêng sẽ rơi vào `submitError`; đã xử lý trong `onSubmit` của `SuperadminAdminsPage.jsx` để gọi `setServerErrors(err.fields)` đưa lỗi về đúng ô `E-mail`.
+  - Ở `SuperadminSettingsPage.jsx`, khóa `openingHours.open` / `openingHours.close` từ API được map sang tên field `open` / `close` giúp HTML ID đơn giản và đồng nhất với client validation.
+  - Lần chạy đầu của script kiểm thử CDP đụng tiến trình mock cũ còn giữ cổng `3001`; đã dọn sạch tiến trình nền, dùng `process.kill(-p.pid)` để đóng sạch mọi tiến trình con và chạy lại toàn bộ bài kiểm thử từ đầu đạt 100%.
+- **Checked:**
+  - `cd client && npm run build`: thành công (`70 modules transformed`, `✓ built in 7.94s`).
+  - `git diff -- docs/api mock`: trống hoàn toàn; `git diff --check`: 0 lỗi; cổng `3001 / 4173 / 9232` sạch sau kiểm thử.
+  - Kiểm thử trực tiếp trên `npx vite preview --port 4173` + `node mock/server.mjs` qua Google Chrome headless CDP:
+    - **`MOCK_MODE=normal`**: đăng nhập `superadmin@gradstudio.test` vào `/superadmin/admins` (`200`), F5 giữ phiên (`GET /api/auth/me → 200`); tạo `Ngô Minh Quân` (`201`) thêm ngay dòng và xóa trắng form; gửi trùng `quan@gradstudio.test` (`409`) hiện `"Email này đã được dùng"` ngay dưới ô E-mail; bấm `Khóa` (`PATCH → 200`) chuyển `Đã khóa` → đăng xuất → thử đăng nhập `quan` bị từ chối (`403 "Tài khoản đã bị khóa"`) → đăng nhập lại `superadmin` bấm `Mở khóa` (`PATCH → 200`) → đăng xuất → đăng nhập lại `quan` thành công (`200` vào `/admin/conversations`); mở thẳng và F5 `/superadmin/settings`, kiểm tra lỗi `20:00 >= 08:00`, `0`, `169`, `24.5` giờ, lưu `07:30–21:00` và `48` giờ (`200`, hiện `"Đã lưu cài đặt"`), F5 giữ nguyên giá trị mới.
+    - **Responsive `360 / 768 / 1280 px`** trên `/superadmin/admins` và `/superadmin/settings`: `scrollWidth <= innerWidth`, đúng 1 `<h1>`, mọi nút/link trong `<main>` cao ≥ 44px, `0` runtime exceptions.
+    - **`MOCK_MODE=slow` / `error` / `empty`**: đều PASS (`"Đang tải…"` → tải xong; lỗi + nút Thử lại ở cả 2 trang; `"Chưa có tài khoản Admin nào."`).
+  - *Chưa kiểm tra:* kiểm tra W3C Nu HTML Checker thủ công (thuộc mốc M6); cập nhật tổng hợp `FRONTEND.md` (mục Routes / Not done) và `SELF_ASSESSMENT_REPORT.md` làm ở bước tổng hợp riêng.
+- **Commits:** TV1 đọc diff và tự commit sau.
