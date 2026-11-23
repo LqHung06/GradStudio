@@ -1326,3 +1326,24 @@ Kiểm tra bố cục ở 360/768/1280px nếu có trình duyệt. Nếu không 
 
 Chạy git diff --check, đọc diff và xác nhận docs/api/ cùng mock/ không bị sửa.
 ```
+
+## 15. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
+
+Tin nhắn 1 (đọc kế hoạch mới và báo cáo đối chiếu):
+
+```text
+Hiện tại nhóm vừa họp lại, và dựa theo những yêu cầu, những câu trả lời của nhóm Product Owner mà sửa lại kế hoạch và time line, đọc kĩ các file và cho biết công việc hiện tại tôi phải làm
+```
+
+Tin nhắn 2:
+
+```text
+nghĩa là sao, đọc cái báo cáo đối chiếu kế hoạch mã nguồn nó bảo lỗi gì hay sao
+```
+
+Tin nhắn 3 (sau khi tự kéo `main`, cài `npm ci` và tạo nhánh `contract/tv2-po-updates`):
+
+```text
+Giờ hãy đưa ra lệnh để tôi tự chạy terminal đi
+```
+*(Đã chạy thành công trên nhánh `contract/tv2-po-updates` và gửi kết quả terminal để assistant triển khai cập nhật 4 file contract `S2`).*

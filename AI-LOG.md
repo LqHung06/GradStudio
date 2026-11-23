@@ -609,3 +609,22 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Checked:** npm ci theo lockfile (không thêm thư viện); npm run build thành công (Vite 7.3.7, 65 modules). Harness tạm bundle bằng esbuild có sẵn, render trực tiếp React trong Chrome headless qua CDP: 17 kiểm tra PASS ở mỗi viewport 360/768/1280. Bao gồm text an toàn, request, fallback/custom proposal, phía gửi/time, messages/items rỗng, null room, unique IDs, accepted/declined, không có nút tự sinh, actions caller, blank/1001 ký tự, focus invalid, gửi lặp, khóa gửi, success clear, generic/fields.text failure giữ nội dung, sendError prop, tên/URL dài 3000 ký tự không tràn ngang, nút >=44px. `git diff --check` thành công; `git diff -- docs/api mock` trống. Đã đọc diff sản phẩm và tài liệu.
 - **Evidence:** harness và kết quả giữ ngoài repo trong thư mục Temp/gs-chat-check, không có route/demo/fixture sản phẩm. Chưa kiểm W3C, chưa chạy flow trang hoặc bốn chế độ mock vì task chỉ nhận props; không gọi endpoint nào.
 - **Commits:** từng file riêng, message feat(G4-G6) cho component/CSS, docs(agents), docs(brief), docs(ai-log); xem `git log main..feat/chat-components` để lấy mã chính xác.
+
+### [TV2] 15. Contract S2: cập nhật 02-catalog, 06-payments, 07-reminders, 09-gallery theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 15. Trên nhánh `contract/tv2-po-updates` (tách từ `main` `37da2bf`), cập nhật 4 file contract của TV2 theo các quyết định PO và quy ước nhóm mới chốt (`R04`, `R05`, `R08`, `R09`, `R10`, `R19`), ghi `## Changes` ở cuối mỗi file.
+- **Changed:**
+  - `docs/api/02-catalog.md`: bỏ trường `price` khỏi `Extra` và ví dụ `GET /api/extras` (PO #6 / `R10`), thêm dòng `## Changes`.
+  - `docs/api/06-payments.md`: thêm `reservationFailure` vào `Payment` (`null` hoặc `{"message", "clashes"}`) cho ca cọc đã thu tiền nhưng trùng giờ (`R08`); ghi rõ kiểm tra lại `booking.status`/`paymentStatus` tại `POST /api/test-gateway/:paymentId` (`R09`); bổ sung điều kiện toàn bộ job `shoot` phải `done` trước khi tạo thanh toán `remaining` (`R19`); cập nhật các ví dụ `PAY-1`/`PAY-2` và thêm dòng `## Changes`.
+  - `docs/api/07-reminders.md`: mô tả cơ chế tính lại nhắc lịch `queued` khi đổi lịch (`R04`) và dừng gửi nhắc `queued` khi hủy booking (`R05`), giữ lịch sử `sent`; thêm dòng `## Changes`.
+  - `docs/api/09-gallery.md`: đồng bộ `reservationFailure: null` cho `PAY-3`, bổ sung ví dụ `400` ảnh không thuộc booking (`ph-999`) và `409` khóa sửa lựa chọn sau khi trả 70% (PO #9); thêm dòng `## Changes`.
+  - `brief.md` mục 15 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Lần viết đầu tiên ở `docs/api/09-gallery.md` đặt ví dụ `ph-999` (`400`) **sau** bước thanh toán `PAY-3` (`paid_in_full`), sẽ khiến mock trả `409` thay vì `400` khi chạy chuỗi tuần tự. Đã dời ví dụ `ph-999` (`400`) và ví dụ sửa lựa chọn trước thanh toán (`200`) lên trước `PAY-3`, chỉ giữ ví dụ khóa sửa (`409`) sau `PAY-3`.
+  - Không đụng tới `mock/`, `client/`, hay contract của TV1/TV3 (`README.md`, `01`, `03`, `04`, `05`, `08`, `10`, `12`, `13`).
+  - Lưu ý: khi TV2 chưa sửa `mock/` (bước mock kế tiếp), chạy `contract-check` với mock cũ trên `main` sẽ báo lệch field `price` của `Extra` và `reservationFailure` của `Payment` (đúng quy trình contract đi trước mock).
+- **Checked:**
+  - Kiểm tra `08-jobs.md:242`: đã đặt `J-GS-1024-shoot` thành `"status": "done"`, nên điều kiện `R19` khớp liền mạch với chuỗi ví dụ `08` → `09`.
+  - Kiểm tra `git diff --stat` và `git status -sb`: chỉ sửa đúng 4 file contract của TV2, `brief.md` và `AI-LOG.md`.
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
