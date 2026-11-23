@@ -1325,6 +1325,37 @@ Kiểm tra bố cục ở 360/768/1280px nếu có trình duyệt. Nếu không 
 Chạy git diff --check, đọc diff và xác nhận docs/api/ cùng mock/ không bị sửa.
 ```
 
+## 15. [TV1 · 23/11/2026 · Antigravity Assistant] Bước #S1: đồng bộ contract, mock và tài liệu TV1 theo kế hoạch 23/11
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `fix/s1-tv1-plan-alignment` từ `main` mới nhất (đã có PR #13, #14, #15). Thực hiện Bước #S1 theo kế hoạch cập nhật ngày 23/11/2026 và báo cáo đối chiếu (R01, R02, R06, R11, R16 — phần thuộc quyền TV1).
+
+Ràng buộc bắt buộc:
+1. Tuân thủ thứ tự contract → mock → code nền/tài liệu. Chỉ sửa các file thuộc quyền sở hữu của TV1 (`docs/api/README.md`, `01-auth.md`, `08-jobs.md`, `12-admins.md`, `mock/server.mjs`, `mock/routes/auth.mjs`, `mock/routes/jobs.mjs`, `mock/routes/admins.mjs`, `client/src/constants/status.js`, `AGENTS.md`, `FRONTEND.md`). KHÔNG sửa file contract/mock thuộc TV2 hoặc TV3.
+2. Mọi thay đổi contract phải ghi rõ dòng trong mục `## Changes` (ngày, nội dung, lý do). Không làm vỡ chuỗi ví dụ `contract-check` hiện có (`01`–`13`).
+3. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước #S1 — TV1):
+1. R01 (Khóa/mở khóa Admin & chặn tài khoản bị khóa):
+   - Contract (`README.md`, `01-auth.md`, `12-admins.md`): thêm `PATCH /api/admins/:id` (role `superadmin`, body `{"active": boolean}`, chỉ cập nhật `active`, không sửa tên/email/mật khẩu, không xóa); ghi rõ `active` là trạng thái thật; thêm ví dụ liên tiếp tạo Admin → khóa → đăng nhập bị từ chối → mở khóa → đăng nhập thành công; ghi rõ lỗi đăng nhập/phiên của tài khoản bị khóa.
+   - Mock (`mock/routes/admins.mjs`, `mock/routes/auth.mjs`, `mock/server.mjs`): `toAdmin` đọc `u.active !== false`, cài `PATCH /api/admins/:id` (400 nếu `active` không phải boolean hoặc gửi field cấm, 404 nếu không có Admin đó), `auth.mjs` từ chối đăng nhập tài khoản `active === false`, `server.mjs` từ chối token thuộc tài khoản `active === false`.
+2. R02 (Tên trạng thái việc):
+   - Đổi nhãn `todo` → `Chưa bắt đầu`, `in_progress` → `Đang làm`, `done` → `Hoàn thành` trong `docs/api/README.md` và `client/src/constants/status.js`; xóa ghi chú chờ PO xác nhận. Giữ nguyên mã API.
+3. R06 (Chặn Staff ghi dữ liệu khi booking đã hủy):
+   - Contract (`08-jobs.md`): ghi rõ `GET /api/jobs` và `GET /api/jobs/:id` vẫn trả lịch sử khi booking `cancelled`; `PATCH /api/jobs/:id` và `POST /api/bookings/:code/previews` trả `409 CONFLICT` và không sửa dữ liệu. Không thêm `job.status = "cancelled"`.
+   - Mock (`mock/routes/jobs.mjs`): kiểm tra trạng thái booking trong `db.bookings` sau khi kiểm tra quyền sở hữu (404/403); nếu `booking.status === 'cancelled'` thì trả `409 CONFLICT`.
+4. R11 (Giới hạn upload preview đúng 5 MiB = 5.242.880 byte nội dung file):
+   - Contract (`08-jobs.md`): sửa ngưỡng từ 5 MB + 64 KB sang đúng 5 MiB (5.242.880 byte) nội dung part `file`, lỗi `fields.file = "Ảnh tối đa 5 MiB"`. Cập nhật ví dụ biên `5242880B` (201) và `5242881B` (400) mà không làm lệch `totalPhotos: 36` của GS-1024.
+   - Mock (`mock/routes/jobs.mjs`): parse đúng byte nội dung phần `name="file"` trong multipart body (không dùng `Content-Length` tổng), từ chối 400 nếu `> 5242880`.
+5. R16 (Đồng bộ tài liệu hướng dẫn):
+   - `AGENTS.md`: sửa ví dụ trả lời proposal từ `{status}` sang `{decision}`; bổ sung tóm tắt các quyết định PO & quy ước nhóm mới liên quan.
+   - `FRONTEND.md`: điền mục 5 (*Product owner decisions*) đầy đủ 10 ý PO (ghi rõ chưa có link bài PO) và tách riêng bảng các lựa chọn bổ sung của nhóm (khóa Admin, việc/hội thoại/booking thay thế sau hủy, 4a–4e).
+6. Kiểm tra sau khi sửa:
+   - Khởi động mock mới và chạy `node tools/contract-check.mjs` đảm bảo 0 FAIL.
+   - Chạy kiểm tra bổ sung cho các ca TV1: A01 (khóa/mở khóa + đăng nhập bị chặn + token cũ bị chặn), A04 (PATCH job và upload preview khi booking `cancelled` trả 409), A05 (upload đúng 5.242.880 byte trả 201, 5.242.881 byte trả 400).
+   - Chạy `cd client && npm run build` và `git diff --check`.
+```
+
 ## 15. [TV3 · 23/11/2026 · Codex] Sửa contract và mock theo báo cáo đối chiếu
 
 ```text
