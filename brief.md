@@ -1326,3 +1326,152 @@ Kiểm tra bố cục ở 360/768/1280px nếu có trình duyệt. Nếu không 
 
 Chạy git diff --check, đọc diff và xác nhận docs/api/ cùng mock/ không bị sửa.
 ```
+
+## 16. [TV3 · 23/11/2026 · Codex] R14: triển khai màn Admin — kiểm tra tiền đề
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy triển khai các màn Admin còn thiếu trong R14 của bao-cao-doi-chieu-ke-hoach-ma-nguon.md, theo kế hoạch mới đã cập nhật.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+1. Kiểm tra tiền đề
+
+Đọc:
+- AGENTS.md và FRONTEND.md.
+- ../bao-cao-doi-chieu-ke-hoach-ma-nguon.md.
+- ../lo-trinh-PA3.html.
+- Kế hoạch TV3, mục 2.5–2.8, 4.1, 5.4–5.6 và 5.9.
+- Contract 03/04/05/10 cùng shared objects.
+- API thanh toán/nhắc lịch liên quan và hướng dẫn dùng hooks.
+- ChatThread, ProposalCard, Layout, RequireRole, useFetch, useForm, AsyncState, FormField và status.js.
+
+Xác nhận contract và mock mới cho đổi/hủy/thay thế đã nằm trên main. Nếu chưa, báo đúng phần thiếu; không viết UI gọi đặc tả cũ hoặc tự sửa mock trong lượt này.
+
+Khi working tree sạch, cập nhật main bằng fast-forward rồi tạo:
+feat/tv3-admin-flow
+
+Không ghi đè thay đổi có sẵn, không reset, stash hoặc tự merge nhánh khác.
+
+2. Phạm vi
+
+Được sửa:
+- client/src/routes/admin.jsx.
+- client/src/pages/admin/.
+- Các API wrapper TV3 trong client/src/api/.
+- Component phụ trợ Admin và CSS riêng nếu cần.
+- Component chat chỉ khi có lỗi tích hợp thực tế; giữ tương thích props Kiệt đang dùng.
+- Dòng Routes, quyết định và Not done thuộc TV3 trong FRONTEND.md.
+- brief.md, AI-LOG.md và bằng chứng kiểm tra phần TV3.
+
+Không sửa docs/api/, mock/, phần nền của Hưng hoặc trang Customer của Kiệt. Nếu API thiếu dữ liệu, báo chỗ thiếu; không tự thêm field hoặc endpoint.
+
+3. Hoàn thiện bốn route
+
+/admin/conversations:
+- Danh sách hội thoại, lọc đủ trạng thái và số lượng.
+- Link tới chi tiết, trạng thái có chữ.
+- Có loading, error với Thử lại và empty.
+
+/admin/conversations/:id:
+- Dùng ChatThread để trả lời.
+- Làm mới hội thoại bằng reload của hook, không reload trang.
+- Form kiểm tra ngày, ca, người, phòng từ API.
+- Hiện lý do trùng bằng chữ, gợi ý có nút dùng giờ.
+- Lịch tài nguyên đọc được đầy đủ, không cắt nhãn.
+- Gửi đề xuất giờ và cập nhật chat từ response.
+- Form tạo booking chỉ dùng proposal khách đã đồng ý; khóa Tạo booking kèm lý do khi chưa đủ điều kiện.
+- Sau hủy, vẫn cho đi qua đề xuất mới và tạo booking thay thế theo contract.
+- Hiện riêng trạng thái hội thoại và booking.
+- Hiện lịch sử booking cũ/mới dựa trên conversationId; không tự thêm endpoint.
+
+/admin/bookings:
+- Danh sách và lọc booking.
+- Có trạng thái booking, thanh toán và link xem.
+- Bố cục dùng được trên điện thoại.
+
+/admin/bookings/:code:
+- Thông tin booking, gói, ca, người/phòng, tiền và thanh toán từ API.
+- Đổi lịch trực tiếp bằng date/items, không cần proposalId hoặc khách đồng ý lại.
+- PATCH là bước kiểm tra trùng cuối cùng. Không chặn lưu sai vì bước xem trước tự tính booking đang sửa là trùng với chính nó.
+- Hiện lỗi CLASH và gợi ý; giữ dữ liệu nhập khi thất bại.
+- Hủy có xác nhận, chỉ ở trạng thái được phép.
+- Sau hủy hiện Đã hủy; tiền cũ còn nguyên, hoàn tiền do studio xử lý ngoài hệ thống.
+- Lưu final-link HTTPS.
+- GS-1024 chưa được tạo thì hiện thông báo không tìm thấy và link về danh sách.
+
+Không hoàn thành booking bằng việc lưu link; Nhận ảnh vẫn thuộc luồng Customer.
+
+4. Hiển thị tiền theo quyết định mới
+
+Không suy ra “chưa nhận tiền” chỉ từ awaiting_deposit.
+
+Nếu TV2 đã bàn giao R08:
+- Hiện đúng trường hợp awaiting_deposit/deposit_paid.
+- Phân biệt khoản đã nhận với tình trạng chưa giữ được chỗ.
+- Dùng reservationFailure theo contract để giải thích.
+- Không mời trả cọc lần nữa và không tự chuyển cọc sang booking thay thế.
+
+Nếu shape chưa được bàn giao, ghi rõ phụ thuộc; không dựng dữ liệu hoặc sửa API để UI chạy được.
+
+5. Quy ước UI
+
+- Mọi dữ liệu nghiệp vụ lấy từ API qua api/client.js.
+- Dùng useFetch + AsyncState, useForm + FormField và status.js.
+- Sau hành động cập nhật từ response, không reload trang.
+- Link điều hướng dùng router Link; hành động dùng button.
+- Mỗi trang một h1; label và lỗi field đầy đủ.
+- Khóa gửi lặp, giữ dữ liệu khi lỗi.
+- Chat/form cuộn theo trang, không nổi hoặc bị cắt.
+- Không import fixtures.js hoặc nối nguyên trang StudioPage PA2 vào router.
+- Không thêm thư viện, nút demo hoặc thao tác giả.
+- Không có link menu dẫn tới placeholder hay Not found.
+
+6. Kiểm tra và ghi nhận
+
+Kiểm tra trên bản build:
+- Bốn route mở trực tiếp và F5.
+- Chưa đăng nhập quay về đúng route sau sign-in; sai vai trò bị chặn.
+- G4 → G5 → G6 và G10 đi được bằng link/nút.
+- G6 vẫn cần khách đồng ý; G10 không cần đồng ý lại.
+- Đổi trùng, hủy, tạo thay thế và giữ lịch sử.
+- normal/slow/error/empty; Thử lại phục hồi khi mock trở về normal.
+- 360/768/1280px, không tràn ngang, nút/link đứng riêng tối thiểu 44px.
+- Không lỗi Console, request ngoài contract hoặc request lặp khi đứng yên.
+- W3C trên HTML render nếu công cụ cho phép.
+
+Không dùng kết quả kiểm tra component riêng hoặc bằng chứng PA2 để kết luận toàn bộ màn PA3 đạt. Build thành công cũng chưa đủ chứng minh luồng đã chạy.
+
+Ghi lệnh, kết quả và kiểm tra chưa thực hiện được.
+
+7. Tài liệu và commit
+
+Trực tiếp ghi:
+- brief.md: prompt nguyên văn, nối mục theo đúng cấu trúc có sẵn.
+- AI-LOG.md: mục PA#3 đúng mẫu, Request trỏ đúng brief, chỉ ghi việc và kiểm tra có thật.
+- FRONTEND.md: Routes khớp router và Not done cụ thể cho TV3. Không sửa tự chấm toàn nhóm hoặc tuyên bố R18 hoàn thành thay TV1.
+- Ghi bằng chứng kiểm tra có thể tái lập để bàn giao cho phần harness R17; không tự thêm bộ formatter/linter/CI hoặc dependency của nhóm.
+
+Tôi cho phép commit từng file dưới tên Lê Công Minh Nhựt, giữ email Git hiện tại của tôi. Cấu hình theo từng lệnh; không sửa global config.
+
+Stage từng đường dẫn, kiểm tra diff staged, mỗi commit một file. Không commit thay đổi của người khác, không amend hoặc viết lại lịch sử.
+
+Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Khi xong, báo:
+- R14 đã hoàn thành những luồng nào, còn thiếu gì.
+- File và commit.
+- Bằng chứng kiểm tra thực tế.
+- Phụ thuộc TV1/TV2.
+- Mục brief/AI-LOG đã thêm và git status cuối..
+```
+
+Bổ sung trong phiên:
+
+```text
+Cập nhật AI_log theo ngôi thứ nhất $humanizer:humanizer
+```
+
+```text
+sao chưa cập nhật brief
+```
