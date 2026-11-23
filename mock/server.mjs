@@ -32,6 +32,7 @@ function fail(status, code, message, fields = {}, details = null) {
 const SERVER_ERROR = () => fail(500, 'SERVER_ERROR', 'Máy chủ đang gặp sự cố, vui lòng thử lại.');
 const NOT_FOUND = () => fail(404, 'NOT_FOUND', 'Không tìm thấy');
 const UNAUTHENTICATED = () => fail(401, 'UNAUTHENTICATED', 'Vui lòng đăng nhập để tiếp tục');
+const LOCKED_SESSION = () => fail(401, 'UNAUTHENTICATED', 'Tài khoản đã bị khóa hoặc phiên không còn hợp lệ');
 const FORBIDDEN = () => fail(403, 'FORBIDDEN', 'Bạn không có quyền truy cập chức năng này');
 const BAD_JSON = () => fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ');
 
@@ -196,6 +197,7 @@ async function handle(req, db, routes) {
   const user = userFromToken(db, headers);
   if (route.roles !== null) {
     if (!user) return UNAUTHENTICATED();
+    if (user.active === false) return LOCKED_SESSION();
     if (Array.isArray(route.roles) && !route.roles.includes(user.role)) return FORBIDDEN();
   }
 

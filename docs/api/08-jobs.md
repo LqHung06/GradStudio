@@ -18,6 +18,8 @@ A job is one piece of work for one staff member on one booking: `makeup`, `shoot
 - An `edit` job has no time or room (`date`, `start`, `end`, `room` are `null`). It is done after the customer chooses the photos.
 - `previewCount` is the number of photos the booking has (see `GET /api/bookings/:code/photos`). It is the same on every job of a booking.
 - A staff member sees only their own jobs.
+- Updating a job never changes the booking or conversation status. Marking all `shoot` jobs of a booking `done` is the milestone used by payments (`06-payments.md`) to allow the remaining 70% payment.
+- When a booking is `cancelled`, its jobs and their statuses stay in history (`GET /api/jobs` and `GET /api/jobs/:id` still return them; there is no `cancelled` job status), while `PATCH /api/jobs/:id` and `POST /api/bookings/:code/previews` are refused with `409 CONFLICT` without changing any data.
 
 ## Starting data (`mock/data/jobs.json`)
 
@@ -227,6 +229,7 @@ Updates the status of one's own job, and optionally its note.
 | 401 | `UNAUTHENTICATED` | No token |
 | 403 | `FORBIDDEN` | The caller is not staff |
 | 404 | `NOT_FOUND` | No such job, or it belongs to another staff member |
+| 409 | `CONFLICT` | The job's booking is `cancelled` (history is read-only; message: `"Booking đã hủy, không thể cập nhật công việc"`). Job status and note remain unchanged. |
 
 Any status may follow any other; the mock checks only the values.
 
@@ -298,9 +301,9 @@ Adds one low-resolution preview photo to a booking's gallery.
 
 | Field | Type | Required | Limits |
 |---|---|---|---|
-| `file` | file | yes | JPEG or PNG (`image/jpeg`, `image/png`), at most **5 MB**. One file per request. |
+| `file` | file | yes | JPEG or PNG (`image/jpeg`, `image/png`), at most **5 MiB (`5 242 880` bytes of file content)**. One file per request. |
 
-  The front end checks the type and the size **before** sending, with these same limits, and shows the message next to the file input. To add several photos it sends one request per photo.
+  The front end checks the type and `file.size <= 5242880` **before** sending, with these same limits, and shows the message next to the file input. To add several photos it sends one request per photo.
 - **201 Created:** `{"photo": Photo, "totalPhotos": number}`. `totalPhotos` is the number of photos the booking has after this upload. Every job of the booking now shows that number as `previewCount`.
 - **Errors:**
 
@@ -308,19 +311,20 @@ Adds one low-resolution preview photo to a booking's gallery.
 |---|---|---|---|
 | 400 | `VALIDATION` | No `file` field | `{"file": "Vui lòng chọn ảnh"}` |
 | 400 | `VALIDATION` | Wrong type | `{"file": "Chỉ nhận ảnh JPEG hoặc PNG"}` |
-| 400 | `VALIDATION` | Larger than 5 MB | `{"file": "Ảnh tối đa 5 MB"}` |
-| 401 | `UNAUTHENTICATED` | No token | |
-| 403 | `FORBIDDEN` | The caller is not staff, or is staff on this booking without a `shoot` or `edit` job | |
-| 404 | `NOT_FOUND` | No such booking, or the caller has no job on it | |
+| 400 | `VALIDATION` | File content larger than 5 MiB (`5 242 880` bytes) | `{"file": "Ảnh tối đa 5 MiB"}` |
+| 401 | `UNAUTHENTICATED` | No token | `{}` |
+| 403 | `FORBIDDEN` | The caller is not staff, or is staff on this booking without a `shoot` or `edit` job | `{}` |
+| 404 | `NOT_FOUND` | No such booking, or the caller has no job on it | `{}` |
+| 409 | `CONFLICT` | The booking is `cancelled` (history is read-only; message: `"Booking đã hủy, không thể đăng ảnh xem trước"`). No photo is added. | `{}` |
 
 ### Examples
 
-Tuấn uploads the first preview of GS-1024. In the mock, the first upload to a booking with no photos also adds the rest of the shoot (see [Mock behaviour](#mock-behaviour)), so the booking has 36 photos afterwards.
+Tuấn uploads the first preview of GS-1024 at the exact 5 MiB (`5 242 880` bytes) boundary. In the mock, the first upload to a booking with no photos also adds the rest of the shoot (see [Mock behaviour](#mock-behaviour)), so the booking has 36 photos afterwards.
 
 ```sh
 curl -i http://localhost:3001/api/bookings/GS-1024/previews \
   -H "Authorization: Bearer {{token:tuan}}" \
-  -F "file=@{{file:preview-01.png:300KB}};type=image/png"
+  -F "file=@{{file:preview-01.png:5242880B}};type=image/png"
 ```
 
 ```http
@@ -332,19 +336,19 @@ Content-Type: application/json
  "totalPhotos": 36}
 ```
 
-A file larger than 5 MB:
+A file exceeding 5 MiB by 1 byte (`5 242 881` bytes):
 
 ```sh
 curl -i http://localhost:3001/api/bookings/GS-1024/previews \
   -H "Authorization: Bearer {{token:tuan}}" \
-  -F "file=@{{file:big.png:6MB}};type=image/png"
+  -F "file=@{{file:over-limit.png:5242881B}};type=image/png"
 ```
 
 ```http
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
 
-{"error": {"code": "VALIDATION", "message": "Dữ liệu chưa hợp lệ", "fields": {"file": "Ảnh tối đa 5 MB"}, "details": null}}
+{"error": {"code": "VALIDATION", "message": "Dữ liệu chưa hợp lệ", "fields": {"file": "Ảnh tối đa 5 MiB"}, "details": null}}
 ```
 
 A PDF instead of a photo:
@@ -400,20 +404,22 @@ Content-Type: application/json
 
 **Photo ids are unique in the whole mock.** The seeded photos of GS-1022 are `ph-101` … `ph-136`, so the GS-1024 ids `ph-01` … `ph-36` that `09-gallery.md` uses do not collide.
 
-**Size check.** The mock checks the size with the request's `Content-Length`: more than 5 MB plus 64 KB (room for the multipart headers) is "too large".
+**Size check.** The mock parses the `file` part inside the `multipart/form-data` body (excluding multipart headers and boundaries) and measures the exact byte length of the file payload: more than 5 MiB (`5 242 880` bytes) is refused with `400` (`fields.file = "Ảnh tối đa 5 MiB"`). It does not use the total request `Content-Length` as the file size.
 
-**Type check.** The mock reads the `Content-Type:` line in the headers of the `file` part (the body is read as `latin1`). Anything other than `image/jpeg` or `image/png` is the wrong type.
+**Type check.** The mock reads the `Content-Type:` line in the headers of the `file` part. Anything other than `image/jpeg` or `image/png` is the wrong type. (PA#4 will also verify file magic bytes / signatures per S5.)
 
 **Order of checks.** A refused upload adds no photo. The checks run in this order:
 1. token (401);
 2. role (403 if not staff);
-3. booking and job (404, or 403 for the make-up artist);
-4. `file` present;
-5. type;
-6. size.
+3. booking and job ownership (404 if not assigned, or 403 for the make-up artist);
+4. booking status (409 if the booking is `cancelled`);
+5. `file` present;
+6. type;
+7. file content size (`<= 5 242 880` bytes).
 
 ## Changes
 
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 
 - 2026-11-19: first version. (TV1)
+- 2026-11-23: align with PO #2/#3 and 23/11 plan (R02, R06, R11): refuse `PATCH /api/jobs/:id` and `POST /api/bookings/:code/previews` with `409 CONFLICT` when the booking is `cancelled` while keeping `GET` history; measure exact file part payload against 5 MiB (`5 242 880` bytes) instead of total `Content-Length`, update error text to `"Ảnh tối đa 5 MiB"`, and test exact `5242880B` / `5242881B` boundaries. (TV1)

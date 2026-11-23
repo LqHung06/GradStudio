@@ -68,7 +68,8 @@ Every endpoint has at least one example: a `http` request block followed by a `h
 
 | Situation | Answer |
 |---|---|
-| Missing or unknown token on a protected endpoint | **401** `UNAUTHENTICATED` |
+| Missing, unknown, or locked-account token on a protected endpoint | **401** `UNAUTHENTICATED` |
+| Locked account signing in via `POST /api/auth/login` | **403** `FORBIDDEN` (`"Tài khoản đã bị khóa"`) |
 | Valid token, but the role is not allowed | **403** `FORBIDDEN` |
 | A customer or staff member asks for an item that exists but is not theirs | **404** `NOT_FOUND` (the item is not revealed) |
 
@@ -101,9 +102,9 @@ Every error answer of every endpoint has this one shape:
 | HTTP | `error.code` | When |
 |---|---|---|
 | 400 | `VALIDATION` | A field is missing, has the wrong type, breaks a limit, or the body is not valid JSON. `fields` names every invalid field. |
-| 401 | `UNAUTHENTICATED` | Missing or unknown token on a protected endpoint. |
+| 401 | `UNAUTHENTICATED` | Missing, unknown, or locked-account token on a protected endpoint. |
 | 401 | `INVALID_CREDENTIALS` | `POST /api/auth/login` with a wrong e-mail or password. |
-| 403 | `FORBIDDEN` | The caller's role may not call this endpoint. |
+| 403 | `FORBIDDEN` | The caller's role may not call this endpoint, or the account is locked on sign-in. |
 | 404 | `NOT_FOUND` | The path matches nothing, or the item does not exist or is not the caller's. |
 | 409 | `CONFLICT` | The request is valid, but the item's current state does not allow it (for example, creating a booking before the customer agreed). `message` says why. |
 | 409 | `CLASH` | A staff member or room is busy at the requested time. `details` holds the clashes and free suggestions. |
@@ -147,12 +148,12 @@ The `500` answer of the mock in `error` mode:
 | Kind | Field | Code → label shown on screen |
 |---|---|---|
 | Conversation | `status` | `unanswered` → Chưa trả lời · `consulting` → Đang tư vấn · `scheduled` → Đã chốt lịch · `done` → Hoàn thành |
-| Booking | `status` | `awaiting_deposit` → Chờ cọc 30% (G7 may show *Đã thống nhất lịch · Chờ cọc 30%*) · `booked` → Đã đặt lịch · `completed` → Hoàn thành · `cancelled` → Đã hủy (label to be confirmed by the product owners) |
+| Booking | `status` | `awaiting_deposit` → Chờ cọc 30% (G7 may show *Đã thống nhất lịch · Chờ cọc 30%*) · `booked` → Đã đặt lịch · `completed` → Hoàn thành · `cancelled` → Đã hủy |
 | Booking | `paymentStatus` | `unpaid` → Chưa cọc · `deposit_paid` → Đã cọc 30% · `paid_in_full` → Đã thanh toán đủ |
 | Payment | `status` | `pending` → Đang chờ thanh toán · `succeeded` → Thành công · `failed` → Thất bại |
 | Payment | `kind` | `deposit` → Cọc 30% · `remaining` → 70% còn lại |
 | Proposal | `status` | `pending` → Chờ khách trả lời · `accepted` → Khách đã đồng ý · `declined` → Khách đã từ chối |
-| Job | `status` | `todo` → Sắp tới · `in_progress` → Đang làm · `done` → Đã xong (to be confirmed by the product owners) |
+| Job | `status` | `todo` → Chưa bắt đầu · `in_progress` → Đang làm · `done` → Hoàn thành |
 | Job, schedule item | `kind` | `makeup` → Makeup · `shoot` → Chụp ảnh · `edit` → Chỉnh ảnh (`edit` is used by jobs only) |
 | Reminder | `emailStatus` | `queued` → Chờ gửi · `sent` → Đã gửi · `failed` → Gửi lỗi |
 | Message | `from` | `customer` → the customer · `studio` → the studio (an Admin) |
@@ -270,7 +271,7 @@ Owned by `05-bookings.md`. Every endpoint that returns a booking returns this wh
 |---|---|
 | `requestedTime` | The time the customer first asked for, with the reason it was not possible. `null` if the first time was kept. G7 shows it struck out. |
 | `items` | `ScheduleItem` objects, in time order |
-| `deposit` | 30% of `price`, rounded to the nearest 1 000 VND |
+| `deposit` | 30% of `price`, rounded to the nearest integer VND (`Math.round(price * 0.3)`). Extras have no separate price (PO #6). |
 | `remaining` | `price − deposit` |
 | `selection.limit` | Number of edited photos in the package |
 | `selection.selectedCount` | Number of photos the customer has saved in their selection |
@@ -371,6 +372,7 @@ Every request the app makes is in this table, and every row has at least one exa
 | POST | `/api/bookings/:code/receive` | customer (own) | `11-receive.md` | G9 |
 | GET | `/api/admins` | superadmin | `12-admins.md` | G11 |
 | POST | `/api/admins` | superadmin | `12-admins.md` | G11 |
+| PATCH | `/api/admins/:id` | superadmin | `12-admins.md` | G11 |
 | GET | `/api/settings` | superadmin | `13-settings.md` | G11 |
 | PUT | `/api/settings` | superadmin | `13-settings.md` | G11 |
 
@@ -398,24 +400,21 @@ The examples of all files run in this order on one freshly started mock. Every f
    - `PAY-2` deposit, gateway `success`: GS-1024 becomes `booked`. The jobs `J-GS-1024-makeup`, `-shoot`, `-edit` and reminder `rm-1` are created.
 7. **`07-reminders`:** Linh reads `rm-1`.
 8. **`08-jobs`:**
-   - Tuấn lists his jobs and updates `J-GS-1024-shoot`.
-   - Tuấn uploads a preview to GS-1024 three times: a valid file, a file that is too large, and a file of the wrong type.
+   - Tuấn lists his jobs and updates `J-GS-1024-shoot` to `done`.
+   - Tuấn uploads previews to GS-1024: an exact 5 MiB (`5 242 880` bytes) PNG (201), a 5 MiB + 1 byte (`5 242 881` bytes) PNG (400), and a PDF (400).
 9. **`09-gallery`:**
    - Linh reads the photos of GS-1024.
    - Selecting 31 photos gives **400**; selecting 30 gives **200**.
    - Linh pays the remaining 70% (`PAY-3`, gateway `success`): `paid_in_full`.
 10. **`10-admin-bookings`:**
-    - Thảo proposes rescheduling GS-1023 to 24/10 09:00 with Mai in `c-han` → **409 `CLASH`**.
-    - Thảo proposes 25/10 09:00 in `c-han` → **201**, proposal `p-3`.
-    - Thảo sends `PATCH /api/bookings/GS-1023` with `{"proposalId": "p-3"}` before Hân accepts → **409 `CONFLICT`**.
-    - Hân accepts `p-3` in `c-han`.
-    - Thảo applies `p-3` again with `PATCH /api/bookings/GS-1023` → **200**.
-    - Thảo cancels GS-1023.
-    - Thảo sets the final link of GS-1024.
+    - Thảo PATCHes GS-1023 with date/items for 24/10 09:00 → **409 CLASH**, no mutation.
+    - Thảo PATCHes date/items for 25/10 09:00 → **200**, no customer re-acceptance (G10, PO).
+    - Thảo cancels GS-1023 and sets the final link of GS-1024.
+    - Supplemental examples: repeat cancel → 409; propose a fresh p-3 after cancellation, Hân accepts (G6), create replacement GS-1025 in c-han. This does not change GS-1024.
+    - Payment.reservationFailure remains a TV2 handoff (R08).
 
-    A proposal refused with 409 gets no id, so the next id after `p-2` is `p-3`.
 11. **`11-receive`:** Linh receives the photos of GS-1024; the booking becomes `completed`.
-12. **`12-admins`, `13-settings`:** the Superadmin lists and creates Admins, then reads and saves the settings.
+12. **`12-admins`, `13-settings`:** the Superadmin lists, creates, locks/unlocks Admins (verifying locked sign-in refusal `403`, locked token refusal `401`, and unlocked sign-in `200`), then reads and saves the settings.
 
 ### Data the mock starts with
 
@@ -450,9 +449,12 @@ The mock is **lenient**. It refuses only what the flow needs to show:
 | Request | Answer |
 |---|---|
 | Missing or invalid field | `400` |
+| Locked Admin signing in | `403 FORBIDDEN` (`"Tài khoản đã bị khóa"`); existing token on protected endpoints → `401 UNAUTHENTICATED` |
 | A staff member or room is busy | `409 CLASH` |
 | Creating a booking before the customer accepted the proposal | `409` |
-| Applying a reschedule before the customer accepted the proposal | `409` |
+| Rescheduling cancelled/completed, or cancelling again | `409` |
+| Updating a job or uploading previews for a `cancelled` booking | `409 CONFLICT` |
+| Uploading a preview larger than 5 MiB (`5 242 880` bytes of file content) or wrong file type | `400 VALIDATION` |
 | Selecting more photos than the package allows | `400` |
 | Paying the remaining 70% before the selection is saved | `409` |
 | Receiving the photos before full payment or before the final link exists | `409` |
@@ -461,8 +463,11 @@ The mock does not invent other rules.
 
 ## Changes
 
+- 2026-11-23: TV3 sync only: direct G10 date/items (PO); replacement after cancellation and one-VND deposit rounding (group choices, plan 2.7). File 03 appends a new c-1 after the canonical proposal chain.
+
 Every change to this file, once front-end code uses it, gets a line here: the date, what changed and why.
 
 - 2026-11-19: first version: conventions, error shape, business status codes, shared objects, endpoint table (39 endpoints), example chain, mock behaviour. (TV1)
 - 2026-11-19: starting data now lists the customers of the seeded bookings and the photo ids of GS-1022. `01-auth.md` and `08-jobs.md` refer to them, and the ids keep the GS-1024 photos `ph-01` … `ph-36` unique. (TV1)
 - 2026-11-20: rescheduling now requires customer agreement in chat first (brief: "Both sides settle a time in chat"): `c-han` is `scheduled` and linked to `GS-1023`, `han` can sign in (`han-demo`) to accept proposal `p-3`, and `PATCH /api/bookings/:code` takes `{"proposalId"}` after agreement. (TV1)
+- 2026-11-23: align TV1 contract with PO decisions and 23/11 plan (R01, R02, R06, R11, R16): add `PATCH /api/admins/:id` (40 endpoints), document locked-account refusal (`403` on sign-in, `401` on existing token), confirm Job status labels (`Chưa bắt đầu` / `Đang làm` / `Hoàn thành`) and Booking `cancelled` label, update deposit rounding to nearest integer VND (PO #6 / plan 2.7), and document cancelled-booking job write lock (`409`) and exact 5 MiB (`5 242 880` bytes) upload limit. (TV1)

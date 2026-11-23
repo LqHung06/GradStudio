@@ -52,9 +52,16 @@ export default [
   { method: 'POST', path: '/api/conversations', roles: ['customer'], handler: (ctx) => {
     const textError = validateText(ctx.body.text);
     if (textError) return invalid(ctx, { text: textError });
-    // 03 explicitly leaves new conversation ID allocation undecided. TV3 has
-    // confirmed it remains a dependency; do not consume any IDs or invent it.
-    return dependency(ctx, 'Chưa chốt cách cấp ID hội thoại mới');
+    const conversation = {
+      id: nextId(ctx.db.conversations, 'c-'), customer: person(ctx.user),
+      topic: ctx.body.text, status: 'unanswered', bookingCode: null,
+      acceptedProposalId: null, messages: [],
+    };
+    // append sees the new conversation so the first message uses the same
+    // global message counter and timestamp rules as every later message.
+    ctx.db.conversations.push(conversation);
+    append(ctx.db, conversation, ctx.user, ctx.body.text);
+    return { status: 201, body: { conversation } };
   } },
   { method: 'GET', path: '/api/conversations/:id', roles: ['customer', 'admin'], handler: (ctx) => {
     const conversation = visible(ctx);
@@ -95,7 +102,7 @@ export default [
     if (ctx.body.note !== undefined && typeof ctx.body.note !== 'string') fields.note = 'Ghi chú phải là chuỗi';
     if (Object.keys(fields).length) return invalid(ctx, fields);
     const linked = ctx.db.bookings?.find((booking) => booking.code === conversation.bookingCode);
-    if (linked && ['completed', 'cancelled'].includes(linked.status)) return ctx.fail(409, 'CONFLICT', 'Booking đã hoàn thành hoặc đã hủy');
+    if (linked?.status === 'completed') return ctx.fail(409, 'CONFLICT', 'Booking đã hoàn thành');
     const result = checkClash(ctx.db, ctx.body.date, ctx.body.items, { ignoreBooking: linked?.code });
     if (!result.available) return ctx.fail(409, 'CLASH', result.clashes[0].reason, {}, { clashes: result.clashes, suggestions: result.suggestions });
     const proposal = { id: nextId(allProposals(ctx.db), 'p-'), status: 'pending', date: ctx.body.date,

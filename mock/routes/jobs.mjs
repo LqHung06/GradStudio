@@ -8,12 +8,14 @@
 import { nowIso } from '../lib/time.mjs';
 
 const STATUSES = ['todo', 'in_progress', 'done'];
-const MAX_UPLOAD = 5 * 1024 * 1024 + 64 * 1024; // 5 MB + room for the multipart headers
+const MAX_UPLOAD = 5 * 1024 * 1024; // 5 MiB = 5,242,880 bytes of file content
+const HEADER_SEP = Buffer.from('\r\n\r\n', 'latin1');
 const FIRST_UPLOAD_TOTAL = 36; // the first upload brings the rest of the shoot
 
 const JOB_NOT_FOUND = 'Không tìm thấy việc này';
 
 const photosOf = (db, code) => (db.photos || []).filter((p) => p.bookingCode === code);
+const bookingOf = (db, code) => (db.bookings || []).find((b) => b.code === code);
 
 // The Job object with exactly the fields of the contract.
 function toJob(job, db) {
@@ -51,20 +53,43 @@ const ownJob = (db, id, user) => db.jobs.find((j) => j.id === id && j.staff.id =
 // ---------- multipart ----------
 
 // Reads the "file" part of a multipart/form-data body. Returns null when there is none,
-// otherwise { type } with the Content-Type line of that part (lower case, '' if missing).
+// otherwise { type, size } with the Content-Type line of that part (lower case, '' if missing)
+// and the exact byte length of the file payload (excluding multipart boundaries and headers).
 function filePart(headers, rawBody) {
   const m = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(String(headers['content-type'] || ''));
   if (!m) return null;
-  const boundary = '--' + (m[1] || m[2]).trim();
-  const text = rawBody.toString('latin1'); // byte for byte, so binary data does not break the search
-  for (const part of text.split(boundary)) {
-    const end = part.indexOf('\r\n\r\n');
-    if (end === -1) continue;
-    const head = part.slice(0, end);
-    const disposition = /^content-disposition:(.*)$/im.exec(head);
-    if (!disposition || !/(^|;)\s*name="file"\s*(;|$)/i.test(disposition[1].trim())) continue;
-    const type = /^content-type:\s*([^;\r\n]+)/im.exec(head);
-    return { type: type ? type[1].trim().toLowerCase() : '' };
+  const delim = Buffer.from('--' + (m[1] || m[2]).trim(), 'latin1');
+
+  let pos = rawBody.indexOf(delim);
+  while (pos !== -1) {
+    pos += delim.length;
+    if (rawBody[pos] === 0x2d && rawBody[pos + 1] === 0x2d) break; // closing "--"
+    if (rawBody[pos] === 0x0d && rawBody[pos + 1] === 0x0a) pos += 2;
+    else if (rawBody[pos] === 0x0a) pos += 1;
+
+    const next = rawBody.indexOf(delim, pos);
+    if (next === -1) break;
+
+    let partEnd = next;
+    // RFC 2046: the CRLF right before the next boundary belongs to the delimiter, not the payload.
+    if (partEnd >= pos + 2 && rawBody[partEnd - 2] === 0x0d && rawBody[partEnd - 1] === 0x0a) {
+      partEnd -= 2;
+    } else if (partEnd >= pos + 1 && rawBody[partEnd - 1] === 0x0a) {
+      partEnd -= 1;
+    }
+
+    const part = rawBody.subarray(pos, partEnd);
+    const headerEnd = part.indexOf(HEADER_SEP);
+    if (headerEnd !== -1) {
+      const head = part.subarray(0, headerEnd).toString('latin1');
+      const disposition = /^content-disposition:(.*)$/im.exec(head);
+      if (disposition && /(^|;)\s*name="file"\s*(;|$)/i.test(disposition[1].trim())) {
+        const type = /^content-type:\s*([^;\r\n]+)/im.exec(head);
+        const size = part.length - (headerEnd + HEADER_SEP.length);
+        return { type: type ? type[1].trim().toLowerCase() : '', size };
+      }
+    }
+    pos = next;
   }
   return null;
 }
@@ -134,6 +159,11 @@ export default [
       const job = ownJob(db, params.id, user);
       if (!job) return fail(404, 'NOT_FOUND', JOB_NOT_FOUND);
 
+      const booking = bookingOf(db, job.bookingCode);
+      if (booking && booking.status === 'cancelled') {
+        return fail(409, 'CONFLICT', 'Booking đã hủy, không thể cập nhật công việc');
+      }
+
       const fields = {};
       if (body.status === undefined || body.status === null || body.status === '') fields.status = 'Vui lòng chọn trạng thái';
       else if (!STATUSES.includes(body.status)) fields.status = 'Trạng thái không hợp lệ';
@@ -158,25 +188,32 @@ export default [
     handler: ({ params, headers, rawBody, user, db, fail }) => {
       const code = params.code;
 
-      // 3. Booking and job: read from db.jobs only. "No such booking" and "no job on it" are the same 404.
+      // 3. Booking and job ownership: read from db.jobs only. "No such booking" and "no job on it" are the same 404.
       const myJobs = db.jobs.filter((j) => j.bookingCode === code && j.staff.id === user.id);
       if (myJobs.length === 0) return fail(404, 'NOT_FOUND', 'Không tìm thấy booking này');
       if (!myJobs.some((j) => j.kind === 'shoot' || j.kind === 'edit')) {
         return fail(403, 'FORBIDDEN', 'Chỉ thợ chụp hoặc chỉnh ảnh của booking này được đăng ảnh xem trước');
       }
 
-      // 4. The file part.
+      // 4. Booking status: cancelled bookings are read-only history.
+      const booking = bookingOf(db, code);
+      if (booking && booking.status === 'cancelled') {
+        return fail(409, 'CONFLICT', 'Booking đã hủy, không thể đăng ảnh xem trước');
+      }
+
+      // 5. The file part.
       const part = filePart(headers, rawBody);
       if (!part) return fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ', { file: 'Vui lòng chọn ảnh' });
 
-      // 5. Type, from the Content-Type line of the part.
+      // 6. Type, from the Content-Type line of the part.
       if (part.type !== 'image/jpeg' && part.type !== 'image/png') {
         return fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ', { file: 'Chỉ nhận ảnh JPEG hoặc PNG' });
       }
 
-      // 6. Size, from the request's Content-Length (the body length when the header is missing).
-      const size = Number(headers['content-length']) || rawBody.length;
-      if (size > MAX_UPLOAD) return fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ', { file: 'Ảnh tối đa 5 MB' });
+      // 7. Exact file payload size (<= 5 MiB = 5,242,880 bytes).
+      if (part.size > MAX_UPLOAD) {
+        return fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ', { file: 'Ảnh tối đa 5 MiB' });
+      }
 
       // Accepted. The mock does not store the file: each photo is an illustration.
       if (!Array.isArray(db.photos)) db.photos = [];
