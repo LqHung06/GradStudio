@@ -5,7 +5,10 @@ import { allProposals, validateCatalog, invalid, dependency, nowIso } from './co
 // Runtime bookkeeping stays outside the shared Booking/Proposal response shapes.
 const appliedByDb = new WeakMap();
 export function wasApplied(db, code, proposalId) {
-  return appliedByDb.get(db)?.has(`${code}:${proposalId}`) ?? false;
+  const records = appliedByDb.get(db);
+  if (!records) return false;
+  return code ? records.has(`${code}:${proposalId}`)
+    : [...records].some((entry) => entry.endsWith(`:${proposalId}`));
 }
 export function recordApplied(db, code, proposalId) {
   if (!appliedByDb.has(db)) appliedByDb.set(db, new Set());
@@ -30,7 +33,9 @@ export default [
       return ctx.fail(409, 'CONFLICT', 'Đề xuất không thuộc hội thoại này');
     }
     if (proposal.status !== 'accepted') return ctx.fail(409, 'CONFLICT', 'Khách chưa đồng ý giờ đề xuất này');
-    if (conversation.bookingCode) return ctx.fail(409, 'CONFLICT', 'Hội thoại đã có booking');
+    const linked = db.bookings.find((entry) => entry.code === conversation.bookingCode);
+    if (conversation.bookingCode && linked?.status !== 'cancelled') return ctx.fail(409, 'CONFLICT', 'Hội thoại đã có booking chưa hủy');
+    if (wasApplied(db, null, proposal.id)) return ctx.fail(409, 'CONFLICT', 'Đề xuất đã dùng hoặc thuộc lịch trước khi hủy');
     if (!db.packages || !db.extras || !db.services) return dependency(ctx, 'Chưa có dữ liệu packages/extras/services của TV2');
     const pkg = db.packages.find((entry) => entry.id === body.packageId);
     const service = db.services.find((entry) => entry.id === pkg.serviceId);
@@ -54,7 +59,7 @@ export default [
     }
     // Price is the package price per 05, not caller money or a new extras rule.
     const price = pkg.price;
-    const deposit = Math.round(price * 0.3 / 1000) * 1000;
+    const deposit = Math.round(price * 0.3);
     const number = Math.max(0, ...db.bookings.map(({ code }) => /^GS-\d+$/.test(code) ? Number(code.slice(3)) : 0)) + 1;
     const booking = {
       code: `GS-${number}`, customer: { ...conversation.customer }, conversationId: conversation.id,

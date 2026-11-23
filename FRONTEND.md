@@ -113,3 +113,8 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 ## 7. Not done
 
 Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
+
+
+### TV3: phần còn chờ sau sửa nghiệp vụ 23/11/2026
+
+R04 và phần ngừng nhắc của R05 chưa tích hợp: chờ TV2 bàn giao helper chuẩn bị thay đổi reminders cùng schema phiên bản lịch/dừng nhắc chưa gửi (contract 07). Hiện chỉ có ensureBookingReminder nội bộ payments. Chờ TV1 quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca; tạm trả 409 không ghi dữ liệu cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy đã được TV1 bàn giao qua main; bộ hồi quy TV3 kiểm tra lại như gate bắt buộc sau khi đồng bộ. R14 giao diện Admin không nằm trong task. Kiểm tra hồi quy TV3: `node --test tools/tv3-booking-rules.test.mjs`; ca TODO thể hiện phần bàn giao còn thiếu, không tính là PASS.
