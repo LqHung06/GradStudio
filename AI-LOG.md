@@ -628,3 +628,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Kiểm tra `08-jobs.md:242`: đã đặt `J-GS-1024-shoot` thành `"status": "done"`, nên điều kiện `R19` khớp liền mạch với chuỗi ví dụ `08` → `09`.
   - Kiểm tra `git diff --stat` và `git status -sb`: chỉ sửa đúng 4 file contract của TV2, `brief.md` và `AI-LOG.md`.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV2] 16. Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới (23/11/2026)
+
+- **Tool:** Antigravity Assistant, Node.js (built-in modules).
+- **Request:** `brief.md` mục 16. Trên nhánh `mock/tv2-po-updates` (tách từ `contract/tv2-po-updates`), cập nhật mock của TV2 theo các mục `R04`, `R05`, `R08`, `R09`, `R10`, `R19` và kiểm tra kỹ toàn bộ `contract-check` lẫn các ca đối chiếu.
+- **Changed:**
+  - `mock/data/extras.json` (**R10**): bỏ trường `price` khỏi `ex-makeup` và `ex-costume`.
+  - `mock/lib/reminders.mjs` (file mới — **R04, R05**): tách các hàm dùng chung `buildReminderPayload`, `ensureBookingReminder`, `recalculateBookingReminders` (tính lại nhắc `queued` theo mốc mới, giữ lịch sử `sent`, tránh trùng) và `stopBookingReminders` (ngừng nhắc `queued` khi hủy, giữ lịch sử `sent`) để bàn giao cho TV3 gọi trong `admin-bookings.mjs`.
+  - `mock/routes/payments.mjs` (**R08, R09, R19**):
+    - Thêm `reservationFailure: null` vào mọi object `payment`.
+    - `R08`: khi cọc `success` nhưng `checkClash` thấy trùng → giữ `payment.status = "succeeded"`, `failureReason = null`, gán `reservationFailure = { message, clashes }`, đặt `booking.paymentStatus = "deposit_paid"`, giữ `booking.status = "awaiting_deposit"`, không tạo job/reminder.
+    - `R09`: kiểm tra lại `booking.status` (`cancelled`/`completed` → `409`) và `booking.paymentStatus` (khoản đã thu → `409`) tại `POST /api/test-gateway/:paymentId`.
+    - `R19`: yêu cầu toàn bộ job `shoot` của booking trong `db.jobs` đạt `status === "done"` trước khi tạo hoặc áp dụng thanh toán `remaining` (`409` nếu chưa xong).
+  - `brief.md` mục 16 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa `docs/api/`, `client/`, `tools/`, `mock/server.mjs` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - Chạy `node mock/server.mjs` kết hợp `node tools/contract-check.mjs --base http://localhost:3001` toàn bộ 14 file (`01` → `13`): **102/102 examples PASS, 0 FAIL, 39/39 endpoints**.
+  - Chạy kiểm thử handler in-memory cho đủ 5 nhóm ca đối chiếu: `R10` (extras không `price`), `R08 / A07-paid-clash` (payment `succeeded` + `deposit_paid` + `awaiting_deposit` + `reservationFailure` + không sinh job/reminder + retry `409`), `R09 / A08` (chặn payment pending thứ hai `409` và chặn callback sau khi booking `cancelled` `409`), `R19` (`409` trước `shoot done`, `201` sau `shoot done`), `R04 & R05` (đổi lịch sang `26/10 09:00` sinh nhắc `queued` lúc `2026-10-25T09:00:00+07:00`, hủy bỏ nhắc `queued` và giữ nguyên lịch sử `sent`).
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
