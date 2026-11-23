@@ -153,11 +153,11 @@ test('R05 reminder handoff: unsent reminders stop on cancellation', {todo:'TV2 s
   const db=fresh(),b=getBooking(db,'GS-1021');db.reminders.push(reminderFixture(b));cancel(db,b.code);
   assert.equal(db.reminders.some(r=>r.bookingCode===b.code&&r.emailStatus==='queued'),false);
 });
-test('R06 handoff: Staff cannot PATCH a cancelled booking job', {todo:'TV1 owns jobs contract and handler'}, () => {
+test('R06 integrated: Staff cannot PATCH a cancelled booking job', () => {
   const db=fresh();cancel(db,'GS-1021');const before=structuredClone(db);
   assert.equal(call(db,'PATCH','/api/jobs/:id',{status:'done',note:'Không được ghi'}, {id:'J-GS-1021-makeup'},'u-mai').status,409);assert.deepEqual(db,before);
 });
-test('R06 handoff: Staff cannot upload after cancellation', {todo:'TV1 owns preview contract and handler'}, () => {
+test('R06 integrated: Staff cannot upload after cancellation', () => {
   const db=fresh();cancel(db,'GS-1021');const before=structuredClone(db);
   const rawBody=Buffer.from('--test\r\nContent-Disposition: form-data; name="file"; filename="x.png"\r\nContent-Type: image/png\r\n\r\nx\r\n--test--\r\n');
   assert.equal(call(db,'POST','/api/bookings/:code/previews',{}, {code:'GS-1021'},'u-ha',{headers:{'content-type':'multipart/form-data; boundary=test'},rawBody}).status,409);assert.deepEqual(db,before);

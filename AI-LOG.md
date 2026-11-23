@@ -608,6 +608,35 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Evidence:** harness và kết quả giữ ngoài repo trong thư mục Temp/gs-chat-check, không có route/demo/fixture sản phẩm. Chưa kiểm W3C, chưa chạy flow trang hoặc bốn chế độ mock vì task chỉ nhận props; không gọi endpoint nào.
 - **Commits:** từng file riêng, message feat(G4-G6) cho component/CSS, docs(agents), docs(brief), docs(ai-log); xem `git log main..feat/chat-components` để lấy mã chính xác.
 
+### [TV1] 15. Bước #S1: đồng bộ contract, mock và tài liệu TV1 theo kế hoạch 23/11 — 23/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 15. Cập nhật kế hoạch mới ngoài repo (`/PA3/ke-hoach/`), kéo `origin/main` (`37da2bf`, đã có PR #13, #14, #15), tách nhánh `fix/s1-tv1-plan-alignment`, và triển khai Bước `#S1` theo báo cáo đối chiếu 23/11 (`R01`, `R02`, `R06`, `R11`, `R16` — chỉ phần sở hữu của TV1, tuân thủ thứ tự contract → mock → code nền/tài liệu). Không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `docs/api/README.md`: thêm `PATCH /api/admins/:id` vào bảng endpoint (40/40); ghi rõ lỗi tài khoản bị khóa (`403 FORBIDDEN` khi đăng nhập, `401 UNAUTHENTICATED` khi dùng token cũ); chốt nhãn `Booking.status` (`cancelled` → `Đã hủy`) và `Job.status` (`Chưa bắt đầu`, `Đang làm`, `Hoàn thành`); đồng bộ làm tròn cọc tới VND nguyên (`Math.round(price * 0.3)`) theo mục 2.7; cập nhật Example chain & bảng Mock behaviour; thêm dòng `## Changes`.
+  - `docs/api/01-auth.md`: bổ sung `403 FORBIDDEN` (`"Tài khoản đã bị khóa"`) cho `POST /api/auth/login` và `401 UNAUTHENTICATED` cho token của tài khoản bị khóa ở `/api/auth/me`, `/api/auth/logout`; thêm dòng `## Changes`.
+  - `docs/api/08-jobs.md`: ghi rõ giữ lịch sử `GET` và từ chối `PATCH /api/jobs/:id` cùng `POST /api/bookings/:code/previews` bằng `409 CONFLICT` khi booking `cancelled` (không thêm trạng thái `job.status = "cancelled"`); cập nhật giới hạn upload đúng **5 MiB (`5 242 880` byte)** nội dung part `file`, lỗi `"Ảnh tối đa 5 MiB"`, cập nhật ví dụ biên `5242880B` (`201`, giữ `totalPhotos: 36`) và `5242881B` (`400`); thêm dòng `## Changes`.
+  - `docs/api/12-admins.md`: bỏ mô tả `active` luôn `true`; bổ sung đặc tả và 8 ví dụ tuần tự cho `PATCH /api/admins/:id` (khóa → đăng nhập `403` → token cũ `401` → mở khóa → đăng nhập `200` → lỗi validation/field cấm `400` → không tồn tại `404` → Admin thường gọi `403`); thêm dòng `## Changes`.
+  - `mock/server.mjs`, `mock/routes/auth.mjs`, `mock/routes/admins.mjs`: `toAdmin` đọc `u.active !== false`; cài `PATCH /api/admins/:id` chỉ nhận `active: boolean` và chặn field lạ (`400`), chỉ áp dụng cho user `role === 'admin'` (`404` với vai trò khác); `auth.mjs` trả `403 FORBIDDEN` (`"Tài khoản đã bị khóa"`) khi đăng nhập tài khoản bị khóa; `server.mjs` từ chối token của tài khoản `active === false` bằng `401 UNAUTHENTICATED`.
+  - `mock/routes/jobs.mjs`: thêm kiểm tra `booking.status === 'cancelled'` sau kiểm tra quyền sở hữu (trả `409 CONFLICT` cho `PATCH` và `POST previews`, giữ `GET` lịch sử); viết lại `filePart()` đọc trực tiếp `Buffer` của part `name="file"` (loại trừ boundary/headers theo RFC 2046) để đo đúng byte nội dung file so với `5 242 880` byte (`"Ảnh tối đa 5 MiB"`).
+  - `client/src/constants/status.js`: đổi `JOB_STATUS` sang `todo: 'Chưa bắt đầu'`, `in_progress: 'Đang làm'`, `done: 'Hoàn thành'`.
+  - `AGENTS.md`: sửa ví dụ trả lời proposal từ `{status}` sang `{decision}`; cập nhật quy tắc upload 5 MiB và tóm tắt quyết định PO & quy ước nhóm ngày 23/11.
+  - `FRONTEND.md`: thêm `PATCH /api/admins/:id` ở dòng `/superadmin/admins`; điền đầy đủ mục 5 (10 mục phản hồi PO ghi rõ *Chưa có link*, tách riêng mục 5.2 các lựa chọn bổ sung và quy ước triển khai của nhóm).
+  - `brief.md`: ghi mục 15 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa bất kỳ file contract/mock nào thuộc quyền TV2 hoặc TV3 (giữ sạch phạm vi TV1 để không gây xung đột PR `#S2`/`#S3`).
+  - Không đụng vào `mock/data/bookings.json` để tránh phá vỡ các ca kiểm tra `03`–`10` của TV2/TV3; ca `A04` (booking hủy) được kiểm chứng qua bản sao in-memory của seed data.
+- **Checked:**
+  - `node tools/contract-check.mjs --base http://localhost:3001` trên mock vừa khởi động lại: **107/107 examples PASS, 0 FAIL**, **40/40 endpoints có ví dụ** (đã gồm toàn bộ ca mới trong `08-jobs.md` và `12-admins.md`).
+  - Kiểm tra bổ sung qua script Node (không lưu file tạm vào repo):
+    - `A01 PASS`: tạo Admin → khóa (`200`) → đăng nhập bị chặn (`403`) → gửi field thừa `name` (`400`) → PATCH user không phải Admin (`404`) → mở khóa (`200`) → đăng nhập lại (`200`).
+    - `A04 PASS`: đặt `GS-1022` thành `cancelled` trên bản sao in-memory → `GET /api/jobs` và `GET /api/jobs/J-GS-1022-shoot` vẫn trả `200`; `PATCH` và `POST previews` trả `409 CONFLICT`, trạng thái/ghi chú/số ảnh không đổi; staff khác vẫn nhận `404`.
+    - `A05 PASS`: upload đúng `5 242 880` byte trả `201` và `5 242 881` byte trả `400` (`fields.file = "Ảnh tối đa 5 MiB"`) cho cả boundary/tên file ngắn và dài (boundary 60 ký tự, tên file 200 ký tự).
+  - `cd client && npm run build`: thành công (`65 modules transformed`, `dist/index.html`, `dist/assets/index-*.css`, `dist/assets/index-*.js`, `built in 5.21s`).
+  - `git diff --check`: 0 lỗi.
+  - *Chưa kiểm tra:* màn hình G8 và G11 chưa triển khai (thuộc bước tiếp theo `R12`), và `A04` qua HTTP sau hủy thực tế chờ TV3 hoàn thành `R05` (`#S3`).
+- **Commits:** TV1 đọc diff và tự commit sau.
+
 ### [TV3] 15. Sửa contract và mock theo báo cáo đối chiếu — 23/11/2026
 
 - **Tool:** Tôi dùng Codex để sửa code và chạy kiểm tra.

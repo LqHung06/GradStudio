@@ -6,8 +6,8 @@ import { nowIso } from '../lib/time.mjs';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // same rule as sign-in
 
-// The Admin object: never the password. "active" is always true in PA#3.
-const toAdmin = (u) => ({ id: u.id, name: u.name, email: u.email, active: true, createdAt: u.createdAt });
+// The Admin object: never the password. active reflects the real account state (default true).
+const toAdmin = (u) => ({ id: u.id, name: u.name, email: u.email, active: u.active !== false, createdAt: u.createdAt });
 
 function validateAdmin(body) {
   const fields = {};
@@ -76,6 +76,31 @@ export default [
       };
       db.users.push(user);
       return { status: 201, body: { admin: toAdmin(user) } };
+    },
+  },
+  {
+    method: 'PATCH',
+    path: '/api/admins/:id',
+    roles: ['superadmin'],
+    handler: ({ params, body, db, fail }) => {
+      const admin = db.users.find((u) => u.id === params.id && u.role === 'admin');
+      if (!admin) return fail(404, 'NOT_FOUND', 'Không tìm thấy tài khoản Admin này');
+
+      const fields = {};
+      if (typeof body.active !== 'boolean') {
+        fields.active = 'Trạng thái khóa phải là true hoặc false';
+      }
+      for (const key of Object.keys(body)) {
+        if (key !== 'active') {
+          fields[key] = 'Chỉ được cập nhật trạng thái hoạt động (active)';
+        }
+      }
+      if (Object.keys(fields).length > 0) {
+        return fail(400, 'VALIDATION', 'Dữ liệu chưa hợp lệ', fields);
+      }
+
+      admin.active = body.active;
+      return { status: 200, body: { admin: toAdmin(admin) } };
     },
   },
 ];
