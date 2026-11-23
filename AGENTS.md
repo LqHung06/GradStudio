@@ -97,8 +97,8 @@ Admin integration (inside a screen that already loaded `conversation`):
 ```
 
 Customer integration: connect the components through `renderProposal`. Here
-`reply(proposal, status)` belongs to the screen: it PATCHes the documented proposal
-endpoint with `{status: 'accepted' | 'declined'}`, updates from the response, and
+`reply(proposal, decision)` belongs to the screen: it PATCHes the documented proposal
+endpoint with `{decision: 'accepted' | 'declined'}`, updates from the response, and
 handles action failures; `replying` is its pending state. Only render actions when
 the flow allows a reply; status text alone does not imply the slot is held.
 
@@ -165,7 +165,7 @@ const form = useForm({
 - Before sending, check what the contract requires. After the first submit attempt, show one message per field next to it, linked with `aria-describedby`; set `aria-invalid`; focus the first invalid field.
 - A `400` from the API shows its `fields` messages on the matching fields. What the user typed stays after an error.
 - The submit button cannot send twice while a request is out.
-- The preview upload refuses a wrong type or a too-large file before sending, with the limits from the contract.
+- The preview upload refuses a wrong type (`image/jpeg`, `image/png`) or a file larger than 5 MiB (`file.size > 5242880` bytes) before sending, matching `docs/api/08-jobs.md`.
 - Do not validate "the date must be in the future": the story date 24/10/2026 is already in the past.
 
 ## Design tokens & spacing scale (Blue Theme, kept from PA#2)
@@ -199,7 +199,13 @@ const form = useForm({
 
 - Linh (customer, display name "Linh") asks for Saturday 24/10/2026 at 09:00 with make-up. Make-up artist Mai is busy 08:00–12:00 (booking GS-1021).
 - Agreed schedule: make-up 13:00–14:00 with Mai, shoot 14:00–16:00 with Tuấn in Phòng B. Admin Thảo creates booking **GS-1024**: `Tốt nghiệp cá nhân`, `Gói Tốt nghiệp Premium` (2 hours, 30 edited photos), 1.800.000đ, deposit 540.000đ, remaining 1.260.000đ.
-- Conversation labels: `Chưa trả lời`, `Đang tư vấn`, `Đã chốt lịch`, `Hoàn thành`. Booking labels: `Chờ cọc 30%` (G7 may show `Đã thống nhất lịch · Chờ cọc 30%`), `Đã đặt lịch`, `Hoàn thành`. The API sends codes; `src/constants/status.js` maps them.
+- Conversation labels: `Chưa trả lời`, `Đang tư vấn`, `Đã chốt lịch`, `Hoàn thành`. Booking labels: `Chờ cọc 30%` (G7 may show `Đã thống nhất lịch · Chờ cọc 30%`), `Đã đặt lịch`, `Hoàn thành`, `Đã hủy`. Job labels (shared across makeup/shoot/edit): `Chưa bắt đầu`, `Đang làm`, `Hoàn thành`. The API sends codes; `src/constants/status.js` maps them.
+- Confirmed PO & team rules (23/11/2026, full table in `FRONTEND.md` §5):
+  - Superadmin lists, creates, and locks/unlocks Admins (`PATCH /api/admins/:id` with `{"active": boolean}`); no edit/delete. Locked Admins cannot sign in (`403`) or reuse tokens (`401`).
+  - Updating a job never changes booking/conversation status. Cancelled bookings keep job history (`GET` allowed) and refuse Staff writes (`PATCH /api/jobs/:id`, `POST /api/bookings/:code/previews`) with `409 CONFLICT`.
+  - Admin reschedules directly in G10 without customer re-acceptance (checking clashes, updating jobs and reminders); Admin cancels `awaiting_deposit` or `booked` bookings (keeping money/job history and conversation `scheduled`; replacement booking allowed in the same conversation after cancel).
+  - Package price is server-computed; extras have no separate price; no costume stock clash check.
+  - Paid-but-clashed deposit keeps payment `succeeded` + `paymentStatus: "deposit_paid"` + `awaiting_deposit` with reason (no auto-refund, no re-deposit prompt). Remaining 70% requires `booked`, `deposit_paid`, saved selection, and all `shoot` jobs `done`; photo selection locks (`409`) after `paid_in_full`.
 - The slot is held **only after the 30% deposit succeeds and resources are re-checked**. Never say "giữ lịch" at the agreement step.
 - Button names follow the brief: `Tạo booking`, `Thanh toán cọc 30%`, `Nhận ảnh`.
 - Images: the illustrations in `client/public/art/` are AI-generated (GPT) fictional people, source stated in `FRONTEND.md`; previews and samples are SVGs in `client/public/samples/`. No photos of real people.
