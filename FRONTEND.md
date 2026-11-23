@@ -57,10 +57,10 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/payments/PAY-1/result` | customer | G7, G9 | GET `/api/payments/:id` | after G7 |
 | `/notifications` | customer | G7 | GET `/api/reminders` | |
 | `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
-| `/admin/conversations` | admin | G4 | GET `/api/conversations` | |
-| `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule`, POST `/api/availability/check`, GET `/api/packages`, `/api/extras`, POST `/api/bookings` | |
-| `/admin/bookings` | admin | G10 | GET `/api/bookings` | |
-| `/admin/bookings/GS-1023` | admin | G10 | GET `/api/bookings/:code`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link`, POST `/api/availability/check`, GET `/api/resources` | GS-1024: after G6 |
+| `/admin/conversations` | admin | G4 | GET `/api/conversations` (dự kiến) | Hiện chỉ có placeholder G2, chưa gọi API hội thoại |
+| `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule`, POST `/api/availability/check`, GET `/api/packages`, `/api/extras`, POST `/api/bookings` (dự kiến) | Chưa đăng ký route chi tiết |
+| `/admin/bookings` | admin | G10 | GET `/api/bookings` (dự kiến) | Chưa đăng ký route |
+| `/admin/bookings/GS-1023` | admin | G10 | GET `/api/bookings/:code`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link`, POST `/api/availability/check`, GET `/api/resources` (dự kiến) | Chưa đăng ký route chi tiết; GS-1024 chỉ có sau G6 |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
 | `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
 | `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins`, PATCH `/api/admins/:id` | |
@@ -118,3 +118,17 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 ### TV3: phần còn chờ sau sửa nghiệp vụ 23/11/2026
 
 R04 và phần ngừng nhắc của R05 chưa tích hợp: chờ TV2 bàn giao helper chuẩn bị thay đổi reminders cùng schema phiên bản lịch/dừng nhắc chưa gửi (contract 07). Hiện chỉ có ensureBookingReminder nội bộ payments. Chờ TV1 quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca; tạm trả 409 không ghi dữ liệu cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy đã được TV1 bàn giao qua main; bộ hồi quy TV3 kiểm tra lại như gate bắt buộc sau khi đồng bộ. R14 giao diện Admin không nằm trong task. Kiểm tra hồi quy TV3: `node --test tools/tv3-booking-rules.test.mjs`; ca TODO thể hiện phần bàn giao còn thiếu, không tính là PASS.
+
+### TV3 — trạng thái R14 sau khi PR #18 vào main
+
+PR #18 đã được tích hợp vào main tại deb7884: contract/mock mới cho đổi lịch
+trực tiếp, hủy giữ lịch sử và booking thay thế đã có. Điều kiện thiếu backend
+được ghi ở lần kiểm tra ban đầu của task R14 nay đã được gỡ.
+
+Giao diện R14 vẫn chưa triển khai: /admin/conversations chỉ là placeholder;
+chi tiết hội thoại, danh sách và chi tiết booking chưa đăng ký. Không dùng
+kết quả kiểm tra mock hoặc build để kết luận các luồng Admin đã hoàn thành.
+R08/reservationFailure và helper/schema reminders của TV2 còn chờ bàn giao;
+Hưng cần chốt ánh xạ jobs cho nhiều ca cùng loại/thêm-bớt loại ca. R06 đã có
+trên main và được giữ nguyên. Cần triển khai rồi nghiệm thu bốn route trên
+bản build theo brief mục 16; chưa có kết quả flow/F5/responsive/W3C của R14.
