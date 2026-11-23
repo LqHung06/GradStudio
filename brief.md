@@ -1159,3 +1159,170 @@ Khi kiểm thử màn `/sign-in` (client/src/pages/SignInPage.jsx), sau khi subm
 - Trong `SignInPage`, gắn `onFocus: form.clearSubmitError` cho cả 2 ô `email` và `password` để banner lỗi 401 biến mất ngay khi người dùng nhấp vào nhập lại.
 - Không sửa `docs/api/` hay `mock/`. Chạy lại `cd client && npm run build` và `git diff --check`.
 ```
+
+## 14. [TV3 · 23/11/2026 · Codex] Component chat dùng chung
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy thực hiện phần việc tiếp theo sau mock: làm hai component chat dùng chung để Kiệt tích hợp vào màn khách hàng, còn tôi dùng cho màn Admin.
+
+Công việc ngày 23/11/2026:
+- client/src/components/chat/ChatThread.jsx
+- client/src/components/chat/ProposalCard.jsx
+
+Hãy triển khai, kiểm tra, ghi tài liệu và commit từng file dưới tên tôi theo các yêu cầu dưới đây.
+
+1. Đọc tài liệu và kiểm tra code
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Đọc:
+- AGENTS.md.
+- ../ke-hoach/ke-hoach/TV3-chat-booking-admin.md, mục 3, 5.3, 5.4, 7 và 9.
+- docs/api/README.md, phần Message, Proposal và ScheduleItem.
+- docs/api/03-conversations.md.
+- FRONTEND.md.
+- brief.md và phần PA#3 của AI-LOG.md.
+- Các component, CSS và design tokens hiện có trong client/src/.
+- Các phần nền frontend của Hưng nếu đã có: status.js, useForm, FormField và các component dùng chung.
+
+Dùng đúng cấu trúc dữ liệu từ contract. Không sửa contract hoặc mock để phục vụ component.
+
+2. Tạo nhánh
+
+Kiểm tra git status, branch hiện tại và remote. Giữ nguyên thay đổi có sẵn, không tự stash hoặc ghi đè.
+
+Nếu working tree sạch:
+- Chuyển sang main.
+- Fetch origin và cập nhật main bằng fast-forward.
+- Tạo nhánh feat/chat-components.
+
+Nếu nhánh đã tồn tại, kiểm tra trước khi tiếp tục; không reset hoặc xóa nhánh.
+
+Nếu mock/tv3 chưa được merge, báo rõ. Hai component chỉ nhận props nên hãy xác định phần có thể làm độc lập, không tự merge nhánh mock hoặc mang cả thay đổi mock sang nhánh frontend.
+
+Nếu không kết nối được remote, ghi rõ đang dùng checkout cục bộ. Nếu không thể chuyển nhánh an toàn, báo nguyên nhân.
+
+3. Phạm vi sửa
+
+Được tạo hoặc sửa:
+- client/src/components/chat/ChatThread.jsx
+- client/src/components/chat/ProposalCard.jsx
+- client/src/styles/chat-components.css nếu cần.
+- AGENTS.md: chỉ bổ sung hướng dẫn sử dụng hai component trong mục Front-end structure.
+- brief.md và AI-LOG.md: chỉ thêm mục của task này theo cấu trúc có sẵn.
+
+Không sửa docs/api/, mock/, package.json, lockfile, router, các trang hoặc phần nền do Hưng phụ trách.
+
+Chưa làm G4, G5, G6 hoặc G10 trong task này. Không thay thế màn PA#2 hoặc xóa FloatingChat lúc này.
+
+Không thêm thư viện.
+
+4. ChatThread.jsx
+
+Giữ giao diện props theo kế hoạch:
+- messages
+- viewerRole
+- onSend(text)
+- sending
+- renderProposal(proposal)
+
+Yêu cầu:
+- Component chỉ nhận dữ liệu và callback, không gọi API.
+- Không đọc token, localStorage hoặc dữ liệu fixtures.
+- Không tự sinh phản hồi, tin nhắn hoặc dữ liệu nghiệp vụ.
+- Render tin nhắn bằng danh sách ol, dùng message.id làm key.
+- Hiện người gửi, thời điểm bằng thẻ time có dateTime và nội dung tin.
+- Dùng viewerRole để phân biệt tin của phía đang xem; không chỉ dựa vào màu.
+- Tin type=text hiển thị nội dung.
+- Tin type=request hiển thị loại chụp, tên gói, ngày giờ mong muốn và dịch vụ thêm từ dữ liệu request.
+- Tin type=proposal hiển thị qua renderProposal.
+- Nếu không truyền renderProposal, vẫn hiển thị đề xuất đầy đủ bằng ProposalCard.
+- messages rỗng hiện “Chưa có tin nhắn nào.”
+- Nội dung người dùng được render an toàn như văn bản, không dùng dangerouslySetInnerHTML.
+
+Form gửi tin:
+- Có label hiển thị “Tin nhắn”.
+- Mỗi instance có ID riêng, tránh trùng ID khi render nhiều khung chat.
+- Nút “Gửi” dùng submit, khóa trong lúc sending.
+- Chặn tin chỉ có khoảng trắng và kiểm tra giới hạn 1–1000 ký tự theo contract.
+- Sau lần submit đầu, hiện lỗi cạnh ô nhập; liên kết bằng aria-describedby và aria-invalid.
+- Không gửi hai lần khi callback đang xử lý.
+- Chỉ xóa nội dung sau khi onSend thành công.
+- Giữ nguyên nội dung và hiện lỗi khi gửi thất bại, gồm lỗi fields.text từ API do phía gọi truyền hoặc ném lại.
+
+Nếu cần thêm prop cho lỗi, hãy bổ sung theo cách tương thích với các props đã chốt và ghi rõ trong hướng dẫn. Không đổi tên hoặc bỏ prop hiện có.
+
+5. ProposalCard.jsx
+
+Props:
+- proposal
+- actions: ReactNode, không bắt buộc.
+
+Hiển thị:
+- Ngày đề xuất.
+- Từng ca: loại việc, giờ bắt đầu/kết thúc, tên nhân sự và phòng nếu có.
+- Ghi chú.
+- Trạng thái bằng chữ: Chờ khách trả lời, Khách đã đồng ý, Khách đã từ chối.
+- Các nút do phía gọi truyền qua actions.
+
+Component không tự thêm nút Đồng ý/Từ chối, không gọi API và không tự đổi trạng thái proposal.
+
+Tên người, phòng và thời gian phải lấy từ proposal. Không viết cứng Mai, Tuấn, Phòng B hoặc lịch mẫu trong component.
+
+Tên trạng thái lấy từ client/src/constants/status.js theo quy ước repo. Nếu phần nền này chưa có sau khi cập nhật main, báo rõ phụ thuộc; không tạo bản sao status.js hoặc tự đặt một bảng trạng thái ở chỗ khác.
+
+Đọc đúng ScheduleItem: response dùng staff và room dạng object, không phải staffId và roomId như request.
+
+Xử lý room=null và danh sách items rỗng mà không crash.
+
+6. Bố cục và khả năng truy cập
+
+Dùng design tokens và phong cách hiện có của dự án.
+
+- Chat nằm trong luồng trang, cuộn theo trang.
+- Không position: fixed, không đặt chiều cao cố định hoặc overflow riêng cho danh sách tin.
+- Không tạo khung cuộn lồng nhau che form.
+- Tên dài, tin nhắn dài và URL dài phải xuống dòng.
+- Dùng được ở 360, 768 và 1280px, không tràn ngang.
+- Nút đứng riêng cao ít nhất 44px ở 360px.
+- Có trạng thái focus rõ.
+- Trạng thái và phía gửi phải nhận biết được bằng chữ.
+- Hai component không tự tạo h1 hoặc landmark của cả trang.
+- CSS có phạm vi riêng, không làm thay đổi component hoặc màn hình khác.
+
+Dùng useForm và FormField của Hưng nếu đã có và phù hợp. Nếu chưa có, không tự triển khai lại nền form dùng chung. Hoàn thành phần độc lập, ghi rõ phần còn chờ tích hợp và không báo task đã xong toàn bộ.
+
+7. Hướng dẫn bàn giao
+
+Chỉ bổ sung vào mục Front-end structure trong AGENTS.md:
+- Đường dẫn và cách import component/CSS.
+- Các props, kiểu dữ liệu và giá trị mặc định.
+- onSend trả Promise như thế nào; thành công và thất bại được xử lý ra sao.
+- Ví dụ phía Admin dùng ChatThread.
+- Ví dụ phía khách truyền nút Đồng ý/Từ chối qua ProposalCard.actions.
+- Cách renderProposal nối hai component.
+- Các phụ thuộc vào phần nền của Hưng.
+
+Ví dụ dữ liệu lấy theo contract. Dữ liệu dùng để kiểm tra phải tách khỏi code sản phẩm.
+
+8. Kiểm tra
+
+Chạy kiểm tra phù hợp bằng công cụ hiện có, không cài thêm thư viện:
+- Render đủ text, request và proposal.
+- Danh sách messages/items rỗng.
+- room=null.
+- Nội dung dài và nhiều instance không trùng ID.
+- Tin rỗng, quá giới hạn, đang gửi, thành công và thất bại.
+- Callback gửi không bị gọi hai lần.
+- Lỗi gửi giữ nguyên nội dung.
+- actions hiển thị đúng và component không tự tạo hành động.
+
+Chạy build nếu môi trường cho phép. Build thành công chưa chứng minh component mới đã được render, nên phải kiểm tra trực tiếp hai component bằng cách phù hợp.
+
+Có thể dùng trang hoặc script kiểm tra tạm, nhưng không để lại nút demo, route demo hoặc fixture trong sản phẩm.
+
+Kiểm tra bố cục ở 360/768/1280px nếu có trình duyệt. Nếu không thực hiện được, ghi rõ chưa kiểm tra; không báo đã đạt.
+
+Chạy git diff --check, đọc diff và xác nhận docs/api/ cùng mock/ không bị sửa.
+```
