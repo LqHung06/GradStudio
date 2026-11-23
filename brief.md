@@ -864,7 +864,7 @@ luận.
 3. Với 08-jobs.md: Thử nghiệm trên bản mock tạm có thêm 3 job của GS-1024 để xác nhận 12/12 PASS (không commit dữ liệu tạm này).
 4. MOCK_MODE=empty: {"jobs": []}, {"admins": []}, còn settings vẫn trả object.
 5. `git diff main -- docs/api client tools` hoàn toàn trống.
-````
+```
 
 ## 9. [TV3 · 21/11/2026 · Codex] Mock: chat, kiểm tra trùng lịch và booking
 
@@ -1046,12 +1046,11 @@ Tin nhắn 2:
 hãy triển khai phần mock của TV2 theo đúng hợp đồng docs/api/ (02, 06, 07, 09, 11) và kế hoạch TV2-khach-hang.md. Không tự ý chạy lệnh ảnh hưởng trên github, làm xong thì dừng lại để tôi check trước khi commit
 ```
 
-
 ## 11. [TV1 · 22/11/2026 · Antigravity Assistant] Nền front end: router, api client, hooks, Layout, status
 
 Tin nhắn 1 (yêu cầu triển khai sau khi rà tiến độ và review PR #12 `mock/tv2`):
 
-`````text
+```text
 Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước khi viết code, đọc AGENTS.md, FRONTEND.md (mục Demo accounts, Routes), docs/api/README.md và mục 2.4, 3.6, 5.4 trong
     ke-hoach/TV1-nen-tang-staff-superadmin.md.
 
@@ -1117,8 +1116,7 @@ Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước kh
     - Mở `npx vite preview` kiểm tra không có lỗi Console, route lạ hiện màn *Không tìm thấy trang*, không cuộn ngang ở 360/768/1280px.
     - Kiểm tra `git diff -- docs/api mock tools` hoàn toàn trống.
     - Liệt kê các file đã tạo/sửa và kết quả các lệnh kiểm tra đã chạy thật. , bạn tạo nhánh giúp tôi luôn nhé làm cho phần này , phần code được merge thì pull về nhé rồi chỉnh sửa sau
-`````
-
+```
 
 ## 12. [TV1 · 22/11/2026 · Antigravity Assistant] G2: AuthContext, RequireRole, màn đăng nhập /sign-in
 
@@ -1327,7 +1325,410 @@ Kiểm tra bố cục ở 360/768/1280px nếu có trình duyệt. Nếu không 
 Chạy git diff --check, đọc diff và xác nhận docs/api/ cùng mock/ không bị sửa.
 ```
 
-## 15. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
+## 15. [TV1 · 23/11/2026 · Antigravity Assistant] Bước #S1: đồng bộ contract, mock và tài liệu TV1 theo kế hoạch 23/11
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `fix/s1-tv1-plan-alignment` từ `main` mới nhất (đã có PR #13, #14, #15). Thực hiện Bước #S1 theo kế hoạch cập nhật ngày 23/11/2026 và báo cáo đối chiếu (R01, R02, R06, R11, R16 — phần thuộc quyền TV1).
+
+Ràng buộc bắt buộc:
+1. Tuân thủ thứ tự contract → mock → code nền/tài liệu. Chỉ sửa các file thuộc quyền sở hữu của TV1 (`docs/api/README.md`, `01-auth.md`, `08-jobs.md`, `12-admins.md`, `mock/server.mjs`, `mock/routes/auth.mjs`, `mock/routes/jobs.mjs`, `mock/routes/admins.mjs`, `client/src/constants/status.js`, `AGENTS.md`, `FRONTEND.md`). KHÔNG sửa file contract/mock thuộc TV2 hoặc TV3.
+2. Mọi thay đổi contract phải ghi rõ dòng trong mục `## Changes` (ngày, nội dung, lý do). Không làm vỡ chuỗi ví dụ `contract-check` hiện có (`01`–`13`).
+3. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (Bước #S1 — TV1):
+1. R01 (Khóa/mở khóa Admin & chặn tài khoản bị khóa):
+   - Contract (`README.md`, `01-auth.md`, `12-admins.md`): thêm `PATCH /api/admins/:id` (role `superadmin`, body `{"active": boolean}`, chỉ cập nhật `active`, không sửa tên/email/mật khẩu, không xóa); ghi rõ `active` là trạng thái thật; thêm ví dụ liên tiếp tạo Admin → khóa → đăng nhập bị từ chối → mở khóa → đăng nhập thành công; ghi rõ lỗi đăng nhập/phiên của tài khoản bị khóa.
+   - Mock (`mock/routes/admins.mjs`, `mock/routes/auth.mjs`, `mock/server.mjs`): `toAdmin` đọc `u.active !== false`, cài `PATCH /api/admins/:id` (400 nếu `active` không phải boolean hoặc gửi field cấm, 404 nếu không có Admin đó), `auth.mjs` từ chối đăng nhập tài khoản `active === false`, `server.mjs` từ chối token thuộc tài khoản `active === false`.
+2. R02 (Tên trạng thái việc):
+   - Đổi nhãn `todo` → `Chưa bắt đầu`, `in_progress` → `Đang làm`, `done` → `Hoàn thành` trong `docs/api/README.md` và `client/src/constants/status.js`; xóa ghi chú chờ PO xác nhận. Giữ nguyên mã API.
+3. R06 (Chặn Staff ghi dữ liệu khi booking đã hủy):
+   - Contract (`08-jobs.md`): ghi rõ `GET /api/jobs` và `GET /api/jobs/:id` vẫn trả lịch sử khi booking `cancelled`; `PATCH /api/jobs/:id` và `POST /api/bookings/:code/previews` trả `409 CONFLICT` và không sửa dữ liệu. Không thêm `job.status = "cancelled"`.
+   - Mock (`mock/routes/jobs.mjs`): kiểm tra trạng thái booking trong `db.bookings` sau khi kiểm tra quyền sở hữu (404/403); nếu `booking.status === 'cancelled'` thì trả `409 CONFLICT`.
+4. R11 (Giới hạn upload preview đúng 5 MiB = 5.242.880 byte nội dung file):
+   - Contract (`08-jobs.md`): sửa ngưỡng từ 5 MB + 64 KB sang đúng 5 MiB (5.242.880 byte) nội dung part `file`, lỗi `fields.file = "Ảnh tối đa 5 MiB"`. Cập nhật ví dụ biên `5242880B` (201) và `5242881B` (400) mà không làm lệch `totalPhotos: 36` của GS-1024.
+   - Mock (`mock/routes/jobs.mjs`): parse đúng byte nội dung phần `name="file"` trong multipart body (không dùng `Content-Length` tổng), từ chối 400 nếu `> 5242880`.
+5. R16 (Đồng bộ tài liệu hướng dẫn):
+   - `AGENTS.md`: sửa ví dụ trả lời proposal từ `{status}` sang `{decision}`; bổ sung tóm tắt các quyết định PO & quy ước nhóm mới liên quan.
+   - `FRONTEND.md`: điền mục 5 (*Product owner decisions*) đầy đủ 10 ý PO (ghi rõ chưa có link bài PO) và tách riêng bảng các lựa chọn bổ sung của nhóm (khóa Admin, việc/hội thoại/booking thay thế sau hủy, 4a–4e).
+6. Kiểm tra sau khi sửa:
+   - Khởi động mock mới và chạy `node tools/contract-check.mjs` đảm bảo 0 FAIL.
+   - Chạy kiểm tra bổ sung cho các ca TV1: A01 (khóa/mở khóa + đăng nhập bị chặn + token cũ bị chặn), A04 (PATCH job và upload preview khi booking `cancelled` trả 409), A05 (upload đúng 5.242.880 byte trả 201, 5.242.881 byte trả 400).
+   - Chạy `cd client && npm run build` và `git diff --check`.
+```
+
+## 15. [TV3 · 23/11/2026 · Codex] Sửa contract và mock theo báo cáo đối chiếu
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy sửa phần contract và mock của TV3 theo báo cáo đối chiếu và kế hoạch vừa cập nhật.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Mục tiêu của lượt này:
+- R03: đổi lịch trực tiếp, không cần khách đồng ý lại.
+- R04: đồng bộ nhắc lịch khi đổi lịch, tích hợp phần TV2 bàn giao.
+- R05: hủy booking có việc, giữ lịch sử và tiền đã thu.
+- R07: tạo booking thay thế trong cùng hội thoại sau hủy.
+- R15: hoàn thiện tạo hội thoại mới.
+- Phần tài liệu R16/R17 liên quan trực tiếp đến các thay đổi trên.
+
+Chưa triển khai giao diện R14 trong lượt này.
+
+1. Đọc và đối chiếu trước khi sửa
+
+Đọc:
+- AGENTS.md.
+- ../bao-cao-doi-chieu-ke-hoach-ma-nguon.md, gồm chi tiết lỗi, bằng chứng, thứ tự bàn giao và phần đang đúng cần giữ.
+- ../lo-trinh-PA3.html.
+- ../ke-hoach/ke-hoach/TV3-chat-booking-admin.md, nhất là mục 2.5–2.8, 4.1, 5.1, 5.2 và 5.9.
+- Phần bàn giao tương ứng trong kế hoạch TV1 và TV2.
+- docs/api/README.md và các contract 03, 04, 05, 10.
+- Contract 06, 07, 08 để hiểu thanh toán, nhắc lịch và jobs.
+- mock/routes/conversations.mjs, resources.mjs, bookings.mjs, admin-bookings.mjs.
+- mock/lib/clash.mjs.
+- Phần payments, reminders, jobs, receive và dữ liệu seed liên quan.
+- brief.md và phần PA#3 trong AI-LOG.md.
+
+Kiểm tra lại từng lỗi trên source hiện tại. Báo cáo mô tả checkout cũ; nếu lỗi đã được sửa thì xác minh và giữ nguyên phần đúng, không sửa lại theo suy đoán.
+
+Kế hoạch mới yêu cầu:
+- G6 tạo booking mới vẫn cần khách đồng ý giờ.
+- G10 đổi lịch trực tiếp bằng date/items, không cần proposalId hoặc khách đồng ý lại.
+- Hủy giữ lịch sử việc, khoản đã thu và trạng thái hội thoại scheduled.
+- Sau hủy, được chốt giờ mới và tạo booking khác trong cùng hội thoại.
+- Chỉ kiểm tra trùng người/phòng, không kiểm số lượng trang phục.
+- Cọc tính 30%, làm tròn tới một đồng; remaining = price - deposit.
+
+Những quy tắc mới chưa có trong contract phải được ghi vào contract trước khi sửa mock. Không sửa contract chỉ để hợp thức hóa code cũ.
+
+2. Git và phạm vi
+
+Kiểm tra working tree, branch, remote và lịch sử commit. Không ghi đè, xóa, stash hoặc commit thay đổi có sẵn của người khác.
+
+Khi working tree sạch, cập nhật main bằng fast-forward rồi tạo:
+fix/tv3-booking-rules
+
+Nếu nhánh đã tồn tại, kiểm tra trước khi tiếp tục. Không reset, rebase hoặc viết lại lịch sử. Nếu remote không truy cập được, ghi rõ trạng thái và tiếp tục phần an toàn trên checkout hiện có.
+
+Được sửa:
+- docs/api/03-conversations.md
+- docs/api/04-availability.md nếu cần làm rõ hành vi kiểm tra lịch
+- docs/api/05-bookings.md
+- docs/api/10-admin-bookings.md
+- mock/routes/conversations.mjs
+- mock/routes/resources.mjs nếu cần
+- mock/routes/bookings.mjs
+- mock/routes/admin-bookings.mjs
+- mock/lib/clash.mjs nếu phát hiện lỗi liên quan
+- Kiểm tra hồi quy cho phần TV3, dùng công cụ có sẵn
+- brief.md, AI-LOG.md
+
+Với README, AGENTS và FRONTEND, chỉ sửa nội dung TV3 cần đồng bộ trong task này, giữ nguyên phần người khác. Ví dụ AGENTS hướng dẫn trả lời proposal phải dùng {decision}, không phải {status}.
+
+Không tự sửa payments, reminders, jobs hoặc contract của TV1/TV2. Không đổi shared shape Payment/Reminder khi chưa có bàn giao. Không sửa server, frontend, dependency hoặc tài liệu lịch sử PA2.
+
+3. Sửa contract trước
+
+Cập nhật các quy tắc và ví dụ thực thi:
+- PATCH booking nhận date/items theo ScheduleItemInput.
+- Bỏ điều kiện proposal accepted và chuỗi Hân đồng ý lại ở G10.
+- Hủy chỉ từ awaiting_deposit/booked; cancelled/completed trả 409.
+- Hủy không xóa jobs, không đổi tiến độ việc hoặc khoản đã thu.
+- Cho đề xuất mới và booking thay thế sau khi booking hiện tại cancelled.
+- Booking thay thế phải dùng proposal mới được khách đồng ý và chưa dùng cho booking trước.
+- POST conversations hợp lệ có ví dụ 201 với ID c-số.
+- Cọc làm tròn tới một đồng, thay quy định cũ làm tròn tới 1.000đ.
+- Mô tả tác động đổi/hủy tới reminders theo phần đã thống nhất với TV2.
+
+Mỗi file có Changes ghi ngày thực hiện, nội dung và căn cứ là quyết định PO hay lựa chọn nhóm.
+
+Giữ câu chuyện GS-1024 và thứ tự ví dụ chính. Không để ca kiểm tra bổ sung làm lệch ID hoặc thay trạng thái mà các file sau đang cần.
+
+Commit contract trước các commit mock sử dụng đặc tả mới.
+
+4. R03: đổi lịch trực tiếp
+
+Sửa PATCH /api/bookings/:code:
+- Nhận date và items, dùng validateSchedule và toScheduleItems đang có.
+- Chỉ Admin được gọi.
+- Từ chối booking cancelled/completed.
+- Kiểm tra trùng ngay trước khi lưu bằng checkClash, bỏ qua chính booking đang sửa.
+- Không thêm ignoreBooking vào request body.
+- Trùng trả 409 CLASH với lý do và suggestions đúng error shape.
+- Giữ trạng thái booking, thanh toán, số tiền, lựa chọn ảnh và dữ liệu không thuộc lịch.
+- Cập nhật ngày/giờ/người/phòng của jobs liên quan, giữ tiến độ và ghi chú.
+- Edit jobs vẫn có date/start/end/room null theo contract.
+- Không sinh jobs cho booking chưa cọc.
+
+Chuẩn bị đầy đủ thay đổi trước khi ghi. Validation hoặc clash thất bại phải giữ nguyên booking, jobs, reminders và payments.
+
+Nếu gặp trường hợp nhiều ca cùng loại hoặc thay đổi loại ca chưa có quy tắc ánh xạ job, nêu rõ điểm cần TV1 thống nhất. Không âm thầm chọn ca đầu tiên hoặc trả 500 cho trường hợp hợp lệ đã được đặc tả.
+
+5. R04 và tác động nhắc lịch khi hủy
+
+Kiểm tra TV2 đã bàn giao hàm tính lại/dừng nhắc lịch hay chưa.
+
+Khi đã có:
+- Dùng chung helper, không sao chép logic ensureBookingReminder hiện tại.
+- Tính từ mốc sớm nhất của lịch mới và settings.reminderHoursBefore.
+- Cập nhật nhắc chưa gửi cùng nội dung giờ/người/phòng liên quan.
+- Giữ lịch sử sent.
+- Phân biệt lịch nhắc của phiên bản lịch mới theo contract để chạy lại không tạo trùng.
+- Hủy không để nhắc chưa gửi tiếp tục được gửi.
+- Không thêm trạng thái e-mail ngoài queued/sent/failed.
+- Không tạo reminder cho booking awaiting_deposit chưa được giữ chỗ.
+
+Nếu helper hoặc schema chưa được bàn giao:
+- Ghi rõ phần thiếu, chữ ký hàm/dữ liệu cần nhận và các ca nghiệm thu.
+- Tiếp tục các lỗi TV3 độc lập.
+- Không tạo implementation giả, không dùng helper no-op rồi đánh dấu R04 hoàn thành.
+- Không tuyên bố cả luồng đổi/hủy đã đạt khi tác động nhắc lịch còn thiếu.
+
+6. R05: hủy booking đã có việc
+
+Bỏ nhánh dependency 500 đang chặn booking có jobs.
+
+Hành vi cần có:
+- awaiting_deposit hoặc booked chuyển cancelled.
+- Hủy lại hoặc hủy completed trả 409.
+- Giữ nguyên jobs và trạng thái việc.
+- Giữ nguyên payments, paymentStatus, giá và khoản đã thu.
+- Không thêm trạng thái hoàn tiền hoặc tự chuyển tiền.
+- Hội thoại giữ scheduled.
+- Tài nguyên được nhả vì cancelled không còn được tính là bận.
+- Ngừng nhắc theo phần TV2 bàn giao.
+
+Việc chặn Staff PATCH job và upload sau hủy thuộc R06 của TV1. Kiểm tra tích hợp và báo kết quả, nhưng không tự sửa file TV1 hoặc đánh dấu R06 đã xong thay TV1.
+
+7. R07: booking thay thế
+
+Sửa conversations/bookings để thực hiện:
+hủy booking cũ → đề xuất giờ mới → khách đồng ý → tạo booking mới.
+
+Yêu cầu:
+- Chỉ cho tạo thêm khi booking hiện tại của hội thoại đã cancelled.
+- Booking chưa hủy vẫn chặn bằng 409.
+- Không tái dùng proposal đã tạo booking cũ.
+- Không dùng proposal thuộc hội thoại khác.
+- Mã booking mới lấy số lớn nhất cộng một.
+- conversation.bookingCode trỏ tới mã mới.
+- Booking cũ giữ conversationId, dữ liệu và lịch sử thanh toán.
+- Booking mới bắt đầu awaiting_deposit/unpaid, không nhận cọc cũ tự động.
+- GET bookings vẫn trả được cả hai booking đúng quyền sở hữu.
+- G6 tiếp tục yêu cầu khách đồng ý proposal mới.
+
+Không thêm field lịch sử vào response khi chưa cần; dùng liên kết conversationId đã có.
+
+8. R15: tạo hội thoại
+
+Hoàn thiện POST /api/conversations:
+- Text hợp lệ trả 201.
+- Chủ hội thoại lấy từ token.
+- ID c-1, c-2… theo số lớn nhất trong các ID dạng c-số; không đụng c-linh/c-han.
+- Tạo unanswered, bookingCode=null, acceptedProposalId=null.
+- Có tin nhắn đầu của khách, lastMessage và updatedAt nhất quán.
+- Admin trả lời lần đầu tự chuyển consulting.
+- Lỗi không tiêu thụ ID hoặc thay dữ liệu.
+- Kiểm tra quyền sở hữu và text 1–1000 ký tự.
+- Không tự đặt thêm giới hạn mỗi khách chỉ có một hội thoại.
+
+9. Kiểm tra và lưu bằng chứng
+
+Thêm kiểm tra hồi quy có thể chạy lại bằng công cụ hiện có, ưu tiên Node built-in. Không thêm dependency.
+
+Phải kiểm tra:
+- Đổi lịch trực tiếp thành công, không cần thao tác khách.
+- Đổi sang giờ trùng trả 409 và toàn bộ dữ liệu giữ nguyên.
+- Không tự trùng lịch với chính booking đang sửa.
+- Booking/jobs/reminders cùng lịch mới khi đủ bàn giao.
+- Hủy GS-1021 có jobs thành công; giữ việc/tiền; giờ cũ trống.
+- Hủy lại và hủy completed trả 409; customer gọi bị chặn.
+- Booking thay thế dùng mã mới, proposal mới; booking/tiền cũ không đổi.
+- Tái dùng proposal hoặc tạo thêm khi booking chưa hủy bị chặn.
+- Hội thoại mới trả 201; Admin trả lời chuyển consulting.
+- Giá lấy từ gói, extras không cộng tiền, client không sửa được tiền.
+- Cọc làm tròn tới một đồng với một giá không tròn nghìn trong dữ liệu test riêng.
+
+Dữ liệu test được tạo trên bản sao bộ nhớ hoặc môi trường kiểm tra riêng, không sửa seed chỉ để test xanh.
+
+Chạy contract-check trên mock mới khởi động theo đúng toàn bộ chuỗi. --only không tự tạo state tiền đề. Ghi số PASS/FAIL thật và tách lỗi TV3 khỏi lỗi phần bàn giao.
+
+Kiểm tra normal/slow/error/empty, JSON, cú pháp module và git diff --check.
+
+Không lấy 99/99 PASS của contract cũ làm bằng chứng đã sửa nghiệp vụ mới.
+
+10. Nhật ký và commit
+
+Ghi prompt này nguyên văn vào cuối brief.md trước khi sửa, đúng mẫu heading, số mục tiếp theo, ngày thực tế, TV3 và tên công cụ. Không rút gọn hoặc sửa mục cũ.
+
+Thêm mục PA#3 vào AI-LOG.md theo cấu trúc hiện có:
+Tool, Request, Changed, Rejected / lỗi phát hiện, Checked, Commits.
+Giữ các trường bổ sung nếu mẫu hiện tại đang dùng. Request dẫn đúng mục brief. Chỉ ghi lỗi và kiểm tra có thật.
+
+Tôi cho phép git add và git commit từng file trong task này.
+- Author/committer: Lê Công Minh Nhựt.
+- Giữ email Git hiện tại của tôi; kiểm tra trước khi dùng.
+- Dùng cấu hình từng lệnh, không đổi global config.
+- Mỗi commit chỉ một file, stage bằng đường dẫn cụ thể.
+- Đọc diff staged trước commit.
+- Commit brief trước; contract trước mock; AI-LOG cuối.
+- Không amend, reset hoặc viết lại lịch sử.
+- Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Bàn giao:
+- Bảng R03/R04/R05/R07/R15: đã sửa, còn phụ thuộc hay chưa kiểm chứng.
+- File và commit tương ứng.
+- Lệnh kiểm tra, kết quả và giới hạn.
+- Phần cần Hưng/Kiệt bàn giao.
+- Hướng dẫn review cho Kiệt và git status cuối.
+```
+
+Bổ sung trong phiên:
+
+```text
+AI_log viết ngôi thứ nhất $humanizer:humanizer
+```
+
+## 16. [TV3 · 23/11/2026 · Codex] R14: triển khai màn Admin — kiểm tra tiền đề
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy triển khai các màn Admin còn thiếu trong R14 của bao-cao-doi-chieu-ke-hoach-ma-nguon.md, theo kế hoạch mới đã cập nhật.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+1. Kiểm tra tiền đề
+
+Đọc:
+- AGENTS.md và FRONTEND.md.
+- ../bao-cao-doi-chieu-ke-hoach-ma-nguon.md.
+- ../lo-trinh-PA3.html.
+- Kế hoạch TV3, mục 2.5–2.8, 4.1, 5.4–5.6 và 5.9.
+- Contract 03/04/05/10 cùng shared objects.
+- API thanh toán/nhắc lịch liên quan và hướng dẫn dùng hooks.
+- ChatThread, ProposalCard, Layout, RequireRole, useFetch, useForm, AsyncState, FormField và status.js.
+
+Xác nhận contract và mock mới cho đổi/hủy/thay thế đã nằm trên main. Nếu chưa, báo đúng phần thiếu; không viết UI gọi đặc tả cũ hoặc tự sửa mock trong lượt này.
+
+Khi working tree sạch, cập nhật main bằng fast-forward rồi tạo:
+feat/tv3-admin-flow
+
+Không ghi đè thay đổi có sẵn, không reset, stash hoặc tự merge nhánh khác.
+
+2. Phạm vi
+
+Được sửa:
+- client/src/routes/admin.jsx.
+- client/src/pages/admin/.
+- Các API wrapper TV3 trong client/src/api/.
+- Component phụ trợ Admin và CSS riêng nếu cần.
+- Component chat chỉ khi có lỗi tích hợp thực tế; giữ tương thích props Kiệt đang dùng.
+- Dòng Routes, quyết định và Not done thuộc TV3 trong FRONTEND.md.
+- brief.md, AI-LOG.md và bằng chứng kiểm tra phần TV3.
+
+Không sửa docs/api/, mock/, phần nền của Hưng hoặc trang Customer của Kiệt. Nếu API thiếu dữ liệu, báo chỗ thiếu; không tự thêm field hoặc endpoint.
+
+3. Hoàn thiện bốn route
+
+/admin/conversations:
+- Danh sách hội thoại, lọc đủ trạng thái và số lượng.
+- Link tới chi tiết, trạng thái có chữ.
+- Có loading, error với Thử lại và empty.
+
+/admin/conversations/:id:
+- Dùng ChatThread để trả lời.
+- Làm mới hội thoại bằng reload của hook, không reload trang.
+- Form kiểm tra ngày, ca, người, phòng từ API.
+- Hiện lý do trùng bằng chữ, gợi ý có nút dùng giờ.
+- Lịch tài nguyên đọc được đầy đủ, không cắt nhãn.
+- Gửi đề xuất giờ và cập nhật chat từ response.
+- Form tạo booking chỉ dùng proposal khách đã đồng ý; khóa Tạo booking kèm lý do khi chưa đủ điều kiện.
+- Sau hủy, vẫn cho đi qua đề xuất mới và tạo booking thay thế theo contract.
+- Hiện riêng trạng thái hội thoại và booking.
+- Hiện lịch sử booking cũ/mới dựa trên conversationId; không tự thêm endpoint.
+
+/admin/bookings:
+- Danh sách và lọc booking.
+- Có trạng thái booking, thanh toán và link xem.
+- Bố cục dùng được trên điện thoại.
+
+/admin/bookings/:code:
+- Thông tin booking, gói, ca, người/phòng, tiền và thanh toán từ API.
+- Đổi lịch trực tiếp bằng date/items, không cần proposalId hoặc khách đồng ý lại.
+- PATCH là bước kiểm tra trùng cuối cùng. Không chặn lưu sai vì bước xem trước tự tính booking đang sửa là trùng với chính nó.
+- Hiện lỗi CLASH và gợi ý; giữ dữ liệu nhập khi thất bại.
+- Hủy có xác nhận, chỉ ở trạng thái được phép.
+- Sau hủy hiện Đã hủy; tiền cũ còn nguyên, hoàn tiền do studio xử lý ngoài hệ thống.
+- Lưu final-link HTTPS.
+- GS-1024 chưa được tạo thì hiện thông báo không tìm thấy và link về danh sách.
+
+Không hoàn thành booking bằng việc lưu link; Nhận ảnh vẫn thuộc luồng Customer.
+
+4. Hiển thị tiền theo quyết định mới
+
+Không suy ra “chưa nhận tiền” chỉ từ awaiting_deposit.
+
+Nếu TV2 đã bàn giao R08:
+- Hiện đúng trường hợp awaiting_deposit/deposit_paid.
+- Phân biệt khoản đã nhận với tình trạng chưa giữ được chỗ.
+- Dùng reservationFailure theo contract để giải thích.
+- Không mời trả cọc lần nữa và không tự chuyển cọc sang booking thay thế.
+
+Nếu shape chưa được bàn giao, ghi rõ phụ thuộc; không dựng dữ liệu hoặc sửa API để UI chạy được.
+
+5. Quy ước UI
+
+- Mọi dữ liệu nghiệp vụ lấy từ API qua api/client.js.
+- Dùng useFetch + AsyncState, useForm + FormField và status.js.
+- Sau hành động cập nhật từ response, không reload trang.
+- Link điều hướng dùng router Link; hành động dùng button.
+- Mỗi trang một h1; label và lỗi field đầy đủ.
+- Khóa gửi lặp, giữ dữ liệu khi lỗi.
+- Chat/form cuộn theo trang, không nổi hoặc bị cắt.
+- Không import fixtures.js hoặc nối nguyên trang StudioPage PA2 vào router.
+- Không thêm thư viện, nút demo hoặc thao tác giả.
+- Không có link menu dẫn tới placeholder hay Not found.
+
+6. Kiểm tra và ghi nhận
+
+Kiểm tra trên bản build:
+- Bốn route mở trực tiếp và F5.
+- Chưa đăng nhập quay về đúng route sau sign-in; sai vai trò bị chặn.
+- G4 → G5 → G6 và G10 đi được bằng link/nút.
+- G6 vẫn cần khách đồng ý; G10 không cần đồng ý lại.
+- Đổi trùng, hủy, tạo thay thế và giữ lịch sử.
+- normal/slow/error/empty; Thử lại phục hồi khi mock trở về normal.
+- 360/768/1280px, không tràn ngang, nút/link đứng riêng tối thiểu 44px.
+- Không lỗi Console, request ngoài contract hoặc request lặp khi đứng yên.
+- W3C trên HTML render nếu công cụ cho phép.
+
+Không dùng kết quả kiểm tra component riêng hoặc bằng chứng PA2 để kết luận toàn bộ màn PA3 đạt. Build thành công cũng chưa đủ chứng minh luồng đã chạy.
+
+Ghi lệnh, kết quả và kiểm tra chưa thực hiện được.
+
+7. Tài liệu và commit
+
+Trực tiếp ghi:
+- brief.md: prompt nguyên văn, nối mục theo đúng cấu trúc có sẵn.
+- AI-LOG.md: mục PA#3 đúng mẫu, Request trỏ đúng brief, chỉ ghi việc và kiểm tra có thật.
+- FRONTEND.md: Routes khớp router và Not done cụ thể cho TV3. Không sửa tự chấm toàn nhóm hoặc tuyên bố R18 hoàn thành thay TV1.
+- Ghi bằng chứng kiểm tra có thể tái lập để bàn giao cho phần harness R17; không tự thêm bộ formatter/linter/CI hoặc dependency của nhóm.
+
+Tôi cho phép commit từng file dưới tên Lê Công Minh Nhựt, giữ email Git hiện tại của tôi. Cấu hình theo từng lệnh; không sửa global config.
+
+Stage từng đường dẫn, kiểm tra diff staged, mỗi commit một file. Không commit thay đổi của người khác, không amend hoặc viết lại lịch sử.
+
+Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Khi xong, báo:
+- R14 đã hoàn thành những luồng nào, còn thiếu gì.
+- File và commit.
+- Bằng chứng kiểm tra thực tế.
+- Phụ thuộc TV1/TV2.
+- Mục brief/AI-LOG đã thêm và git status cuối.
+```
+
+## 17. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
 
 Tin nhắn 1 (đọc kế hoạch mới và báo cáo đối chiếu):
 
@@ -1348,7 +1749,7 @@ Giờ hãy đưa ra lệnh để tôi tự chạy terminal đi
 ```
 *(Đã chạy thành công trên nhánh `contract/tv2-po-updates` và gửi kết quả terminal để assistant triển khai cập nhật 4 file contract `S2`).*
 
-## 16. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
+## 18. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
 
 Tin nhắn 1:
 
