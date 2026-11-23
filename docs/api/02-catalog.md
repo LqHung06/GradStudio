@@ -203,7 +203,7 @@ Content-Type: application/json
 
 ## GET /api/extras
 
-Returns optional add-on services (make-up, costume rental).
+Returns optional add-on services (make-up, costume rental). Per product owner decision #6, extras have no separate price: they are recorded for staff/costume preparation, and booking prices come from the selected package only.
 
 - **Roles:** public.
 - **200 OK:** `{"extras": [Extra…]}`.
@@ -223,13 +223,11 @@ Content-Type: application/json
     {
       "id": "ex-makeup",
       "name": "Makeup",
-      "price": 0,
       "note": "Đã gồm trong Gói Tốt nghiệp Premium, 60 phút trước giờ chụp"
     },
     {
       "id": "ex-costume",
       "name": "Thuê áo cử nhân",
-      "price": 150000,
       "note": "Áo cử nhân và mũ theo size, chuẩn bị sẵn trước buổi chụp"
     }
   ]
@@ -321,3 +319,4 @@ Content-Type: application/json
 ## Changes
 
 - 2026-11-20: initial version: services, packages, package detail, extras, portfolio, reviews. (TV2)
+- 2026-11-23: removed `price` from `Extra` per PO #6 decision (extras have no separate surcharge; package price is the total). (TV2)
