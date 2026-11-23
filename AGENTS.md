@@ -97,8 +97,8 @@ Admin integration (inside a screen that already loaded `conversation`):
 ```
 
 Customer integration: connect the components through `renderProposal`. Here
-`reply(proposal, status)` belongs to the screen: it PATCHes the documented proposal
-endpoint with `{status: 'accepted' | 'declined'}`, updates from the response, and
+`reply(proposal, decision)` belongs to the screen: it PATCHes the documented proposal
+endpoint with `{decision: 'accepted' | 'declined'}`, updates from the response, and
 handles action failures; `replying` is its pending state. Only render actions when
 the flow allows a reply; status text alone does not imply the slot is held.
 
