@@ -1356,7 +1356,7 @@ Yêu cầu chi tiết (Bước #S1 — TV1):
    - Chạy `cd client && npm run build` và `git diff --check`.
 ```
 
-## 15. [TV3 · 23/11/2026 · Codex] Sửa contract và mock theo báo cáo đối chiếu
+## 16. [TV3 · 23/11/2026 · Codex] Sửa contract và mock theo báo cáo đối chiếu
 
 ```text
 Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy sửa phần contract và mock của TV3 theo báo cáo đối chiếu và kế hoạch vừa cập nhật.
@@ -1589,7 +1589,7 @@ Bổ sung trong phiên:
 AI_log viết ngôi thứ nhất $humanizer:humanizer
 ```
 
-## 16. [TV3 · 23/11/2026 · Codex] R14: triển khai màn Admin — kiểm tra tiền đề
+## 17. [TV3 · 23/11/2026 · Codex] R14: triển khai màn Admin — kiểm tra tiền đề
 
 ```text
 Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy triển khai các màn Admin còn thiếu trong R14 của bao-cao-doi-chieu-ke-hoach-ma-nguon.md, theo kế hoạch mới đã cập nhật.
@@ -1728,7 +1728,7 @@ Khi xong, báo:
 - Mục brief/AI-LOG đã thêm và git status cuối.
 ```
 
-## 17. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
+## 18. [TV2 · 23/11/2026 · Antigravity Assistant] Contract S2: cập nhật 02, 06, 07, 09 theo quyết định PO và nhóm
 
 Tin nhắn 1 (đọc kế hoạch mới và báo cáo đối chiếu):
 
@@ -1749,7 +1749,7 @@ Giờ hãy đưa ra lệnh để tôi tự chạy terminal đi
 ```
 *(Đã chạy thành công trên nhánh `contract/tv2-po-updates` và gửi kết quả terminal để assistant triển khai cập nhật 4 file contract `S2`).*
 
-## 18. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
+## 19. [TV2 · 23/11/2026 · Antigravity Assistant] Mock S2: cập nhật extras, payments và lib/reminders theo PO và kế hoạch mới
 
 Tin nhắn 1:
 
@@ -1757,7 +1757,7 @@ Tin nhắn 1:
 Triền khai phần mock theo đúng yêu cầu đề và kế hoạch mà nhóm đã đưa ra, tự chạy lệnh kiểm tra kĩ lại và đối chiếu lại xem mock có bị lệch hay thiếu hay dư so với yêu cầu PA3 và kế hoạch nhóm hay không
 ```
 
-## 19. [TV1 · 23/11/2026 · Antigravity Assistant] G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview
+## 20. [TV1 · 23/11/2026 · Antigravity Assistant] G8: Màn Staff (`/staff/jobs`, `/staff/jobs/:id`) và upload ảnh preview
 
 ```text
 Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g8-staff` (tách từ sau Bước #S1 đã có `JOB_STATUS` mới, chặn việc sau hủy 409, và giới hạn upload 5 MiB = 5.242.880 byte). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/08-jobs.md`, `docs/api/05-bookings.md` (GET `/api/bookings/:code`), `docs/api/09-gallery.md` (GET `/api/bookings/:code/photos`) và mục 5.5 (G8) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
@@ -1804,7 +1804,7 @@ Yêu cầu chi tiết (Bước G8 — Staff):
    - Kiểm tra thực tế trên `vite preview` + mock ở cả 4 chế độ (`normal`, `slow`, `error`, `empty`) với tài khoản `tuan@gradstudio.test` (`J-GS-1022-shoot`, `J-GS-1022-edit`, mở thử việc của `mai` nhận thông báo 404) và `mai@gradstudio.test` (`J-GS-1021-makeup` không hiện form upload), mở trực tiếp `/staff/jobs/J-GS-1022-shoot` và F5.
 ```
 
-## 20. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
+## 21. [TV1 · 23/11/2026 · Antigravity Assistant] G11: Màn Superadmin (`/superadmin/admins`, `/superadmin/settings`, khóa/mở khóa Admin)
 
 ```text
 Bối cảnh: GradStudio PA#3, front end React 19 + Vite 7 trong `client/`. Nhánh làm việc `feat/g11-superadmin`. Contract và mock cho G11 đã hoàn thiện trên `main` (đã có `PATCH /api/admins/:id` từ Bước #S1). Trước khi viết code, đọc kỹ `AGENTS.md`, `docs/api/12-admins.md`, `docs/api/13-settings.md`, `docs/api/01-auth.md` và mục 5.2, 5.5 (G11), 5.10 (R01) trong `ke-hoach/TV1-nen-tang-staff-superadmin.md`.
@@ -1850,3 +1850,12 @@ Yêu cầu chi tiết (Bước G11 — Superadmin):
      + Test luồng **R01**: tạo Admin mới → thử tạo trùng email (`409` hiện dưới ô E-mail) → bấm **Khóa** → đăng xuất → thử đăng nhập bằng Admin vừa khóa (bị từ chối `403 "Tài khoản đã bị khóa"`) → đăng nhập lại Superadmin → bấm **Mở khóa** → đăng xuất → đăng nhập lại bằng Admin mới (thành công `200`).
      + Test `/superadmin/settings`: thử sai giờ đóng/mở và `0`/`169`/`24.5` giờ (báo lỗi tại field), lưu hợp lệ `07:30–21:00` và `48` giờ (hiện `"Đã lưu cài đặt"`, F5 vẫn còn giá trị mới).
 ```
+
+## 22. [TV2 · 23/11/2026 · Antigravity Assistant] Front end #14b: G1 (Trang chủ, Chi tiết gói) và G3 + G6 phía khách (/chat)
+
+Tin nhắn 1:
+
+```text
+vậy làm tiếp đi
+```
+*(Tiếp nối sau khi đối chiếu ảnh lộ trình `#14b` ngày 23/11: triển khai G1 nối API và G3/G6 phía khách dùng `ChatThread` & `ProposalCard` trên nhánh `feat/g1-g3-customer`.)*
