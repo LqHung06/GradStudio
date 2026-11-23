@@ -864,7 +864,7 @@ luận.
 3. Với 08-jobs.md: Thử nghiệm trên bản mock tạm có thêm 3 job của GS-1024 để xác nhận 12/12 PASS (không commit dữ liệu tạm này).
 4. MOCK_MODE=empty: {"jobs": []}, {"admins": []}, còn settings vẫn trả object.
 5. `git diff main -- docs/api client tools` hoàn toàn trống.
-````
+```
 
 ## 9. [TV3 · 21/11/2026 · Codex] Mock: chat, kiểm tra trùng lịch và booking
 
@@ -1046,12 +1046,11 @@ Tin nhắn 2:
 hãy triển khai phần mock của TV2 theo đúng hợp đồng docs/api/ (02, 06, 07, 09, 11) và kế hoạch TV2-khach-hang.md. Không tự ý chạy lệnh ảnh hưởng trên github, làm xong thì dừng lại để tôi check trước khi commit
 ```
 
-
 ## 11. [TV1 · 22/11/2026 · Antigravity Assistant] Nền front end: router, api client, hooks, Layout, status
 
 Tin nhắn 1 (yêu cầu triển khai sau khi rà tiến độ và review PR #12 `mock/tv2`):
 
-`````text
+```text
 Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước khi viết code, đọc AGENTS.md, FRONTEND.md (mục Demo accounts, Routes), docs/api/README.md và mục 2.4, 3.6, 5.4 trong
     ke-hoach/TV1-nen-tang-staff-superadmin.md.
 
@@ -1117,8 +1116,7 @@ Bối cảnh: GradStudio PA#3, front end React + Vite trong client/. Trước kh
     - Mở `npx vite preview` kiểm tra không có lỗi Console, route lạ hiện màn *Không tìm thấy trang*, không cuộn ngang ở 360/768/1280px.
     - Kiểm tra `git diff -- docs/api mock tools` hoàn toàn trống.
     - Liệt kê các file đã tạo/sửa và kết quả các lệnh kiểm tra đã chạy thật. , bạn tạo nhánh giúp tôi luôn nhé làm cho phần này , phần code được merge thì pull về nhé rồi chỉnh sửa sau
-`````
-
+```
 
 ## 12. [TV1 · 22/11/2026 · Antigravity Assistant] G2: AuthContext, RequireRole, màn đăng nhập /sign-in
 
@@ -1696,15 +1694,5 @@ Khi xong, báo:
 - File và commit.
 - Bằng chứng kiểm tra thực tế.
 - Phụ thuộc TV1/TV2.
-- Mục brief/AI-LOG đã thêm và git status cuối..
-```
-
-Bổ sung trong phiên:
-
-```text
-Cập nhật AI_log theo ngôi thứ nhất $humanizer:humanizer
-```
-
-```text
-sao chưa cập nhật brief
+- Mục brief/AI-LOG đã thêm và git status cuối.
 ```
