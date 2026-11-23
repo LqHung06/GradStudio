@@ -73,7 +73,9 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 | Ngày | Link tới comment | Câu hỏi | Quyết định | Áp dụng ở |
 |---|---|---|---|---|
-| | | | | |
+| 23/11/2026 | Chưa có link PO; căn cứ kế hoạch TV3 2.5 và báo cáo đối chiếu | G10 đổi lịch | PO: Admin đổi date/items trực tiếp, không cần khách đồng ý lại. G6 tạo mới vẫn cần đề xuất được chấp nhận. | 10-admin-bookings, 05-bookings |
+| 23/11/2026 | Lựa chọn nhóm, kế hoạch 2.7 | Hủy / thay thế | Giữ jobs, tiền và hội thoại scheduled; hủy lại 409. Đề xuất mới sau hủy để tạo mã mới cùng hội thoại, không chuyển cọc cũ. | 03-conversations, 05-bookings, 10-admin-bookings |
+| 23/11/2026 | PO R3 và lựa chọn nhóm 2.7 | Giá / cọc / hội thoại mới | Giá từ gói, extras không cộng tiền; cọc làm tròn một đồng. Hội thoại dùng ID c-số. | 03-conversations, 05-bookings |
 
 ## 6. Libraries
 
@@ -90,3 +92,8 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 ## 7. Not done
 
 Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
+
+
+### TV3: phần còn chờ sau sửa nghiệp vụ 23/11/2026
+
+R04 và phần ngừng nhắc của R05 chưa tích hợp: chờ TV2 bàn giao helper chuẩn bị thay đổi reminders cùng schema phiên bản lịch/dừng nhắc chưa gửi (contract 07). Hiện chỉ có ensureBookingReminder nội bộ payments. Chờ TV1 quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca; tạm trả 409 không ghi dữ liệu cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy thuộc TV1, chưa đạt trên checkout này. R14 giao diện Admin không nằm trong task. Kiểm tra hồi quy TV3: `node --test tools/tv3-booking-rules.test.mjs`; ca TODO thể hiện phần bàn giao còn thiếu, không tính là PASS.
