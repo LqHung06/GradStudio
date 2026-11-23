@@ -1,0 +1,172 @@
+/* Superadmin G11 screens (/superadmin/admins, /superadmin/settings) — Blue Theme tokens */
+
+.superadmin-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.superadmin-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.superadmin-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  overflow-wrap: anywhere;
+}
+
+.superadmin-lead {
+  margin: 0;
+  color: var(--muted);
+}
+
+.superadmin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .superadmin-layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.superadmin-panel {
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--dashboard-radius-card);
+  background: var(--surface);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.superadmin-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-size: 1.375rem;
+  color: var(--primary-dark);
+}
+
+.superadmin-settings-panel {
+  width: min(620px, 100%);
+}
+
+.superadmin-time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-4);
+}
+
+.superadmin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.superadmin-form-actions .button {
+  min-height: 44px;
+}
+
+/* Admins table on desktop / tablet, stacked cards at <= 767px */
+.admins-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.admins-table caption {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: var(--space-3);
+}
+
+.admins-table th,
+.admins-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.admins-table th {
+  font-size: 0.9375rem;
+  color: var(--primary-dark);
+  background: var(--paper);
+}
+
+.admins-table td[data-label='Ngày tạo'] {
+  font-variant-numeric: tabular-nums;
+}
+
+.admins-table .button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .superadmin-panel {
+    padding: var(--space-4);
+  }
+
+  .admins-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .admins-table,
+  .admins-table tbody,
+  .admins-table tr,
+  .admins-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admins-table tbody {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .admins-table tr {
+    padding: var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper);
+  }
+
+  .admins-table td {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .admins-table td:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+    padding-top: var(--space-3);
+  }
+
+  .admins-table td::before {
+    content: attr(data-label);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .admins-table td:last-child::before {
+    margin-bottom: var(--space-1);
+  }
+
+  .admins-table .button,
+  .superadmin-form-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+}
