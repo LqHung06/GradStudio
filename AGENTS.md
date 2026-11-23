@@ -50,6 +50,71 @@ PA#3 builds the **whole main flow G1–G11 for four roles** (Customer, Admin, St
 
 ### Using the shared hooks and components (for TV2/TV3)
 
+#### Shared chat components (TV3 · 23/11/2026)
+
+Import named exports (paths relative to `src/`):
+
+```jsx
+import { ChatThread } from './components/chat/ChatThread.jsx';
+import { ProposalCard } from './components/chat/ProposalCard.jsx';
+```
+
+Both import `src/styles/chat-components.css` automatically; no extra stylesheet import
+is needed. Keep the app's existing token stylesheet and `styles/foundation.css` loaded.
+They have no API calls, page landmarks or headings. Parent screens own loading/error
+states, authentication, API requests and replacing messages from responses.
+
+- `ChatThread.messages: Message[] = []`: response objects from README / 03-conversations,
+  including `author`, `from: 'customer' | 'studio'`, `at`, and type text/request/proposal.
+- `viewerRole: 'customer' | 'admin'` is required: admin views the studio side.
+- `onSend(text): Promise<void>` is required. Resolve only after successful sending and
+  updating parent state from the API response. Reject on failure; do not swallow errors.
+  The form clears only after resolution. Rejection retains text; `fields.text` appears
+  beside the textarea, other `message` errors appear in an alert. Double submits are
+  blocked by `useForm`; `sending: boolean = false` can also lock the form externally.
+- `renderProposal?: (proposal: Proposal) => ReactNode`: omitted uses ProposalCard.
+- Optional compatible extension `sendError: { fields?: { text?: string }, message?: string } | null = null`
+  supports errors owned by the parent; parent must clear it on edit/retry/success as
+  appropriate. For failure semantics, still reject `onSend` rather than resolving it.
+- `ProposalCard.proposal: Proposal` is required: `{ id, status, date, items, note }`.
+  Items are response ScheduleItem `{ kind, start, end, staff: {id,name}, room: {id,name} | null }`;
+  empty items and null room are supported. Never pass request staffId/roomId here.
+- `ProposalCard.actions: ReactNode = null`: caller owns all buttons, handlers and
+  pending/error states; the card never changes status or creates buttons.
+- Dependencies supplied by Hưng: `useForm`, `FormField`, `formatDate`, `JOB_KIND`,
+  `PROPOSAL_STATUS`, `getStatusLabel` in `constants/status.js`. All exist on main.
+
+Admin integration (inside a screen that already loaded `conversation`):
+
+```jsx
+<ChatThread messages={conversation.messages} viewerRole="admin"
+  onSend={async (text) => {
+    const result = await apiFetch(`/api/conversations/${conversation.id}/messages`, {
+      method: 'POST', body: { text },
+    });
+    setConversation(current => ({ ...current, messages: [...current.messages, result.message] }));
+  }} />
+```
+
+Customer integration: connect the components through `renderProposal`. Here
+`reply(proposal, status)` belongs to the screen: it PATCHes the documented proposal
+endpoint with `{status: 'accepted' | 'declined'}`, updates from the response, and
+handles action failures; `replying` is its pending state. Only render actions when
+the flow allows a reply; status text alone does not imply the slot is held.
+
+```jsx
+<ChatThread messages={conversation.messages} viewerRole="customer" onSend={sendMessage}
+  renderProposal={proposal => <ProposalCard proposal={proposal}
+    actions={proposal.status === 'pending' && <>
+      <button type="button" disabled={replying} onClick={() => reply(proposal, 'accepted')}>Đồng ý</button>
+      <button type="button" disabled={replying} onClick={() => reply(proposal, 'declined')}>Từ chối</button>
+    </>} />} />
+```
+
+Use API response data directly (README example p-2 contains makeup 13:00–14:00
+with staff object and null room, then shoot 14:00–16:00 with staff/room objects).
+Test data belongs in a separate temporary harness, never in these components.
+
 ```jsx
 // Data loading with AsyncState + StatusBadge + Money:
 const { data, error, loading, reload, setData } = useFetch('/api/bookings');
