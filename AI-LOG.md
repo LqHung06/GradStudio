@@ -542,7 +542,6 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chạy `MOCK_MODE=empty`: `GET /api/services` trả mảng rỗng, `GET /api/packages/pkg-tn-premium` vẫn giữ nguyên object `pkg-tn-premium` với `includes: []`.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
 
-
 ### [TV1] 12. Nền front end: router, api client, hooks, Layout, status (22/11/2026)
 
 - **Tool:** Antigravity Assistant.
@@ -555,7 +554,7 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `client/src/hooks/useForm.js` (mới) và `client/src/components/FormField.jsx` (mới): validate sau lần submit đầu, map `ApiError` 400 `fields`, giữ giá trị khi lỗi, khóa nút khi `submitting`, focus ô lỗi đầu tiên.
   - `client/src/constants/status.js` (mới), `client/src/components/StatusBadge.jsx` (mới), `client/src/components/Money.jsx` (mới): ánh xạ mã trạng thái mục 2.4 sang tiếng Việt, `formatMoney`, `formatDate`.
   - `client/src/components/Layout.jsx`: viết lại theo thiết kế Blue Theme (không import `fixtures.js`, không còn menu cứng hay ghi chú demo), có skip-link `#main`, menu theo `user?.role`, nút `Đăng xuất` / link `Đăng nhập`, footer chỉ gồm chữ/thương hiệu.
-  - `client/src/routes/{public,customer,admin,staff,superadmin}.jsx` (mới), `client/src/pages/NotFoundPage.jsx` (mới), `client/src/App.jsx` (mới), `client/src/main.jsx`, `client/src/styles/foundation.css` (mới): cấu hình `BrowserRouter`, route tạm `/` gọi `GET /api/services` và stub `/sign-in`, route `*` màn *Không tìm thấy trang*.
+  - `client/src/routes/{public,customer,admin,staff,superadmin}.jsx` (mới), `client/src/pages/NotFoundPage.jsx` (mới), `client/src/App.jsx` (mới), `client/src/main.jsx`, `client/src/styles/foundation.css` (mới): cấu hình `BrowserRouter`, route tạm `/` gọi `GET /api/services` và stub `/sign-in`, route `*` màn _Không tìm thấy trang_.
   - `AGENTS.md`: bỏ ghi chú 3 HTML entry PA#2 và bổ sung hướng dẫn dùng hook/component nền cho TV2/TV3.
 - **Rejected / lỗi phát hiện:**
   - Lần chạy kiểm tra đầu trên `44febe8` (trước khi PR #12 merge) gặp `GET /api/services → 404`; đã giữ nguyên `docs/api/` và `mock/`, không sửa mock để khớp code. Sau khi PR #12 merge (`d5bb006`) và đồng bộ `main` vào `feat/core-foundation`, `GET /api/services` trả `200` đầy đủ.
@@ -569,14 +568,13 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - `error`: `GET /api/services → 500`, TV1 xác nhận trên trình duyệt hiện `"Máy chủ đang gặp sự cố, vui lòng thử lại."` kèm nút `Thử lại`.
     - `empty`: `GET /api/services → 200`, TV1 xác nhận trên trình duyệt hiện `"Hiện chưa có dịch vụ nào."`.
     - `/unknown-route`: render `<h1 id="not-found-heading">Không tìm thấy trang</h1>` và link `Về trang chủ`.
-  - *Chưa kiểm tra:* bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
+  - _Chưa kiểm tra:_ bấm nút `Thử lại` không reload trang khi chuyển `error` → `normal` và đo cuộn ngang/tap target 44px ở `360/768/1280px` trên trình duyệt tương tác.
 - **Commits:** TV1 đọc diff và tự commit sau.
-
 
 ### [TV1] 13. G2: AuthContext, RequireRole, màn đăng nhập /sign-in (22/11/2026)
 
 - **Tool:** Antigravity Assistant.
-- **Request:** `brief.md` mục 12 (Tin nhắn 1 & Tin nhắn 2). Trên nhánh `feat/g2-auth`, cài đặt `AuthContext`, `RequireRole`, màn `/sign-in`, màn *Không có quyền truy cập*, nối `Layout.jsx` với `useAuth()`, đặt route trang chủ tạm cho 4 vai trò để kiểm thử G2, và sửa lỗi ẩn banner 401 khi người dùng nhấp lại vào ô nhập. Không tự `git add`/`commit`/`push`.
+- **Request:** `brief.md` mục 12 (Tin nhắn 1 & Tin nhắn 2). Trên nhánh `feat/g2-auth`, cài đặt `AuthContext`, `RequireRole`, màn `/sign-in`, màn _Không có quyền truy cập_, nối `Layout.jsx` với `useAuth()`, đặt route trang chủ tạm cho 4 vai trò để kiểm thử G2, và sửa lỗi ẩn banner 401 khi người dùng nhấp lại vào ô nhập. Không tự `git add`/`commit`/`push`.
 - **Changed:**
   - `client/src/api/auth.js` (mới): gọi 3 endpoint trong `docs/api/01-auth.md` (`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`).
   - `client/src/auth/AuthContext.jsx` (mới): `AuthProvider`, `useAuth()`, `ROLE_HOME`, `canRoleAccessPath`, lưu phiên vào `localStorage` để F5 không mất đăng nhập, gọi `GET /api/auth/me` khi khởi động trước khi `ready = true` (xóa phiên nếu `401`; giữ phiên cache nếu gặp `500` ở `MOCK_MODE=error`), đăng ký `Authorization: Bearer <token>` và callback `onUnauthorized` với `api/client.js`.
@@ -594,8 +592,8 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - TV1 kiểm thử trực tiếp trên trình duyệt tại `http://localhost:4173/sign-in` (`MOCK_MODE=normal`):
     - Kiểm tra validation khi bỏ trống (`Vui lòng nhập email`, `Vui lòng nhập mật khẩu`), sai định dạng (`Email không đúng định dạng`), và `401` (`Email hoặc mật khẩu không đúng`).
     - Đăng nhập và đăng xuất lần lượt đủ 6 tài khoản demo: `linh` (`/my-bookings`), `han` (`/my-bookings`), `thao` (`/admin/conversations`), `mai` (`/staff/jobs`), `tuan` (`/staff/jobs`), `superadmin` (`/superadmin/admins`) — hiển thị đúng trang chủ, menu theo vai trò và tên người dùng trên header.
-    - Xác nhận đủ 5 ca sau lần sửa cuối: (1) banner 401 tự ẩn ngay khi focus/gõ lại ô nhập; (2) F5 giữ phiên đăng nhập (`GET /api/auth/me → 200`); (3) mở chéo route vai trò khác (Linh mở `/admin/conversations`, `/superadmin/admins`) hiện màn *Không có quyền truy cập* có nút về trang chính; (4) đăng xuất (`POST /api/auth/logout → 204`) rồi mở `/staff/jobs` → `/sign-in` → đăng nhập `tuan` quay lại đúng `/staff/jobs`, đăng nhập `linh` chuyển về `/my-bookings`; (5) mở `/trang-khong-ton-tai` hiện màn *Không tìm thấy trang*.
-  - *Chưa kiểm tra:* đo cuộn ngang và kích thước tap target 44px ở `360 / 768 / 1280px` bằng DevTools.
+    - Xác nhận đủ 5 ca sau lần sửa cuối: (1) banner 401 tự ẩn ngay khi focus/gõ lại ô nhập; (2) F5 giữ phiên đăng nhập (`GET /api/auth/me → 200`); (3) mở chéo route vai trò khác (Linh mở `/admin/conversations`, `/superadmin/admins`) hiện màn _Không có quyền truy cập_ có nút về trang chính; (4) đăng xuất (`POST /api/auth/logout → 204`) rồi mở `/staff/jobs` → `/sign-in` → đăng nhập `tuan` quay lại đúng `/staff/jobs`, đăng nhập `linh` chuyển về `/my-bookings`; (5) mở `/trang-khong-ton-tai` hiện màn _Không tìm thấy trang_.
+  - _Chưa kiểm tra:_ đo cuộn ngang và kích thước tap target 44px ở `360 / 768 / 1280px` bằng DevTools.
 - **Commits:** TV1 đọc diff và tự commit sau.
 
 ### [TV3] 14. Component chat dùng chung — 23/11/2026
@@ -612,13 +610,13 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 
 ### [TV3] 15. Sửa contract và mock theo báo cáo đối chiếu — 23/11/2026
 
-- **Tool:** Tôi dùng Codex để sửa code và chạy kiểm tra; tôi dùng skill humanizer khi biên tập mục nhật ký này ở ngôi thứ nhất.
-- **Request:** Tôi giao task trong brief.md mục 15, kèm yêu cầu ghi AI-LOG ở ngôi thứ nhất. Tôi giữ phạm vi contract/mock TV3 và chưa làm giao diện R14.
+- **Tool:** Tôi dùng Codex để sửa code và chạy kiểm tra.
+- **Request:** Tôi giao task trong brief.md mục 15. Tôi giữ phạm vi contract/mock TV3 và chưa làm giao diện R14.
 - **Changed:**
   - Tôi cập nhật main bằng fast-forward từ fca4607 tới 37da2bf sau khi fetch origin; working tree ban đầu sạch. Tôi tạo nhánh fix/tv3-booking-rules, giữ email Git hiện tại lecongminhnhut6533@gmail.com, dùng tên Lê Công Minh Nhựt theo từng lệnh commit và không đổi global config.
   - Tôi commit prompt trước, rồi contract 03/05/10 và phần README liên quan đến TV3 trước các commit mock. Contract phân biệt quyết định PO về đổi lịch G10 trực tiếp với lựa chọn nhóm về hủy, booking thay thế, ID c-số và cọc làm tròn một đồng. Chuỗi chính vẫn tạo GS-1024; các ca thay thế chạy sau phần đổi/hủy/link của G10.
   - Tôi sửa conversations.mjs để tạo hội thoại 201 với chủ lấy từ token, ID c-số, tin đầu và timestamps nhất quán; Admin trả lời đầu chuyển consulting. Tôi cho gửi đề xuất mới sau khi booking cũ bị hủy.
-  - Tôi sửa bookings.mjs để booking thay thế có mã mới, yêu cầu proposal mới được khách đồng ý, không tái dùng proposal cũ hoặc chuyển cọc cũ. Tôi giữ liên kết conversationId cho lịch sử và tính deposit = Math.round(price * 0.3), remaining = price - deposit từ giá gói; extras không cộng tiền.
+  - Tôi sửa bookings.mjs để booking thay thế có mã mới, yêu cầu proposal mới được khách đồng ý, không tái dùng proposal cũ hoặc chuyển cọc cũ. Tôi giữ liên kết conversationId cho lịch sử và tính deposit = Math.round(price \* 0.3), remaining = price - deposit từ giá gói; extras không cộng tiền.
   - Tôi sửa admin-bookings.mjs để PATCH nhận date/items, validate và kiểm tra trùng ngay lúc lưu, tự bỏ qua booking đang sửa; các lỗi không ghi một phần dữ liệu. Tôi cập nhật job theo loại ca khi ánh xạ được một-một, giữ tiến độ/ghi chú và các trường null của edit. Tôi bỏ nhánh 500 khi hủy booking có jobs, giữ việc/tiền, nhả người/phòng và giữ hội thoại scheduled; hủy lại hoặc hủy completed trả 409. Tôi vô hiệu hóa quyền dùng các proposal có trước lần hủy cho booking thay thế mà vẫn giữ nguyên lịch sử tin nhắn.
   - Tôi sửa ví dụ AGENTS thành body decision, bổ sung quyết định và Not done của TV3 trong FRONTEND, thêm bộ test Node built-in cùng hướng dẫn chạy lại tại tools/tv3-booking-rules-README.md. Tôi không sửa seed, server, frontend, dependencies hoặc routes/contract của TV1/TV2.
 - **Rejected / lỗi phát hiện:**
