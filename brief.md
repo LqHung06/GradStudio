@@ -1859,3 +1859,27 @@ Tin nhắn 1:
 vậy làm tiếp đi
 ```
 *(Tiếp nối sau khi đối chiếu ảnh lộ trình `#14b` ngày 23/11: triển khai G1 nối API và G3/G6 phía khách dùng `ChatThread` & `ProposalCard` trên nhánh `feat/g1-g3-customer`.)*
+
+## 23. [TV1 · 24/11/2026 · Antigravity Assistant] Bước #S4: kiểm tra tích hợp hợp nhất trên `main` (`735807d`)
+
+```text
+Bối cảnh: GradStudio PA#3, sau khi cả 3 nhánh cập nhật theo kế hoạch 23/11 (#S1 TV1, #S2 TV2, #S3 TV3) cùng các màn G1, G2, G3, G8, G11 đã merge vào `main` (`735807d`). Thực hiện Bước `#S4` (kiểm tra tích hợp hợp nhất trên `main` mới nhất ngày 24/11/2026).
+
+Ràng buộc bắt buộc:
+1. Đây là phiên kiểm tra & nghiệm thu tích hợp: KHÔNG tự ý sửa `docs/api/`, `mock/`, `client/` hay `tools/`. Nếu phát hiện lỗi/FAIL, báo cáo nguyên văn kèm file, endpoint và người phụ trách (TV1/TV2/TV3) để nhóm xử lý đúng quy trình.
+2. Không bịa kết quả, không bỏ qua ca lỗi; dọn sạch mọi tiến trình nền (`mock`, `vite preview`, Chrome) sau khi chạy xong.
+3. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu kiểm tra chi tiết (Bước #S4 — TV1 chủ trì):
+1. Đồng bộ `main` local: `git switch main && git pull origin main` (xác nhận working tree sạch).
+2. Kiểm tra hợp đồng toàn bộ (`contract-check`): khởi động `node mock/server.mjs` mới và chạy `node tools/contract-check.mjs --base http://localhost:3001` trên toàn bộ 14 file (`01`–`13`). Ghi nhận chính xác số ví dụ PASS/FAIL và số endpoint đã phủ.
+3. Chạy bộ kiểm tra hồi quy nghiệp vụ `node --test tools/tv3-booking-rules.test.mjs` để xác nhận trạng thái PASS/FAIL/TODO sau khi cả TV1, TV2, TV3 đã merge.
+4. Nghiệm thu tích hợp **R05 + R06** (phần trước đây của G8 còn chờ TV3 hoàn thành hủy booking có jobs):
+   - Chạy `cd client && npm run build` để kiểm tra bản build hợp nhất (G1 + G2 + G3 + G8 + G11).
+   - Chạy `npx vite preview --port 4173` cùng `node mock/server.mjs` (`MOCK_MODE=normal`) mới:
+     + Admin (`thao`) gọi `POST /api/bookings/GS-1022/cancel` hủy booking đã có việc (`200`).
+     + Mở trực tiếp `/staff/jobs/J-GS-1022-shoot` bằng tài khoản `tuan` trên Chrome headless CDP: xác nhận lịch sử việc vẫn đọc được (`GET /api/jobs`, `GET /api/jobs/J-GS-1022-shoot` → `200`), giao diện hiện banner **"Booking Đã hủy"**, cả 2 form (cập nhật trạng thái và thêm ảnh preview) đều bị khóa (`disabled`).
+     + Gọi trực tiếp `PATCH /api/jobs/J-GS-1022-shoot` và `POST /api/bookings/GS-1022/previews` sau khi hủy: xác nhận API trả `409 CONFLICT` và dữ liệu không đổi.
+5. Kiểm tra nhanh các route đang chạy trên `main` (`/`, `/packages/pkg-tn-premium`, `/sign-in`, `/chat`, `/staff/jobs`, `/superadmin/admins`, `/superadmin/settings`) không có lỗi runtime Console khi tải.
+6. Tổng hợp báo cáo kết quả `#S4` rõ ràng (kèm danh sách FAIL/TODO nếu có và tin nhắn ngắn gọn để TV1 gửi vào group chat báo TV2/TV3, đồng thời ghi nhận đề xuất chốt ngắn gọn cho TV3 về quy tắc ánh xạ `jobs` khi đổi lịch).
+```
