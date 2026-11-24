@@ -219,6 +219,7 @@ const form = useForm({
 5. The mock's log shows only endpoints from the contract, no 404, no repeated requests (check on the build, not `npm run dev`).
 6. `git diff -- docs/api mock` is empty unless the user asked for that change.
 7. When the contract or the mock changed: `node tools/contract-check.mjs` on a freshly started mock shows 0 FAIL.
+8. Shared regression & CI gates: `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs` and the 5 gates in `.github/workflows/ci.yml` (documented in `HARNESS.md`).
 
 When done, list the files changed and the endpoints called. Report only checks you actually ran.
 
