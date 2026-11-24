@@ -49,6 +49,16 @@ export function PaymentResultPage() {
     payment?.kind === 'deposit' &&
     booking?.status === 'booked';
 
+  const isDepositSuccessCompleted =
+    payment?.status === 'succeeded' &&
+    payment?.kind === 'deposit' &&
+    booking?.status === 'completed';
+
+  const isDepositSuccessCancelled =
+    payment?.status === 'succeeded' &&
+    payment?.kind === 'deposit' &&
+    booking?.status === 'cancelled';
+
   const isDepositPaidButClashed =
     payment?.status === 'succeeded' &&
     payment?.kind === 'deposit' &&
@@ -97,7 +107,7 @@ export function PaymentResultPage() {
             loading={paymentReq.loading}
             error={paymentReq.error}
             onRetry={paymentReq.reload}
-            isEmpty={!payment}
+            isEmpty={!payment || !booking}
             emptyMessage="Không có thông tin kết quả thanh toán."
           >
             {payment && booking && (
@@ -149,6 +159,47 @@ export function PaymentResultPage() {
                       </Link>
                       <Link className="button button-outline" to="/notifications">
                         Xem nhắc lịch
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {isDepositSuccessCompleted && (
+                  <div className="form-success-note" role="status">
+                    <p>
+                      Khoản cọc cho booking {booking.code} đã thanh toán thành công. Lịch chụp này hiện đã hoàn thành.
+                    </p>
+                    <div className="catalog-card-actions">
+                      <Link
+                        className="button button-dark"
+                        to={`/my-bookings/${encodeURIComponent(booking.code)}`}
+                      >
+                        Xem lịch chụp
+                      </Link>
+                      <Link
+                        className="button button-outline"
+                        to={`/my-bookings/${encodeURIComponent(booking.code)}/gallery`}
+                      >
+                        Xem gallery ảnh
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {isDepositSuccessCancelled && (
+                  <div className="payment-muted-box" role="status">
+                    <p>
+                      Khoản cọc (<Money amount={payment.amount} />) đã được ghi nhận thành công trước đó. Booking {booking.code} hiện đã bị hủy — vui lòng mở cuộc trò chuyện hoặc xem lịch chụp thay thế.
+                    </p>
+                    <div className="catalog-card-actions">
+                      <Link className="button button-coral" to="/chat">
+                        Mở cuộc trò chuyện
+                      </Link>
+                      <Link
+                        className="button button-outline"
+                        to={`/my-bookings/${encodeURIComponent(booking.code)}`}
+                      >
+                        Xem lịch sử booking
                       </Link>
                     </div>
                   </div>
