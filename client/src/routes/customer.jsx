@@ -1,36 +1,21 @@
 import { RequireRole } from '../auth/RequireRole.jsx';
-import { Layout } from '../components/Layout.jsx';
+import { BookingDetailPage } from '../pages/customer/BookingDetailPage.jsx';
 import { CustomerChatPage } from '../pages/customer/CustomerChatPage.jsx';
-
-// Temporary role-home placeholder for G2 verification; TV2 replaces this with G7 MyBookingsPage
-// and adds /my-bookings/:code, /test-gateway/:paymentId, /payments/:id/result,
-// /notifications, /my-bookings/:code/gallery.
-function CustomerHomePlaceholder() {
-  return (
-    <Layout>
-      <section className="foundation-probe" aria-labelledby="customer-home-heading">
-        <h1 id="customer-home-heading">Lịch chụp của tôi</h1>
-        <p>Trang chính dành cho khách hàng (G7 sẽ được nối tiếp bởi TV2).</p>
-      </section>
-    </Layout>
-  );
-}
+import { MyBookingsPage } from '../pages/customer/MyBookingsPage.jsx';
+import { PaymentResultPage } from '../pages/customer/PaymentResultPage.jsx';
+import { TestGatewayPage } from '../pages/customer/TestGatewayPage.jsx';
 
 export const customerRoutes = [
-  {
-    path: '/chat',
-    element: (
-      <RequireRole roles={['customer']}>
-        <CustomerChatPage />
-      </RequireRole>
-    ),
-  },
-  {
-    path: '/my-bookings',
-    element: (
-      <RequireRole roles={['customer']}>
-        <CustomerHomePlaceholder />
-      </RequireRole>
-    ),
-  },
-];
+  { path: '/chat', Page: CustomerChatPage },
+  { path: '/my-bookings', Page: MyBookingsPage },
+  { path: '/my-bookings/:code', Page: BookingDetailPage },
+  { path: '/test-gateway/:paymentId', Page: TestGatewayPage },
+  { path: '/payments/:paymentId/result', Page: PaymentResultPage },
+].map(({ path, Page }) => ({
+  path,
+  element: (
+    <RequireRole roles={['customer']}>
+      <Page />
+    </RequireRole>
+  ),
+}));

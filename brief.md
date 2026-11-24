@@ -2293,3 +2293,13 @@ Khi xong, báo:
 - File/commit và git status.
 - Phần việc ngày 24/11 đã đủ điều kiện nghiệm thu chưa.
 ```
+
+
+## 27. [TV2 · 24/11/2026 · Antigravity Assistant] Front end #15b: G7 Lịch chụp của tôi, chi tiết booking, cổng thanh toán thử nghiệm và kết quả thanh toán
+
+Tin nhắn 1:
+
+```text
+vậy làm tiếp thôi
+```
+*(Tiếp nối sau khi kiểm tra tiến độ `#15b` ngày 24/11 và kéo `main` mới nhất `cfca1b7`: triển khai 4 màn G7 `/my-bookings`, `/my-bookings/:code`, `/test-gateway/:paymentId`, `/payments/:paymentId/result` trên nhánh `feat/g7-bookings-deposit`.)*

@@ -850,3 +850,30 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Checked:** Hồi quy TV3 đạt 22 PASS, 0 FAIL, 0 TODO. Ca ở mức handler và HTTP xác nhận tính nhắc theo mốc sớm nhất và số giờ cấu hình, giữ sent, chạy lại cùng lịch không sinh bản trùng, không tạo nhắc khi còn awaiting_deposit, hủy xóa queued và giữ tiền/việc. Validation, clash và ánh xạ jobs thất bại giữ dữ liệu nguyên vẹn. Staff đọc được job sau hủy, PATCH và upload trả 409. Contract-check trên mock mới đạt 112/112 và 0 FAIL. Build Vite mặc định thành công. Chrome xác nhận Admin gửi đề xuất, Linh đồng ý trong `/chat`, Admin đăng nhập lại, làm mới và tạo GS-1024 đúng số tiền, hai lần bấm chỉ gửi một POST. Ca thay thế vẫn dùng HTTP cho hủy và đồng ý lần hai. Harness mô phỏng ba phản hồi 400 để kiểm field, aria-describedby, focus và giá trị giữ lại cho tin nhắn, lịch đề xuất và booking. Kiểm lại normal/slow/error/empty, F5, phân quyền và 360/768/1280px. Chưa chạy W3C Nu.
 - **Phụ thuộc:** G10 UI chưa triển khai. Hưng cần chốt ánh xạ jobs khi thêm/bớt/lặp loại ca. Kiệt cần sửa cấp ID cho nhắc mới sau khi xóa queued. Contract/Mock payments đã có reservationFailure và nhánh đã có Customer Chat.
 - **Commits:** Brief f28f1e2 trước khi sửa, mock ce4b4c8, hồi quy 8f5e05e, bộ kiểm tra Chrome 29281f5, contract 36d9da5, FRONTEND 3371d01. Mỗi commit một file, dùng author/committer Lê Công Minh Nhựt <lecongminhnhut6533@gmail.com>. AI-LOG được commit cuối.
+
+
+### [TV2] 27. Front end #15b: G7 Lịch chụp của tôi, chi tiết booking, cổng thanh toán thử nghiệm và kết quả thanh toán (24/11/2026)
+
+- **Tool:** Antigravity Assistant, React 19, Vite 7.
+- **Request:** `brief.md` mục 27. Trên nhánh `feat/g7-bookings-deposit` (tách từ `main` `cfca1b7`), triển khai trọn bộ 4 màn G7 của khách hàng theo `docs/api/05-bookings.md` và `docs/api/06-payments.md`.
+- **Changed:**
+  - `client/src/pages/customer/MyBookingsPage.jsx` (file mới — `/my-bookings`): thay placeholder G2, tải `GET /api/bookings` qua `useFetch` + `AsyncState`, bộ lọc trạng thái booking (`BOOKING_STATUS`), hiển thị gói, lịch trình, giá/cọc/còn lại (`Money`), trạng thái (`StatusBadge`), cảnh báo riêng cho ca đã nhận cọc nhưng trùng giờ (R08) và booking Đã hủy (R05/R07).
+  - `client/src/pages/customer/BookingDetailPage.jsx` (file mới — `/my-bookings/:code`): tải `GET /api/bookings/:code`, xử lý `404` thân thiện (*"Chưa có lịch chụp ... Lịch sẽ có sau khi studio tạo booking từ cuộc trò chuyện"*), hiển thị `requestedTime` gạch ngang (`<del>`), nút **`Thanh toán cọc 30%`** gọi `POST /api/bookings/:code/payments` (`{ kind: "deposit" }`) có khóa chống bấm đúp và điều hướng theo `res.redirectUrl`; ca đã nhận cọc nhưng trùng giờ (`awaiting_deposit` + `deposit_paid`) hiện thông báo & link `/chat`, không mời trả cọc lại; ca `cancelled` giữ lịch sử và link `/chat`.
+  - `client/src/pages/customer/TestGatewayPage.jsx` (file mới — `/test-gateway/:paymentId`): gắn nhãn rõ là **Cổng thanh toán thử nghiệm (PA#3)**, tải `GET /api/payments/:id`, xử lý 404 và giao dịch đã xử lý, cung cấp 2 nút `Thanh toán thành công (thử nghiệm)` và `Thanh toán thất bại (thử nghiệm)` gọi `POST /api/test-gateway/:paymentId` và điều hướng theo `res.redirectUrl`.
+  - `client/src/pages/customer/PaymentResultPage.jsx` (file mới — `/payments/:paymentId/result`): đọc trạng thái thật từ `GET /api/payments/:id` (không đọc query string), xử lý đủ 5 trạng thái: cọc thành công + `booked` (*Lịch chụp đã được giữ*), cọc đã nhận nhưng trùng giờ (`reservationFailure` + danh sách `clashes` bằng chữ + link `/chat`, không nút trả cọc lại), trả 70% thành công, thanh toán thất bại (có nút **`Thử thanh toán lại`** tạo giao dịch mới không giới hạn), và `pending`.
+  - `client/src/routes/customer.jsx`: nối đủ 5 route customer hiện có (`/chat`, `/my-bookings`, `/my-bookings/:code`, `/test-gateway/:paymentId`, `/payments/:paymentId/result`) bọc `<RequireRole roles={['customer']}>`.
+  - `client/src/styles/customer-pages.css`: bổ sung style G7 dùng design tokens Blue Theme & `--space-*`, không `!important`.
+  - `brief.md` mục 27 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa `docs/api/`, `mock/`, `tools/` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - `cd client && npm run build`: **PASS** (`91 modules transformed`, 0 lỗi).
+  - Kiểm tra tĩnh (`Select-String`) trên toàn bộ file TV2 vừa tạo/sửa: 0 `localhost`, 0 `fixtures.js`, 0 `!important`, 0 `href="#"`, 0 `position: fixed`.
+  - `git diff -- docs/api mock`: trống.
+  - Kiểm thử trực tiếp trên **Chrome DevTools** (`http://localhost:4173` + `node mock/server.mjs`):
+    - G1 (`/`, `/packages/pkg-tn-premium`): đủ 6 mục, 0 lỗi Console, đúng 1 `<h1>`, extras không có giá riêng, giá gói `1.800.000đ` / cọc `540.000đ` / còn lại `1.260.000đ`.
+    - G7 (`han@gradstudio.test` / `GS-1023`): `/my-bookings` → `/my-bookings/GS-1023` → bấm **Thanh toán cọc 30%** → `/test-gateway/PAY-1` → **Thanh toán thất bại** → `/payments/PAY-1/result` → bấm **Thử thanh toán lại** → `/test-gateway/PAY-2` → **Thanh toán thành công** → `/payments/PAY-2/result` hiện *Đặt cọc thành công*, trạng thái **Đã đặt lịch** / **Đã cọc 30%**; F5 cả trang kết quả và chi tiết booking đều sạch, 0 lỗi Console.
+    - G7 404 & G3 (`/chat`, `linh@gradstudio.test`): mở thẳng `/my-bookings/GS-1024` hiện thông báo thân thiện (không trắng màn); `/chat` tải đủ tin nhắn `c-linh` và form yêu cầu.
+    - Responsive trực quan qua ảnh chụp 360 / 768 / 1280 px trên `/`, `/my-bookings`, `/my-bookings/GS-1023`, `/payments/PAY-2/result`, `/chat`: không tràn ngang hay cắt chữ; đã bổ sung `margin-bottom: var(--space-3)` cho `.package-detail-card h2` để tiêu đề mục thoáng hơn.
+  - **Chưa kiểm tra trong lượt này:** 3 chế độ `MOCK_MODE` (`slow`, `error`, `empty`) trên 4 màn G7 và W3C Nu HTML Checker (sẽ rà cùng G9 ở mốc M6).
+- **Commits:** TV2 tự kiểm tra diff và commit sau.
