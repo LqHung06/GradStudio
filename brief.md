@@ -1883,3 +1883,41 @@ Yêu cầu kiểm tra chi tiết (Bước #S4 — TV1 chủ trì):
 5. Kiểm tra nhanh các route đang chạy trên `main` (`/`, `/packages/pkg-tn-premium`, `/sign-in`, `/chat`, `/staff/jobs`, `/superadmin/admins`, `/superadmin/settings`) không có lỗi runtime Console khi tải.
 6. Tổng hợp báo cáo kết quả `#S4` rõ ràng (kèm danh sách FAIL/TODO nếu có và tin nhắn ngắn gọn để TV1 gửi vào group chat báo TV2/TV3, đồng thời ghi nhận đề xuất chốt ngắn gọn cho TV3 về quy tắc ánh xạ `jobs` khi đổi lịch).
 ```
+
+## 24. [TV1 · 24/11/2026 · Antigravity Assistant] R17: Verification Gates, GitHub Actions CI và `HARNESS.md`
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `chore/r17-ci-and-harness` từ `main` mới nhất. Thực hiện mục `R17` trong báo cáo đối chiếu và mục 4.1 kế hoạch 23/11 (chuẩn bị bộ Verification Gates tự động, GitHub Actions CI và hồ sơ `HARNESS.md` từ dữ liệu lịch sử thật để phục vụ PA#3 và tích lũy bằng chứng nhiều mốc cho PA#5).
+
+Ràng buộc bắt buộc:
+1. KHÔNG thêm bất kỳ dependency nào vào `client/package.json` hay `client/package-lock.json` (chỉ dùng Node built-in `node:test`, `node --check` và các lệnh có sẵn để không gây xung đột với PR G7/G9 của TV2 và G4–G6/G10 của TV3).
+2. KHÔNG sửa `docs/api/`, `mock/`, `client/src/` hay `tools/tv3-booking-rules.test.mjs`. Không viết lại, chỉnh sửa hay dựng lại lịch sử commit/log cũ.
+3. Mọi mốc thời gian, commit hash và kết quả kiểm tra ghi trong `HARNESS.md` phải đối chiếu trực tiếp từ `git log` và output chạy thật trong phiên này.
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết (R17 — Phương án A):
+1. `tools/tv1-rules.test.mjs` (Node built-in `node:test`, không phụ thuộc thư viện ngoài):
+   - Viết bộ kiểm tra hồi quy cho các quy tắc TV1 đã chốt ở `#S1`:
+     + `R01`: `PATCH /api/admins/:id` khóa/mở khóa Admin, từ chối đăng nhập tài khoản bị khóa (`403`), từ chối token cũ của tài khoản bị khóa (`401`), chặn field lạ (`400`) và user không phải Admin (`404`).
+     + `R06`: booking `cancelled` vẫn đọc được `GET /api/jobs` và `GET /api/jobs/:id` (`200`), chặn `PATCH /api/jobs/:id` và `POST /api/bookings/:code/previews` bằng `409 CONFLICT` không làm đổi dữ liệu, giữ `404` với nhân viên khác.
+     + `R11`: upload đúng `5 242 880` byte (5 MiB) nhận `201`, vượt đúng 1 byte (`5 242 881` byte) trả `400` (`fields.file = "Ảnh tối đa 5 MiB"`) cho cả boundary/tên file ngắn và dài.
+   - Không sửa file JSON seed trên đĩa; dùng bản sao dữ liệu trong bộ nhớ hoặc mock trên cổng tạm (ephemeral port) và đóng tiến trình sạch sau khi chạy.
+2. `.github/workflows/ci.yml` (GitHub Actions CI):
+   - Kích hoạt trên `push` tới `main` và mọi `pull_request` vào `main`.
+   - Dùng Node 20, chạy các gate rõ ràng, tái lập được ở máy local:
+     + **Gate 1 (Syntax & JSON):** `node --check` cho mọi file `mock/**/*.mjs` và `tools/*.mjs`; kiểm tra parse hợp lệ cho mọi `mock/data/*.json`.
+     + **Gate 2 (Contract check):** khởi động `node mock/server.mjs` trên cổng tạm và chạy `node tools/contract-check.mjs` (yêu cầu 0 FAIL, 40/40 endpoints).
+     + **Gate 3 (Regression tests):** chạy `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs`.
+     + **Gate 4 (Client build):** `cd client && npm ci && npm run build`.
+     + **Gate 5 (Repo hygiene):** kiểm tra không còn conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) trong source/docs.
+3. `HARNESS.md` (tại gốc repo):
+   - Trình bày ngắn gọn, có bằng chứng:
+     + **Mục tiêu & cấu trúc Harness:** cách repo dùng `AGENTS.md`, `brief.md`, `AI-LOG.md`, `docs/api/`, `tools/` và CI làm vòng kiểm chứng.
+     + **Timeline phát triển `AGENTS.md` (Rules):** bảng trích trực tiếp từ `git log --date=short -- AGENTS.md` (commit thật, ngày, tác giả, thay đổi và lý do thực tế).
+     + **Danh sách Verification Gates:** bảng ánh xạ từng gate (lệnh chạy local = lệnh trong `.github/workflows/ci.yml`, điều kiện fail, phạm vi kiểm tra).
+     + **Phần chưa bật & kế hoạch chuyển tiếp PA#4/PA#5:** ghi rõ linter/formatter (`eslint`/`prettier`) chưa thêm trong PA#3 để tránh xung đột nhánh cuối kỳ và sẽ chốt với cả nhóm ở mốc tiếp theo; sang PA#4 áp dụng test đỏ trước code xanh cho R1–R9/S1–S5.
+4. `AGENTS.md`: bổ sung 1 dòng tham chiếu tới `tools/tv1-rules.test.mjs`, `.github/workflows/ci.yml` và `HARNESS.md` trong mục *Verification gate* (sẽ tách commit riêng `docs(agents): …`).
+5. Kiểm tra thực tế trước khi kết thúc:
+   - Chạy lần lượt toàn bộ lệnh giống hệt trong `.github/workflows/ci.yml` trên máy local (Gate 1 → Gate 5) và ghi nguyên văn kết quả vào `AI-LOG.md`.
+   - Xác nhận `git diff -- docs/api mock client` trống hoàn toàn và `git diff --check` 0 lỗi.
+```
