@@ -1,0 +1,342 @@
+/* Staff G8 screens (/staff/jobs and /staff/jobs/:id) — Blue Theme tokens, responsive 360/768/1280px */
+
+.staff-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.staff-page-header {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.staff-page-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  overflow-wrap: anywhere;
+}
+
+.staff-lead {
+  margin: 0;
+  color: var(--muted);
+}
+
+.staff-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: fit-content;
+  min-height: 44px;
+  padding-inline: var(--space-2);
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.staff-back-link:hover {
+  text-decoration: underline;
+  background: var(--primary-soft);
+}
+
+.staff-back-link:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+
+/* Filter bar on /staff/jobs */
+.staff-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.staff-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--dashboard-radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-filter-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.staff-filter-btn[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--surface);
+}
+
+.staff-filter-btn:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 2px;
+}
+
+/* Grouped job list */
+.staff-groups {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.staff-date-group {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.staff-date-heading {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  font-size: 1.25rem;
+  color: var(--primary-dark);
+}
+
+.staff-job-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--space-4);
+}
+
+.staff-job-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--dashboard-radius-card);
+  background: var(--surface);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.staff-job-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.staff-job-card-top h3 {
+  margin: 0;
+  font-size: 1.1875rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.staff-job-meta {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.staff-job-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+}
+
+.staff-job-meta-row dt {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.staff-job-meta-row dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-job-card-actions {
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.staff-job-card-actions .button {
+  min-height: 44px;
+}
+
+/* Detail page */
+.staff-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.staff-cancelled-banner {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--dashboard-danger-border);
+  border-radius: 12px;
+  background: var(--dashboard-danger-bg);
+  color: var(--dashboard-danger-text);
+}
+
+.staff-cancelled-banner strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 1.0625rem;
+}
+
+.staff-cancelled-banner p {
+  margin: 0;
+  color: inherit;
+}
+
+.staff-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (min-width: 960px) {
+  .staff-detail-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.staff-panel {
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--dashboard-radius-card);
+  background: var(--surface);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.staff-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-size: 1.375rem;
+  color: var(--primary-dark);
+}
+
+.staff-panel h3 {
+  margin: var(--space-6) 0 var(--space-3);
+  font-size: 1.125rem;
+  color: var(--ink);
+}
+
+.staff-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.staff-detail-item {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+}
+
+.staff-detail-item dt {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.staff-detail-item dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.staff-form-actions .button {
+  min-height: 44px;
+}
+
+.form-success {
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-4);
+  border: 1px solid #c6dfd1;
+  border-radius: 10px;
+  background: var(--dashboard-success-bg);
+  color: var(--dashboard-success-text);
+  font-weight: 600;
+}
+
+.staff-inline-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--dashboard-danger-border);
+  border-radius: 10px;
+  background: var(--dashboard-danger-bg);
+  color: var(--dashboard-danger-text);
+}
+
+.staff-inline-error p {
+  margin: 0;
+  color: inherit;
+  font-weight: 600;
+}
+
+.staff-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: var(--space-3);
+}
+
+.staff-photo-card {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.staff-photo-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+  background: var(--surface);
+}
+
+.staff-photo-card figcaption {
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .staff-panel {
+    padding: var(--space-4);
+  }
+
+  .staff-job-card {
+    padding: var(--space-4);
+  }
+
+  .staff-job-card-actions .button,
+  .staff-form-actions .button {
+    width: 100%;
+    justify-content: center;
+  }
+}

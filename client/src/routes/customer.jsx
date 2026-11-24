@@ -1,8 +1,9 @@
 import { RequireRole } from '../auth/RequireRole.jsx';
 import { Layout } from '../components/Layout.jsx';
+import { CustomerChatPage } from '../pages/customer/CustomerChatPage.jsx';
 
 // Temporary role-home placeholder for G2 verification; TV2 replaces this with G7 MyBookingsPage
-// and adds /chat, /my-bookings/:code, /test-gateway/:paymentId, /payments/:id/result,
+// and adds /my-bookings/:code, /test-gateway/:paymentId, /payments/:id/result,
 // /notifications, /my-bookings/:code/gallery.
 function CustomerHomePlaceholder() {
   return (
@@ -16,6 +17,14 @@ function CustomerHomePlaceholder() {
 }
 
 export const customerRoutes = [
+  {
+    path: '/chat',
+    element: (
+      <RequireRole roles={['customer']}>
+        <CustomerChatPage />
+      </RequireRole>
+    ),
+  },
   {
     path: '/my-bookings',
     element: (
