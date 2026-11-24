@@ -806,3 +806,26 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `git diff -- docs/api mock client tools`: trống; mọi cổng `3001 / 4173 / 9236` đã giải phóng sạch.
   - *Chưa kiểm tra:* lượt `#S4` chưa kiểm lại 4 chế độ `MOCK_MODE` và 3 độ rộng (`360/768/1280px`) trên các màn G1/G3 mới merge của TV2, chưa chạy W3C Nu HTML Checker (thuộc mốc M6), và chưa thể đi hết luồng G4/G5/G7/G9/G10 vì các route này của TV2/TV3 chưa có trên `main`.
 - **Commits:** TV1 đọc diff `brief.md`/`AI-LOG.md` và quyết định commit hoặc tạo PR tài liệu.
+
+### [TV1] 24. R17: Verification Gates, GitHub Actions CI và `HARNESS.md` — 24/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 24. Trên nhánh `chore/r17-ci-and-harness` (tách từ `main` `2ccea33`), dựng Verification Gates không thêm dependency (`Phương án A`): `tools/tv1-rules.test.mjs`, `.github/workflows/ci.yml`, `HARNESS.md` (timeline thật từ `git log`), cập nhật tham chiếu trong `AGENTS.md`, và chạy lại đủ 5 Gate như CI trên máy local. Không sửa `docs/api/`, `mock/`, `client/src/`, `tools/tv3-booking-rules.test.mjs`; không tự `git add`/`commit`/`push`.
+- **Changed:**
+  - `tools/tv1-rules.test.mjs` (mới): bộ kiểm tra `node:test` kiểm 4 nhóm ca thực tế cho quy tắc TV1: `R01` (tạo/khóa/mở khóa Admin, đăng nhập tài khoản khóa `403`, token cũ của tài khoản khóa `401`, chặn field lạ `400`, chặn user không phải Admin `404`, Admin thường `403`), `R06` (booking `cancelled` vẫn giữ `GET` lịch sử và từ chối `PATCH`/`POST previews` với `409 CONFLICT`, giữ `404` cho staff khác), `R11` (ngưỡng upload đúng `5 242 880` B `201` vs `5 242 881` B `400` với boundary/tên file ngắn và dài), và ca HTTP trực tiếp qua `mock/server.mjs` trên cổng tạm.
+  - `.github/workflows/ci.yml` (mới): workflow GitHub Actions chạy trên `push`/`pull_request` tới `main` với Node 20 gồm 5 Gate rõ ràng (Syntax & JSON, Contract check, Business rules `node:test`, `cd client && npm ci && npm run build`, Repo hygiene).
+  - `HARNESS.md` (mới): mô tả cấu trúc Harness, timeline 6 commit thật của `AGENTS.md` (từ `384b437` ngày 08/11 đến `9c14d5b` ngày 23/11), bảng ánh xạ 5 Gate (lệnh local = CI), và lý do chọn Phương án A trong PA#3 kèm lộ trình bật ESLint/Prettier + test đỏ PA#4/PA#5.
+  - `AGENTS.md`: thêm mục `8` trong *Verification gate* trỏ tới `tools/tv1-rules.test.mjs`, `.github/workflows/ci.yml` và `HARNESS.md`.
+  - `brief.md`: ghi mục 24 nguyên văn prompt.
+- **Rejected / lỗi phát hiện:**
+  - Không cài thêm `eslint`/`prettier` vào `client/package.json` ở bước này (theo Phương án A đã chốt) để tránh làm đỏ PR G7/G9 của TV2 và G4–G6/G10 của TV3 hoặc xung đột `package-lock.json` trước hạn M5.
+  - Không chỉnh sửa `tools/tv3-booking-rules.test.mjs`; 2 ca `TODO` nối reminder của TV2/TV3 tiếp tục giữ nguyên hiện trạng trung thực.
+- **Checked (chạy đủ 5 Gate giống hệt `.github/workflows/ci.yml` trên local):**
+  - **Gate 1 (Syntax & JSON):** `node --check` mọi file `mock/**/*.mjs` và `tools/*.mjs` thành công; `Parsed 14 seed JSON file(s) successfully.`
+  - **Gate 2 (Contract check):** khởi động mock mới (`PORT=3001`) + `node tools/contract-check.mjs`: **`112/112 examples answered as written; 0 FAIL line(s)`**, **`PASS README.md every endpoint in the table has an example (40/40)`**.
+  - **Gate 3 (Regression tests):** `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs`: **`23 tests: 21 pass, 0 fail, 2 todo`** (cả 4 test trong `tools/tv1-rules.test.mjs` đều PASS; 2 TODO giữ nguyên là phần bàn giao reminder R04/R05 của TV2/TV3).
+  - **Gate 4 (Client build):** `cd client && npm ci && npm run build`: `npm ci` sạch (74 packages, 0 vulnerabilities), `vite build` thành công (**81 modules transformed**, `built in 1.83s`).
+  - **Gate 5 (Repo hygiene):** `git grep -n -E '^(<<<<<<<|=======$|>>>>>>>)' -- client docs mock tools '*.md' '*.yml'` trả về `No conflict markers found.`
+  - `git diff -- docs/api mock client`: trống hoàn toàn; `git diff --check`: 0 lỗi; Port `3001` đã đóng sạch.
+  - *Chưa kiểm tra:* workflow `.github/workflows/ci.yml` chạy thực tế trên runner GitHub Actions (sẽ chạy tự động ngay khi push nhánh và mở PR).
+- **Commits:** TV1 đọc diff và tự commit tách riêng `docs(agents)` (hoặc cho phép assistant commit).
