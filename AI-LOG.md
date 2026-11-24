@@ -786,3 +786,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `git diff -- docs/api mock`: trống.
   - **Chưa kiểm tra trong lượt này:** đủ 3 chiều rộng 360/768/1280px, cả 4 chế độ `MOCK_MODE` và W3C Nu HTML Checker.
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+### [TV1] 23. Bước #S4: kiểm tra tích hợp hợp nhất trên `main` (`735807d`) — 24/11/2026
+
+- **Tool:** Antigravity Assistant.
+- **Request:** `brief.md` mục 23. Đồng bộ `main` (`735807d`), chạy toàn bộ kiểm tra hợp đồng, hồi quy TV3, build client hợp nhất, quét 7 route đang hoạt động và nghiệm thu tích hợp end-to-end **R05 + R06** (Admin hủy booking đã có việc → màn G8 khóa thao tác). Không sửa `docs/api/`, `mock/`, `client/`, `tools/`; không tự `git add`/`commit`/`push`.
+- **Changed:** Chỉ ghi thêm `brief.md` mục 23 và `AI-LOG.md` mục 23; không đụng vào mã nguồn sản phẩm, contract, mock hay tools.
+- **Rejected / lỗi phát hiện:**
+  - Lần gọi thử đầu của `contract-check` trong câu lệnh chưa có mock nên gặp `ECONNREFUSED`; đã chạy lại đúng quy trình trên `node mock/server.mjs` mới khởi động và thu kết quả sạch.
+  - Bộ `tools/tv3-booking-rules.test.mjs` vẫn còn **2 ca `TODO` thuộc bàn giao R04/R05 của TV2 & TV3**: (1) `R04 handoff` — nhắc lịch `queued` chưa tự tính lại khi đổi lịch trong `admin-bookings.mjs`; (2) `R05 reminder handoff` — chưa gọi hàm dừng nhắc `queued` khi hủy booking (`mock/lib/reminders.mjs` đã có từ TV2 PR #20 nhưng `admin-bookings.mjs` chưa import/gọi).
+  - Trong `mock/routes/admin-bookings.mjs:21-25`, đổi lịch hiện tạm trả `409 CONFLICT` nếu khác tập loại ca hoặc có loại ca lặp lại do còn chờ TV1 chốt quy tắc ánh xạ `jobs`.
+- **Checked:**
+  - `git switch main && git pull origin main`: fast-forward lên `735807d`.
+  - `node tools/contract-check.mjs --base http://localhost:3001` (mock mới `MOCK_MODE=normal`): **112/112 examples PASS, 0 FAIL, 40/40 endpoints**.
+  - `node --test tools/tv3-booking-rules.test.mjs`: **19 tests — 17 PASS, 0 FAIL, 2 TODO** (hai ca `R06 integrated` đều **PASS**).
+  - `cd client && npm run build`: thành công (**81 modules transformed**, `dist/index.html`, `dist/assets/*.css` `114.49 kB`, `dist/assets/*.js` `328.17 kB`, `built in 2.09s`).
+  - Quét 7 route đang hoạt động trên `npx vite preview --port 4173` + `node mock/server.mjs` qua Google Chrome headless CDP: `/`, `/packages/pkg-tn-premium`, `/sign-in`, `/chat`, `/staff/jobs`, `/superadmin/admins`, `/superadmin/settings` đều render đúng nội dung, **0 runtime exceptions**.
+  - Nghiệm thu tích hợp **R05 + R06**: Admin `thao` gọi `POST /api/bookings/GS-1022/cancel` (`200`, `booking.status === "cancelled"`) → mở trực tiếp `/staff/jobs/J-GS-1022-shoot` bằng tài khoản `tuan` hiện đủ thông tin lịch sử (`Trần Minh Khoa`, `Gói Chân dung CV`), banner **"Booking Đã hủy"**, cả `select#status`, `textarea#note`, `input#file` và 2 nút submit đều `disabled`; gọi trực tiếp `PATCH /api/jobs/J-GS-1022-shoot` và `POST /api/bookings/GS-1022/previews` đều trả `409 CONFLICT`, trạng thái/ghi chú/36 ảnh giữ nguyên.
+  - `git diff -- docs/api mock client tools`: trống; mọi cổng `3001 / 4173 / 9236` đã giải phóng sạch.
+  - *Chưa kiểm tra:* lượt `#S4` chưa kiểm lại 4 chế độ `MOCK_MODE` và 3 độ rộng (`360/768/1280px`) trên các màn G1/G3 mới merge của TV2, chưa chạy W3C Nu HTML Checker (thuộc mốc M6), và chưa thể đi hết luồng G4/G5/G7/G9/G10 vì các route này của TV2/TV3 chưa có trên `main`.
+- **Commits:** TV1 đọc diff `brief.md`/`AI-LOG.md` và quyết định commit hoặc tạo PR tài liệu.
