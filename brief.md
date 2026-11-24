@@ -2094,3 +2094,164 @@ Khi xong, báo:
 - Phụ thuộc cần Hưng/Kiệt bàn giao.
 - Số mục brief/AI-LOG và git status cuối.
 ```
+
+## 25. [TV3 · 24/11/2026 · Codex] Tích hợp R04/R05 và nghiệm thu G4/G5/G6
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy hoàn tất phần việc còn lại ngày 24/11/2026: tích hợp reminders R04/R05 và bổ sung nghiệm thu G4/G5/G6.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Không triển khai lại các màn đã có. Chưa mở rộng sang G10 trong task này.
+
+1. Kiểm tra trạng thái mới
+
+Đọc:
+- AGENTS.md.
+- Kế hoạch TV3 mục 2.5–2.8, 4.1 và 5.9.
+- Báo cáo đối chiếu, phần R04/R05/R14.
+- docs/api/07-reminders.md và 10-admin-bookings.md.
+- mock/lib/reminders.mjs.
+- mock/routes/admin-bookings.mjs.
+- tools/tv3-booking-rules.test.mjs.
+- tools/tv3-admin-build-check.mjs.
+- Các trang Admin, trang CustomerChatPage và nhật ký gần nhất.
+
+Source hiện có:
+- recalculateBookingReminders(db, booking).
+- stopBookingReminders(db, bookingCode).
+- reservationFailure trong contract/mock payments.
+- Màn /chat của Customer.
+
+Không tiếp tục coi các phần trên là chưa được TV2 bàn giao nếu checkout hiện tại đã có.
+
+Chạy kiểm tra ban đầu để xác nhận lỗi trước khi sửa. Hiện bộ hồi quy TV3 có 17 PASS và 2 TODO về reminders; TODO không được tính là PASS.
+
+2. Git và phạm vi
+
+Kiểm tra working tree và nhánh hiện tại feat/tv3-admin-flow.
+Giữ nguyên thay đổi và các commit UI đã có. Không reset,
+stash, ghi đè hoặc tự merge nhánh khác.
+
+Được sửa:
+- mock/routes/admin-bookings.mjs.
+- tools/tv3-booking-rules.test.mjs.
+- Công cụ kiểm tra Admin hiện có nếu cần bổ sung nghiệm thu.
+- docs/api/10-admin-bookings.md để đồng bộ mô tả tích hợp,
+  có Changes khi thay đổi đặc tả.
+- File UI TV3 nếu kiểm tra phát hiện lỗi thực tế.
+- FRONTEND.md, brief.md và AI-LOG.md trong phạm vi TV3.
+
+Không tự sửa helper reminders, payments, Customer UI hoặc
+file sở hữu TV1/TV2. Nếu helper bàn giao có lỗi, mô tả ca tái
+hiện và phần cần chủ file xử lý; không sao chép helper sang
+một implementation riêng.
+
+Không thêm dependency hoặc endpoint.
+
+3. Hoàn thành R04
+
+Trong PATCH /api/bookings/:code:
+- Dùng recalculateBookingReminders của TV2 sau khi lịch mới
+  đã được validate và kiểm tra trùng.
+- Tính nhắc theo mốc sớm nhất mới và reminderHoursBefore.
+- Cập nhật queued theo lịch mới; giữ lịch sử sent.
+- Chạy lại cùng lịch không sinh thêm reminder trùng.
+- Booking awaiting_deposit chưa giữ chỗ không được sinh nhắc.
+- Giữ nguyên tiền, trạng thái booking và tiến độ jobs.
+
+Các helper hiện có thay đổi db trực tiếp. Hãy bảo đảm không
+ghi một phần dữ liệu: chuẩn bị thay đổi trên bản sao phù hợp,
+chỉ áp dụng khi toàn bộ kiểm tra thành công.
+
+Validation/clash hoặc ánh xạ job thất bại phải giữ nguyên
+booking, jobs, reminders và payments.
+
+Không quay lại yêu cầu proposalId hoặc khách đồng ý lại G10.
+
+4. Hoàn thành R05
+
+Trong POST /api/bookings/:code/cancel:
+- Gọi stopBookingReminders cho đúng booking.
+- Dừng nhắc queued, giữ lịch sử sent.
+- Giữ jobs, trạng thái việc, payments và khoản đã thu.
+- Giữ hội thoại scheduled.
+- Hủy lại hoặc hủy completed vẫn trả 409.
+- Request bị từ chối không làm đổi dữ liệu.
+
+Giữ nguyên kiểm tra R06 đã có: Staff không sửa việc hoặc
+upload sau hủy, nhưng vẫn xem được lịch sử.
+
+5. Đóng hai TODO bằng kiểm tra thật
+
+Bỏ đánh dấu TODO khi implementation đã làm ca kiểm tra đạt.
+Không xóa assertion, đổi kỳ vọng theo code lỗi hoặc chuyển
+sang skip để có kết quả xanh.
+
+Bổ sung các ca:
+- Đổi lịch cập nhật đúng sendAt và nội dung nhắc.
+- Đổi lịch có queued và sent: cập nhật queued, giữ sent.
+- Chạy lại cùng lịch không tạo trùng.
+- Hủy dừng queued, giữ sent và tiền/việc.
+- Trùng lịch hoặc body sai giữ nguyên toàn bộ dữ liệu.
+- awaiting_deposit không sinh reminder.
+- Hành vi tương ứng qua HTTP trên mock riêng.
+
+Chạy toàn bộ hồi quy TV3 và contract-check trên mock mới.
+Ghi đúng số PASS/FAIL/TODO; không dùng kết quả cũ.
+
+6. Bổ sung nghiệm thu G4/G5/G6
+
+Màn Customer đã có, nên kiểm tra lại luồng nhiều vai trò
+bằng giao diện:
+- Admin đề xuất giờ.
+- Customer đăng nhập /chat, đồng ý.
+- Admin đăng nhập lại, làm mới hội thoại và tạo booking.
+- Kiểm tra trạng thái, số tiền và chống gửi hai lần.
+
+Bổ sung kiểm tra lỗi 400 ánh xạ đúng từng field, liên kết
+aria-describedby, focus lỗi và giữ giá trị nhập. Nếu dùng
+phản hồi mô phỏng trong harness để kiểm tra mapping, ghi rõ;
+không đưa mô phỏng vào code sản phẩm.
+
+Chạy build, kiểm tra UI và hồi quy trên source mới nhất.
+Nếu build mặc định bị EPERM, có thể dùng configLoader runner
+và outDir tạm để chẩn đoán; ghi rõ đây không thay thế build
+đóng gói cuối cùng.
+
+Nếu Chrome không chạy được do môi trường, báo chính xác
+phần chưa kiểm chứng. Không ghi UI PASS từ kết quả cũ.
+Không sửa cấu hình sản phẩm chỉ để vượt lỗi môi trường.
+
+7. Cập nhật tài liệu
+
+- FRONTEND.md: bỏ ghi chú đã lỗi thời về việc TV2 chưa bàn
+  giao helper/reservationFailure; giữ các giới hạn còn thật.
+- Contract 10: cập nhật phần “Not yet integrated” sau khi
+  thực sự tích hợp và kiểm tra, không xóa lịch sử Changes.
+- brief.md: ghi nguyên văn prompt trước khi sửa.
+- AI-LOG.md: thêm mục theo đúng cấu trúc hiện có, dẫn đúng
+  brief, chỉ ghi sự việc và kiểm tra thực tế.
+- Không sửa lại nhật ký cũ; ghi diễn biến mới trong mục mới.
+
+8. Commit và bàn giao
+
+Tôi cho phép commit từng file:
+Author và committer: Lê Công Minh Nhựt
+Email: lecongminhnhut6533@gmail.com
+
+Dùng cấu hình từng lệnh, không sửa global config.
+Stage từng đường dẫn, mỗi commit một file, đọc diff staged.
+Commit brief trước, AI-LOG cuối. Không amend hoặc viết lại
+lịch sử; không commit thay đổi có sẵn của người khác.
+
+Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Khi xong, báo:
+- R04/R05 đã đóng hay còn thiếu gì.
+- Kết quả hồi quy, contract-check và nghiệm thu UI.
+- Giới hạn môi trường hoặc phụ thuộc còn lại.
+- File/commit và git status.
+- Phần việc ngày 24/11 đã đủ điều kiện nghiệm thu chưa.
+```
