@@ -144,17 +144,65 @@ test('R3 price: package only, extras add no money, client amounts ignored; one-V
 });
 
 const reminderFixture = b => ({id:'test-reminder',bookingCode:b.code,sendAt:'2026-10-19T09:00:00+07:00',channels:['email','account'],emailStatus:'queued',text:'Lịch cũ'});
-test('R04 handoff: queued reminder follows new earliest time/staff/room', {todo:'TV2 helper and schedule-version schema not delivered'}, () => {
+test('R04: queued reminder follows new earliest time/staff/room', () => {
   const db=fresh(),b=getBooking(db,'GS-1022');db.reminders.push(reminderFixture(b));
   assert.equal(patch(db,b.code,{date:'2026-10-26',items:[{kind:'shoot',start:'09:00',end:'10:30',staffId:'u-ha',roomId:'r-a'}]}).status,200);
   assert.ok(db.reminders.some(r=>r.sendAt==='2026-10-25T09:00:00+07:00'&&r.text.includes('Hà')&&r.text.includes('Phòng A')));
 });
-test('R05 reminder handoff: unsent reminders stop on cancellation', {todo:'TV2 stop/version representation not delivered'}, () => {
-  const db=fresh(),b=getBooking(db,'GS-1021');db.reminders.push(reminderFixture(b));cancel(db,b.code);
+test('R04: lead hours and earliest item update queued, preserve sent and stay idempotent', () => {
+  const db = fresh();
+  const booking = getBooking(db, 'GS-1021');
+  const queued = reminderFixture(booking);
+  const sent = { ...queued, id: 'sent-history', emailStatus: 'sent' };
+  db.reminders.push(queued, sent);
+  db.settings.reminderHoursBefore = 6;
+  const schedule = input();
+  schedule.items.reverse();
+  const history = structuredClone(sent);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    assert.equal(patch(db, booking.code, schedule).status, 200);
+    assert.deepEqual(db.reminders, [
+      { ...queued, sendAt: '2026-10-26T07:00:00+07:00',
+        text: 'Nhắc lịch: makeup 13:00 ngày 26/10/2026 với Mai tại GradStudio' },
+      history,
+    ]);
+  }
+});
+
+test('R04: paid deposit without a reservation still creates no reminder', () => {
+  const db = fresh();
+  const booking = getBooking(db, 'GS-1023');
+  booking.paymentStatus = 'deposit_paid';
+  const before = structuredClone(db);
+  assert.equal(patch(db, booking.code, input()).status, 200);
+  assert.equal(booking.status, 'awaiting_deposit');
+  assert.equal(booking.paymentStatus, 'deposit_paid');
+  assert.deepEqual(db.reminders, before.reminders);
+  assert.deepEqual(db.jobs, before.jobs);
+  assert.deepEqual(db.payments, before.payments);
+});
+
+test('R05: cancellation stops queued reminders and preserves sent, other bookings, jobs and money', () => {
+  const db = fresh();
+  const b = getBooking(db, 'GS-1021');
+  const queued = reminderFixture(b);
+  const sent = { ...queued, id: 'sent-history', emailStatus: 'sent' };
+  const other = { ...queued, id: 'other-booking', bookingCode: 'GS-1022' };
+  db.reminders.push(queued, sent, other);
+  db.payments.push({ id: 'paid-history', bookingCode: b.code, amount: b.deposit, status: 'succeeded' });
+  const before = structuredClone(db);
+  assert.equal(call(db, 'POST', '/api/bookings/:code/cancel', { reason: '' }, { code: b.code }).status, 400);
+  assert.deepEqual(db, before);
+  assert.equal(cancel(db, b.code).status, 200);
   assert.equal(db.reminders.some(r=>r.bookingCode===b.code&&r.emailStatus==='queued'),false);
+  assert.deepEqual(db.reminders, before.reminders.slice(1));
+  assert.deepEqual(db.jobs, before.jobs);
+  assert.deepEqual(db.payments, before.payments);
+  assert.equal(b.paymentStatus, before.bookings.find(({ code }) => code === b.code).paymentStatus);
 });
 test('R06 integrated: Staff cannot PATCH a cancelled booking job', () => {
   const db=fresh();cancel(db,'GS-1021');const before=structuredClone(db);
+  assert.equal(call(db,'GET','/api/jobs/:id',{}, {id:'J-GS-1021-makeup'},'u-mai').status,200);
   assert.equal(call(db,'PATCH','/api/jobs/:id',{status:'done',note:'Không được ghi'}, {id:'J-GS-1021-makeup'},'u-mai').status,409);assert.deepEqual(db,before);
 });
 test('R06 integrated: Staff cannot upload after cancellation', () => {
@@ -170,13 +218,76 @@ async function startMock(mode) {
   await ready;
   return {base:`http://127.0.0.1:${port}`,stop:async()=>{child.kill();await once(child,'exit');}};
 }
+
+async function request(server, method, path, body, user = 'u-linh') {
+  const before = Date.now();
+  const response = await fetch(server.base + path, {
+    method,
+    headers: { 'content-type': 'application/json', Authorization: 'Bearer token-' + user },
+    body: body && JSON.stringify(body),
+  });
+  return { status: response.status, body: await response.json(), elapsed: Date.now() - before };
+}
+
+test('HTTP: rescheduling and cancelling preserve reminder history on the real mock', async () => {
+  const server = await startMock('normal');
+  const code = 'GS-1023';
+  const bookingPath = '/api/bookings/' + code;
+  const send = async (method, path, body, user, expected = 200) => {
+    const result = await request(server, method, path, body, user);
+    assert.equal(result.status, expected, method + ' ' + path + ': ' + JSON.stringify(result.body));
+    return result.body;
+  };
+  const readReminders = async () => (await send('GET', '/api/reminders', null, 'u-han')).reminders;
+  try {
+    const before = await readReminders();
+    const moved = await send('PATCH', bookingPath, input(), 'u-thao');
+    assert.equal(moved.booking.status, 'awaiting_deposit');
+    assert.deepEqual(await readReminders(), before);
+
+    const started = await send('POST', bookingPath + '/payments', { kind: 'deposit' }, 'u-han', 201);
+    const paymentPath = '/api/payments/' + started.payment.id;
+    await send('POST', '/api/test-gateway/' + started.payment.id, { result: 'success' }, 'u-han');
+    const paid = await send('GET', paymentPath, null, 'u-han');
+    const sent = (await readReminders()).find((entry) => entry.bookingCode === code);
+    assert.equal(sent.emailStatus, 'sent');
+
+    const schedule = input('2026-10-27');
+    const rescheduled = await send('PATCH', bookingPath, schedule, 'u-thao');
+    assert.equal(rescheduled.booking.date, schedule.date);
+    assert.equal(rescheduled.booking.paymentStatus, 'deposit_paid');
+    const reminders = await readReminders();
+    assert.deepEqual(reminders.find(({ id }) => id === sent.id), sent);
+    const queued = reminders.find((entry) => entry.bookingCode === code && entry.emailStatus === 'queued');
+    assert.equal(queued.sendAt, '2026-10-26T13:00:00+07:00');
+    assert.match(queued.text, /13:00.*27\/10\/2026.*Mai/);
+
+    await send('PATCH', bookingPath, schedule, 'u-thao');
+    await send('PATCH', bookingPath, input('2026-02-30'), 'u-thao', 400);
+    const clash = input('2026-10-24');
+    clash.items[0].start = '09:00';
+    clash.items[0].end = '10:00';
+    assert.equal((await send('PATCH', bookingPath, clash, 'u-thao', 409)).error.code, 'CLASH');
+    assert.deepEqual(await readReminders(), reminders);
+    assert.deepEqual(await send('GET', bookingPath, null, 'u-han'), rescheduled);
+    assert.deepEqual(await send('GET', paymentPath, null, 'u-han'), paid);
+
+    const cancelled = await send('POST', bookingPath + '/cancel', { reason: 'Khách đổi kế hoạch' }, 'u-thao');
+    assert.deepEqual(cancelled.booking, { ...rescheduled.booking, status: 'cancelled' });
+    assert.deepEqual(await readReminders(), reminders.filter(({ id }) => id !== queued.id));
+    assert.deepEqual(await send('GET', paymentPath, null, 'u-han'), {
+      ...paid, booking: { ...paid.booking, status: 'cancelled' },
+    });
+    assert.equal((await send('GET', '/api/conversations/c-han', null, 'u-han')).conversation.status, 'scheduled');
+  } finally {
+    await server.stop();
+  }
+});
+
 for(const mode of ['normal','slow','error','empty']) test(`HTTP ${mode}: fresh real server, role enforcement, new conversation and list`, async()=>{
   const server=await startMock(mode);
   try {
-    const req=async(method,path,body,user='u-linh')=>{
-      const before=Date.now();const response=await fetch(server.base+path,{method,headers:{'content-type':'application/json',Authorization:'Bearer token-'+user},...(body?{body:JSON.stringify(body)}:{})});
-      return {status:response.status,body:await response.json(),elapsed:Date.now()-before};
-    };
+    const req = (method, path, body, user) => request(server, method, path, body, user);
     const created=await req('POST','/api/conversations',{text:'HTTP conversation'});
     if(mode==='error'){assert.equal(created.status,500);assert.equal(created.body.error.code,'SERVER_ERROR');return;}
     assert.equal(created.status,201);assert.equal(created.body.conversation.id,'c-1');

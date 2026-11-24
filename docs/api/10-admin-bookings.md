@@ -65,11 +65,11 @@ Every error is `{"error": {"code": string, "message": string, "fields": object, 
 - **200 OK:** `{booking: Booking}`, finalLink replaced with url. Does not complete the booking or change its payment status. File 11 receive completes it after full payment.
 - **Errors:** inherited 401/403/500; 400 VALIDATION with fields.url (Vietnamese message: Link phải bắt đầu bằng https:// for non-HTTPS input); 404 NOT_FOUND for missing booking; 409 CONFLICT unless booking is booked. No payment prerequisite beyond status booked is added for saving a link.
 
-## Reminder handoff (R04 / cancellation part of R05)
+## Reminder updates (R04 / cancellation part of R05)
 
 Group choices in plan 2.7: for a reserved booking, calculate reminder time from the earliest new item minus settings.reminderHoursBefore. Update unsent reminders and their schedule/staff/room text; retain sent history and distinguish schedule versions to avoid duplicates on reruns. Cancellation must stop unsent reminders without deleting sent history. Keep only queued/sent/failed e-mail statuses. Never create reminders for awaiting_deposit without a reservation.
 
-**Not yet integrated:** TV2 has not delivered a shared helper or version/cancellation representation in contract 07. Current payments.ensureBookingReminder is private and skips existing reminders. TV3 does not duplicate it or change Reminder/Payment shapes. Booking/job edits and cancellation work independently, but reminder synchronization/stopping is pending; do not claim the complete flow passes. Requested interface for discussion: prepareBookingReminders(db, previousBooking, nextBooking) -> staged reminder replacements, computed without mutation, with an agreed version identity and unsent-stop representation. It must preserve sent history, produce no duplicate on repeat and no changes if validation/clash fails. See the regression TODO cases and FRONTEND Not done.
+The mock runs the shared reminder helpers on a copy of the reminder list. Rescheduling a booked booking recalculates its queued reminder or queues one for the changed schedule while retaining sent history. Repeating the same schedule keeps a single queued reminder for it. The mock publishes the prepared list with the booking and job updates after schedule validation, clash checks and job mapping succeed. On cancellation the mock removes only queued reminders for that booking. Sent reminders are still returned by [GET /api/reminders](07-reminders.md). Reminder and payment response shapes are unchanged.
 
 ## Examples — direct Admin changes
 
@@ -728,6 +728,8 @@ Content-Type: application/json
 ```
 
 ## Changes
+
+- 2026-11-24: integrate TV2 reminder helpers for R04 and R05 after validation; retain sent history on reschedule and cancellation. (TV3)
 
 - 2026-11-23: R03 direct date/items rescheduling (PO decision, plan 2.5); R05 retain jobs/payments, repeated cancel 409 and scheduled conversation; R07 fresh replacement (group choices, plan 2.7). Record pending TV1 job mapping and TV2 reminder handoff; shared shapes unchanged.
 

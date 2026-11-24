@@ -1,26 +1,13 @@
 import { RequireRole } from '../auth/RequireRole.jsx';
-import { Layout } from '../components/Layout.jsx';
-
-// Temporary role-home placeholder for G2 verification; TV3 replaces this with G4 ConversationsPage
-// and adds /admin/conversations/:id, /admin/bookings, /admin/bookings/:code.
-function AdminHomePlaceholder() {
-  return (
-    <Layout>
-      <section className="foundation-probe" aria-labelledby="admin-home-heading">
-        <h1 id="admin-home-heading">Hội thoại khách hàng</h1>
-        <p>Trang chính dành cho Admin (G4 sẽ được nối tiếp bởi TV3).</p>
-      </section>
-    </Layout>
-  );
-}
+import { AdminBookingsPage, ConversationsPage } from '../pages/admin/AdminLists.jsx';
+import { ConversationPage } from '../pages/admin/ConversationPage.jsx';
+import '../pages/admin/admin.css';
 
 export const adminRoutes = [
-  {
-    path: '/admin/conversations',
-    element: (
-      <RequireRole roles={['admin']}>
-        <AdminHomePlaceholder />
-      </RequireRole>
-    ),
-  },
-];
+  { path: '/admin/conversations', Page: ConversationsPage },
+  { path: '/admin/conversations/:id', Page: ConversationPage },
+  { path: '/admin/bookings', Page: AdminBookingsPage },
+].map(({ path, Page }) => ({
+  path,
+  element: <RequireRole roles={['admin']}><Page /></RequireRole>,
+}));

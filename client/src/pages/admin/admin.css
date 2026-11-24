@@ -1,0 +1,95 @@
+.admin-workspace {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  overflow-wrap: anywhere;
+}
+
+.admin-workspace :where(section, fieldset, .form-field, .admin-columns-side) {
+  min-inline-size: 0;
+}
+
+.admin-workspace :where(button, .admin-link) {
+  min-block-size: 44px;
+}
+
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-actions [aria-pressed="true"] {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: white;
+}
+
+.admin-cards {
+  display: grid;
+  gap: var(--space-4);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--space-3);
+  padding: var(--space-4);
+}
+
+.admin-card > :last-child {
+  margin-bottom: 0;
+}
+
+.admin-columns, .admin-fields, .admin-columns-side {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.admin-fields {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.admin-workspace fieldset {
+  border: 1px solid var(--line);
+  padding: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
+.admin-workspace :where(input, select, textarea) {
+  max-inline-size: 100%;
+}
+
+.admin-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+}
+
+.admin-amounts dd {
+  margin: 0;
+  font-weight: bold;
+}
+
+.admin-extras label {
+  display: flex;
+  align-items: center;
+  min-block-size: 44px;
+  gap: var(--space-2);
+}
+
+@media (min-width: 64rem) {
+  .admin-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
