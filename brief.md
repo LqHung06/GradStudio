@@ -1727,3 +1727,214 @@ Khi xong, báo:
 - Phụ thuộc TV1/TV2.
 - Mục brief/AI-LOG đã thêm và git status cuối.
 ```
+
+## 17. [TV3 · 24/11/2026 · Codex] R14: triển khai Admin G4/G5/G6 (tiếp mục 16)
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy tiếp tục triển khai giao diện Admin R14, ưu tiên hoàn thành G4/G5/G6 trong ngày 24/11/2026 theo kế hoạch M4.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+1. Đọc lại trạng thái hiện tại
+
+Đọc:
+- AGENTS.md.
+- FRONTEND.md, đặc biệt phần trạng thái R14 sau PR #18.
+- ../bao-cao-doi-chieu-ke-hoach-ma-nguon.md.
+- ../ke-hoach/ke-hoach/TV3-chat-booking-admin.md:
+  mục 2.5–2.8, 4.1, 5.3–5.5 và 5.9.
+- ../lo-trinh-PA3.html.
+- docs/api/README.md và contract 03/04/05/10.
+- ChatThread.jsx, ProposalCard.jsx.
+- api/client.js, useFetch, useForm, AsyncState, FormField,
+  Layout, RequireRole và constants/status.js.
+- brief.md mục 16 và mục AI-LOG tương ứng.
+
+PR #18 đã được merge vào main tại deb7884 và được tích hợp vào nhánh feat/tv3-admin-flow. Hãy kiểm tra lại bằng Git và source hiện tại.
+
+Không dùng kết luận “contract/mock chưa merge” trong nhật ký cũ để dừng công việc nếu tiền đề đó đã được giải quyết.
+
+Những phần còn chờ:
+- R08/reservationFailure và helper/schema reminders của Kiệt.
+- Quy tắc ánh xạ jobs cho nhiều ca cùng loại hoặc thêm/bớt loại ca của Hưng.
+
+Các phần này không chặn việc triển khai danh sách hội thoại, chat, kiểm tra lịch, đề xuất giờ và tạo booking theo contract hiện có. Hoàn thành các phần độc lập, ghi rõ giới hạn còn lại.
+
+2. Git và phạm vi
+
+Kiểm tra working tree, branch, remote và lịch sử commit.
+
+Nếu đang ở feat/tv3-admin-flow, tiếp tục nhánh này sau khi kiểm tra. Không tạo lại nhánh, reset, xóa hoặc ghi đè thay đổi có sẵn. Fetch origin để đối chiếu khi có thể; không tự merge nhánh khác hoặc viết lại lịch sử.
+
+Được tạo/sửa:
+- client/src/routes/admin.jsx.
+- client/src/pages/admin/.
+- API wrapper của TV3 trong client/src/api/.
+- Component phụ trợ Admin và CSS riêng.
+- ChatThread/ProposalCard chỉ khi có lỗi tích hợp thực tế;
+  giữ tương thích props Kiệt đang dùng.
+- Các dòng Routes và Not done thuộc TV3 trong FRONTEND.md.
+- brief.md, AI-LOG.md.
+- Kiểm tra và bằng chứng có thể chạy lại cho phần vừa làm.
+
+Không sửa docs/api/, mock/, tools/contract-check.mjs,
+phần nền của Hưng hoặc trang Customer của Kiệt.
+
+Không thêm dependency. Nếu API thiếu dữ liệu cần thiết,
+báo rõ endpoint/field thiếu; không tự sửa API hoặc dựng dữ liệu.
+
+3. G4: danh sách hội thoại
+
+Thay placeholder /admin/conversations bằng trang thật:
+- Dùng Layout và RequireRole roles=['admin'].
+- Tải GET /api/conversations bằng useFetch.
+- Lọc Tất cả, Chưa trả lời, Đang tư vấn, Đã chốt lịch,
+  Hoàn thành; nút có aria-pressed.
+- Số lượng phải lấy từ dữ liệu, không viết cứng.
+- Mỗi hội thoại có tên khách, chủ đề, tin cuối, thời gian,
+  trạng thái có chữ và Link tới trang chi tiết.
+- Có loading, error kèm Thử lại và thông báo danh sách rỗng.
+
+4. G4: chi tiết và trả lời
+
+Đăng ký /admin/conversations/:id:
+- Tải chi tiết theo params, không phụ thuộc việc đã bấm
+  từ trang danh sách.
+- Dùng ChatThread có sẵn.
+- Gửi tin qua endpoint messages đúng contract.
+- Cập nhật messages và summary từ response.
+- onSend phải reject khi lỗi để ChatThread giữ nội dung.
+- Có nút Làm mới hội thoại dùng reload của hook để thấy
+  khách đã trả lời proposal; không reload cả trang.
+- Có thông báo 404 và link về danh sách.
+- Không mô phỏng khách trả lời hoặc tự chuyển trạng thái.
+
+5. G5: kiểm tra và đề xuất giờ
+
+Trong trang chi tiết hội thoại:
+- Tải nhân sự/phòng từ GET /api/resources.
+- Tải lịch ngày từ GET /api/schedule?date=...
+- Form gồm ngày, từng ca makeup/chụp, giờ bắt đầu/kết thúc,
+  nhân sự, phòng và ghi chú.
+- Dùng useForm và FormField.
+- Kiểm tra theo contract; không chặn ngày quá khứ.
+- Nút Kiểm tra trùng lịch gọi POST /api/availability/check.
+- Hiện lý do trùng bằng chữ và suggestions từ response.
+- Mỗi suggestion có nút Dùng giờ này để điền form.
+- Hiện lịch tài nguyên bằng danh sách/bảng có chữ đầy đủ,
+  không cắt nhãn hoặc chỉ thể hiện bằng màu.
+- Nút Đề xuất giờ này cho khách gọi endpoint proposals.
+- Thành công thì đề xuất hiện trong chat từ dữ liệu API.
+- Lỗi 400 hiện đúng field; 409 CLASH hiện lý do/gợi ý,
+  giữ dữ liệu nhập.
+
+Không tự tính lịch trống trên client hoặc thêm ignoreBooking
+vào request body.
+
+6. G6 phía Admin: tạo booking
+
+Thêm phần Booking mới:
+- Khách lấy từ hội thoại.
+- Gói và extras lấy từ API.
+- Ngày/giờ/người/phòng lấy từ proposal đã được khách đồng ý.
+- Giá hiển thị trước lấy từ gói; cọc 30% làm tròn tới VND nguyên.
+- Extras không cộng phụ phí; không có sửa giá/giảm giá.
+- Số tiền chính thức sau tạo lấy từ response booking.
+
+Nút có đúng tên Tạo booking:
+- Khi chưa có proposal hợp lệ được đồng ý, disabled và có
+  lý do bên cạnh, liên kết bằng aria-describedby.
+- Khi đang gửi, không gửi được lần hai.
+- Thành công hiện mã, Chờ cọc 30%, giá/cọc/còn lại từ API.
+- Không nói lịch đã được giữ khi mới tạo booking.
+
+Với hội thoại đã có booking:
+- Booking chưa hủy: hiện thông tin và điều hướng phù hợp,
+  không cho tạo thêm.
+- Booking đã hủy: cho đề xuất mới, khách đồng ý và tạo
+  booking thay thế theo contract.
+- Hiện riêng trạng thái hội thoại và booking.
+- Giữ lịch sử cả booking cũ và mới theo conversationId.
+- Không tái dùng proposal cũ hoặc chuyển tiền sang mã mới.
+
+Không tạo Link dẫn tới route chưa triển khai. Nếu cần mở
+chi tiết booking ngay sau tạo, triển khai route đích thật
+trong phạm vi Admin hoặc hiển thị kết quả tại chỗ và ghi
+phần điều hướng còn thiếu vào Not done.
+
+7. Phân biệt phần đang làm và phần còn chờ
+
+G6 tạo booking mới vẫn cần khách đồng ý.
+G10 đổi lịch dùng date/items trực tiếp, không cần đồng ý lại.
+
+Lượt này ưu tiên G4/G5/G6. Không đánh dấu toàn bộ R14 hoặc G10
+hoàn thành nếu mới làm ba bước này.
+
+Không tự triển khai reservationFailure trước contract TV2.
+Không lấy awaiting_deposit để suy ra chắc chắn chưa nhận tiền.
+Không thêm helper reminders giả hoặc sửa mock để UI chạy.
+
+8. Kiểm tra
+
+Chạy build và kiểm tra trực tiếp trên bản build:
+- Danh sách và chi tiết hội thoại mở thẳng/F5 được.
+- Chưa đăng nhập chuyển sign-in, sau đăng nhập quay lại đúng route.
+- Vai trò khác bị chặn.
+- Gửi tin thành công/lỗi, giữ nội dung khi lỗi, chặn gửi lặp.
+- Kiểm tra 09:00 có lý do Mai bận 08:00–12:00.
+- Dùng gợi ý, gửi proposal, khách đồng ý qua API thật hoặc
+  màn Customer nếu đã có, rồi Admin làm mới và tạo booking.
+- Nút Tạo booking khóa đúng lúc và mở đúng lúc.
+- Booking mới đúng trạng thái và số tiền.
+- normal/slow/error/empty; Thử lại phục hồi khi mock về normal.
+- 360/768/1280px không tràn ngang; nút/link đứng riêng >=44px.
+- Không lỗi Console, request lặp khi đứng yên hoặc endpoint
+  ngoài contract.
+
+Dữ liệu chuẩn bị cho kiểm tra phải tách khỏi sản phẩm.
+Không thêm nút demo hoặc fixture vào component.
+
+Ghi rõ bước nào kiểm qua HTTP, bước nào kiểm qua UI.
+Nếu Customer UI chưa có, không tuyên bố đã đi hết luồng
+nhiều vai trò bằng giao diện.
+
+Không lấy build thành công hoặc kết quả component cũ
+làm bằng chứng các trang mới đã đạt.
+
+9. Tài liệu và commit
+
+Trước khi sửa, nối prompt này nguyên văn vào brief.md theo
+đúng cấu trúc hiện có, số mục tiếp theo, TV3, ngày thực tế
+và tên công cụ. Đây là lượt tiếp tục mục 16; dẫn lại mục đó
+nhưng không sửa nội dung lịch sử.
+
+Thêm mục AI-LOG PA#3 đúng cấu trúc hiện có:
+Tool, Request, Changed, Rejected / lỗi phát hiện, Checked,
+Commits và các trường bổ sung theo mẫu khi cần.
+Chỉ ghi sự việc, kiểm tra và commit thật.
+
+FRONTEND:
+- Routes phải khớp router thực tế.
+- Not done ghi rõ G10, R04/R08 và giới hạn còn lại.
+- Không xóa các giới hạn chỉ vì đã build được.
+
+Tôi cho phép git add và git commit từng file trong task này:
+- Author và committer: Lê Công Minh Nhựt.
+- Email: lecongminhnhut6533@gmail.com.
+- Cấu hình theo từng lệnh, không sửa global config.
+- Mỗi commit một file, stage bằng đường dẫn cụ thể.
+- Đọc diff staged trước commit.
+- Commit brief trước triển khai, AI-LOG cuối.
+- Không commit thay đổi có sẵn của người khác.
+- Không amend, reset hoặc viết lại lịch sử.
+
+Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Khi xong, báo:
+- G4/G5/G6 đã chạy được gì và phần còn thiếu.
+- Các file và commit.
+- Kiểm tra đã chạy, kết quả và giới hạn.
+- Phụ thuộc cần Hưng/Kiệt bàn giao.
+- Số mục brief/AI-LOG và git status cuối.
+```
