@@ -1,4 +1,5 @@
 import { checkClash } from '../lib/clash.mjs';
+import { recalculateBookingReminders, stopBookingReminders } from '../lib/reminders.mjs';
 import { validateSchedule, toScheduleItems } from './resources.mjs';
 import { invalid } from './conversations.mjs';
 import { findBooking, bookingMissing, recordApplied } from './bookings.mjs';
@@ -31,11 +32,18 @@ export default [
         ? { date: null, start: null, end: null, room: null, staff: structuredClone(item.staff) }
         : { date: ctx.body.date, start: item.start, end: item.end, room: structuredClone(item.room), staff: structuredClone(item.staff) } });
     }
-    // TV2 reminder planning helper/schema is not delivered. Do not copy the
-    // private payment helper; R04 remains an explicit handoff in contract 10.
-    booking.date = ctx.body.date;
-    booking.items = items;
+    const schedule = { date: ctx.body.date, items };
+    const reminderDraft = booking.status === 'booked' ? {
+      settings: ctx.db.settings,
+      reminders: structuredClone(ctx.db.reminders),
+    } : null;
+    if (reminderDraft) {
+      recalculateBookingReminders(reminderDraft, { ...booking, ...schedule });
+    }
+
+    Object.assign(booking, schedule);
     for (const { job, changes } of updates) Object.assign(job, changes);
+    if (reminderDraft) ctx.db.reminders = reminderDraft.reminders;
     return { status: 200, body: { booking } };
   } },
   { method: 'POST', path: '/api/bookings/:code/cancel', roles: ['admin'], handler: (ctx) => {
@@ -47,6 +55,8 @@ export default [
     }
     if (!['awaiting_deposit', 'booked'].includes(booking.status)) return ctx.fail(409, 'CONFLICT', 'Booking đã hoàn thành hoặc đã hủy');
     const conversation = ctx.db.conversations.find((entry) => entry.id === booking.conversationId);
+    const reminderDraft = { reminders: structuredClone(ctx.db.reminders) };
+    stopBookingReminders(reminderDraft, booking.code);
     if (conversation) {
       // Runtime eligibility only: preserve proposal/message response history.
       for (const message of conversation.messages) {
@@ -56,6 +66,7 @@ export default [
       conversation.status = 'scheduled';
     }
     booking.status = 'cancelled';
+    ctx.db.reminders = reminderDraft.reminders;
     return { status: 200, body: { booking } };
   } },
   { method: 'PUT', path: '/api/bookings/:code/final-link', roles: ['admin'], handler: (ctx) => {
