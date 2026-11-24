@@ -2303,3 +2303,13 @@ Tin nhắn 1:
 vậy làm tiếp thôi
 ```
 *(Tiếp nối sau khi kiểm tra tiến độ `#15b` ngày 24/11 và kéo `main` mới nhất `cfca1b7`: triển khai 4 màn G7 `/my-bookings`, `/my-bookings/:code`, `/test-gateway/:paymentId`, `/payments/:paymentId/result` trên nhánh `feat/g7-bookings-deposit`.)*
+
+
+## 28. [TV2 · 24/11/2026 · Antigravity Assistant] Front end #18: G7 Nhắc lịch (/notifications) và G9 Gallery chọn ảnh, trả 70%, Nhận ảnh (/my-bookings/:code/gallery)
+
+Tin nhắn 1:
+
+```text
+vậy giờ làm cái tiếp theo 
+```
+*(Triển khai `#18` trên nhánh `feat/g9-gallery-notifications` tách từ `feat/g7-bookings-deposit`: hoàn thiện `/notifications` và `/my-bookings/:code/gallery`, đồng thời tách sẵn các commit nhỏ theo quy tắc mục 8.2/8.5.)*
