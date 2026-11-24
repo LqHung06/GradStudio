@@ -462,6 +462,10 @@
   color: var(--primary-dark);
 }
 
+.package-detail-card h2 {
+  margin-bottom: var(--space-3);
+}
+
 .package-detail-header h1 {
   font-size: clamp(1.75rem, 3.5vw, 2.5rem);
 }
@@ -684,4 +688,100 @@
   .home-cta-banner {
     padding: var(--space-4);
   }
+}
+
+
+/* G7 bookings, test gateway & payment result */
+.booking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.booking-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.booking-card-top h2 {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display-vi);
+  font-size: 1.375rem;
+  letter-spacing: -0.01em;
+  color: var(--primary-dark);
+}
+
+.booking-code-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.booking-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.booking-amounts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  margin: var(--space-2) 0 0;
+}
+
+.booking-amounts-row dt {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.booking-amounts-row dd {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--primary-dark);
+}
+
+.booking-warning-note,
+.payment-warning-box {
+  padding: var(--space-4);
+  border-radius: 10px;
+  border: 1px solid var(--dashboard-warning-border);
+  background: var(--dashboard-warning-bg);
+  color: var(--dashboard-warning-text);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.booking-warning-note p,
+.payment-warning-box p,
+.payment-muted-box p {
+  margin: 0;
+}
+
+.booking-muted-note,
+.payment-muted-box {
+  padding: var(--space-4);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.payment-action-box {
+  margin-top: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+
+.gateway-card {
+  max-width: 780px;
+  margin-inline: auto;
 }
