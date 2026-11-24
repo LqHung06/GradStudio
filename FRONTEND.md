@@ -118,6 +118,6 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 Mock đã dùng helper của TV2 để tính lại nhắc lịch khi đổi và dừng nhắc chờ gửi khi hủy (R04/R05). `reservationFailure` đã có trong contract và mock payments. TV2 cần sửa cách cấp ID trong helper dùng chung: nếu hủy xóa một nhắc queued trước một ID còn tồn tại, lần tạo tiếp theo theo độ dài danh sách có thể trùng ID. Quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca chờ TV1. Mock hiện trả 409 cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy, đồng thời giữ quyền đọc lịch sử. Kiểm tra hồi quy bằng `node --test tools/tv3-booking-rules.test.mjs`.
 
-### TV3 — phạm vi R14 trong brief mục 24–25
+### TV3 — phạm vi R14 trong brief mục 25–26
 
 G4/G5/G6 đã có các route ở bảng trên. Khách có thể đồng ý đề xuất ở `/chat`. G10 còn thiếu route chi tiết `/admin/bookings/:code` và các thao tác trên giao diện để đổi lịch trực tiếp bằng `date/items`, hủy và lưu link ảnh cuối. Khi tạo booking thay thế, API kiểm tra đề xuất có trước thời điểm hủy hay đã được dùng. Contract hiện thiếu trường cho phép giao diện phân biệt các trường hợp đó nếu khách trả lời một đề xuất cũ sau khi hủy.
