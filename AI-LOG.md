@@ -877,3 +877,27 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - Responsive trực quan qua ảnh chụp 360 / 768 / 1280 px trên `/`, `/my-bookings`, `/my-bookings/GS-1023`, `/payments/PAY-2/result`, `/chat`: không tràn ngang hay cắt chữ; đã bổ sung `margin-bottom: var(--space-3)` cho `.package-detail-card h2` để tiêu đề mục thoáng hơn.
   - **Chưa kiểm tra trong lượt này:** 3 chế độ `MOCK_MODE` (`slow`, `error`, `empty`) trên 4 màn G7 và W3C Nu HTML Checker (sẽ rà cùng G9 ở mốc M6).
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+
+### [TV2] 28. Front end #18: G7 Nhắc lịch (`/notifications`) và G9 Gallery chọn ảnh, trả 70%, Nhận ảnh (`/my-bookings/:code/gallery`) (24/11/2026)
+
+- **Tool:** Antigravity Assistant, React 19, Vite 7.
+- **Request:** `brief.md` mục 28. Trên nhánh `feat/g9-gallery-notifications`, triển khai nốt 2 màn cuối của TV2 theo `docs/api/07-reminders.md`, `09-gallery.md`, `11-receive.md` và `06-payments.md`.
+- **Changed:**
+  - `client/src/pages/customer/NotificationsPage.jsx` (file mới — **G7 `/notifications`**): `<h1>Thông báo và nhắc lịch</h1>`, tải `GET /api/reminders` qua `useFetch` + `AsyncState`, hiển thị thời điểm gửi (`<time dateTime>`), kênh (`E-mail, Tài khoản`), trạng thái e-mail qua `StatusBadge` (`REMINDER_EMAIL_STATUS`: *Chờ gửi / Đã gửi / Gửi lỗi*), nội dung nhắc và link tới chi tiết booking.
+  - `client/src/pages/customer/BookingGalleryPage.jsx` (file mới — **G9 `/my-bookings/:code/gallery`**): `<h1>Chọn ảnh để chỉnh · {code}</h1>`, xử lý `404` thân thiện khi mở trước G6; lưới ảnh trong `<fieldset>`/`<legend>`, mỗi ảnh là `<label>` bọc checkbox + `<img>` + chữ trạng thái **`✓ Đã chọn` / `Chưa chọn`** (không chỉ đổi màu); bộ đếm `aria-live="polite"`; chặn vượt quá giới hạn gói (30 ảnh với GS-1024), cho sửa trước khi trả 70% và khóa toàn bộ checkbox + nút lưu sau `paid_in_full`; nút **`Thanh toán 70% còn lại`** (khóa kèm lý do rõ nếu chưa lưu lựa chọn hoặc còn thay đổi chưa lưu, hiển thị lỗi `409` R19 từ server nếu buổi chụp chưa `done`); nút **`Nhận ảnh`** (khóa kèm lý do rõ nếu chưa trả đủ 70% hoặc chưa có `finalLink`, cập nhật trạng thái *Hoàn thành* trực tiếp từ response `POST /api/bookings/:code/receive`).
+  - `client/src/routes/customer.jsx`: đăng ký đủ toàn bộ 7 route customer (`/chat`, `/my-bookings`, `/my-bookings/:code`, `/my-bookings/:code/gallery`, `/test-gateway/:paymentId`, `/payments/:paymentId/result`, `/notifications`) bọc `<RequireRole roles={['customer']}>`.
+  - `client/src/styles/customer-pages.css`: bổ sung CSS cho danh sách nhắc lịch và lưới chọn ảnh gallery dùng token Blue Theme & `--space-*`, không `!important`.
+  - `brief.md` mục 28 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Không sửa `docs/api/`, `mock/`, `tools/` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - `cd client && npm run build`: **PASS** (`93 modules`, 0 lỗi).
+  - Kiểm tra tĩnh (`Select-String`) trên toàn bộ file TV2 vừa tạo/sửa: 0 `localhost`, 0 `fixtures.js`, 0 `!important`, 0 `href="#"`, 0 `position: fixed`.
+  - `git diff -- docs/api mock`: trống.
+  - Kiểm thử trực tiếp trên **Chrome DevTools** (`http://localhost:4173` + `node mock/server.mjs`):
+    - `han@gradstudio.test`: `/notifications` hiện đúng thẻ nhắc lịch `GS-1023` (thời gian gửi, `E-mail, Tài khoản`, badge `Đã gửi`, nội dung, link booking), F5 sạch 0 lỗi Console; `/my-bookings/GS-1023/gallery` hiện đúng bộ đếm `0/30`, thông báo chưa có ảnh xem trước, nút **Thanh toán 70% còn lại** và **Nhận ảnh** bị khóa kèm lý do rõ ràng, F5 sạch 0 lỗi Console.
+    - `linh@gradstudio.test`: `/notifications` hiện thông báo rỗng chuẩn; mở thẳng `/my-bookings/GS-1024/gallery` hiện thông báo 404 thân thiện (không trắng màn).
+    - Responsive trực quan qua ảnh chụp 360 / 768 / 1280 px trên `/notifications` và `/my-bookings/GS-1023/gallery`: không tràn ngang hay cắt chữ. Đã khắc phục 2 điểm nhỏ phát hiện từ ảnh chụp: (1) dùng `formatMoney` trong chuỗi nút `Thanh toán 70% còn lại` để không bị tách cột do `inline-flex gap` ở 360px; (2) thêm `.button:disabled { opacity: 0.55 }` để nút bị khóa dễ nhận biết trực quan.
+  - **Chưa kiểm tra trong lượt này:** 3 chế độ `MOCK_MODE` (`slow`, `error`, `empty`) trên 2 màn mới và W3C Nu HTML Checker (sẽ rà cùng toàn app ở mốc M6).
+- **Commits:** TV2 tự kiểm tra diff và tách thành các commit nhỏ riêng biệt (`docs(brief)`, `feat(G7)`, `feat(G9)`, `docs(ai-log)`).
