@@ -20,7 +20,7 @@ const requests = [];
 const errors = [];
 const allowed = [
   /^(GET|POST) \/api\/auth\/(login|logout|me)$/,
-  /^GET \/api\/(conversations(\/[^/]+)?|bookings|resources|schedule|packages|extras)$/,
+  /^GET \/api\/(conversations(\/[^/]+)?|bookings|resources|schedule|services|packages|extras)$/,
   /^POST \/api\/(conversations\/[^/]+\/(messages|proposals)|availability\/check|bookings)$/,
   /^PATCH \/api\/conversations\/[^/]+\/proposals\/[^/]+$/,
   /^POST \/api\/bookings\/GS-\d+\/cancel$/,
@@ -167,6 +167,67 @@ try {
     await fill('password', password);
     await click('Đăng nhập');
   };
+  async function switchRole(path, name) {
+    await click('Đăng xuất');
+    await waitFor(() => run(() => !localStorage.getItem('gradstudio_token')), 'sign-out');
+    await navigate(path);
+    await login(name);
+    await waitFor(() => run((expected) => location.pathname === expected, path), 'role route ' + path);
+  }
+
+  // Supply field errors on an otherwise valid form. Only these isolated requests
+  // are intercepted, so the actual role flow and successful writes use the mock.
+  async function checkFieldErrors(path, button, fields) {
+    const before = await run((names) => names.map((name) => {
+      const el = document.getElementById(name) || document.querySelector('[name="' + name + '"]');
+      return el.value ?? [...el.querySelectorAll(':checked')].map((input) => input.parentElement.textContent);
+    }), Object.keys(fields));
+    let handled = false;
+    let interceptionError;
+    const onPause = async ({ data }) => {
+      const { method, params } = JSON.parse(data);
+      if (method !== 'Fetch.requestPaused') return;
+      try {
+        if (params.request.method !== 'POST' || handled) {
+          await send('Fetch.continueRequest', { requestId: params.requestId });
+          return;
+        }
+        handled = true;
+        const error = { code: 'VALIDATION', message: 'Dữ liệu chưa hợp lệ', fields, details: null };
+        await send('Fetch.fulfillRequest', {
+          requestId: params.requestId, responseCode: 400,
+          responseHeaders: [{ name: 'Content-Type', value: 'application/json; charset=utf-8' }],
+          body: Buffer.from(JSON.stringify({ error })).toString('base64'),
+        });
+      } catch (error) {
+        interceptionError = error;
+      }
+    };
+    ws.addEventListener('message', onPause);
+    try {
+      await send('Fetch.enable', { patterns: [{ urlPattern: origin + path }] });
+      await click(button);
+      for (const message of Object.values(fields)) await see(message);
+      assert.ifError(interceptionError);
+      assert.equal(handled, true);
+      const state = await run((expected) => Object.entries(expected).map(([name, message]) => {
+        const el = document.getElementById(name) || document.querySelector('[name="' + name + '"]');
+        const ids = el.getAttribute('aria-describedby')?.split(/\s+/) ?? [];
+        return {
+          invalid: el.getAttribute('aria-invalid'),
+          linked: ids.some((id) => document.getElementById(id)?.textContent === message),
+          focused: el === document.activeElement,
+          value: el.value ?? [...el.querySelectorAll(':checked')].map((input) => input.parentElement.textContent),
+        };
+      }), fields);
+      assert.deepEqual(state, before.map((value, index) => ({
+        invalid: 'true', linked: true, focused: index === 0, value,
+      })));
+    } finally {
+      ws.removeEventListener('message', onPause);
+      await send('Fetch.disable');
+    }
+  }
   const detail = '/admin/conversations/c-linh';
   const list = '/admin/conversations';
   await send('Page.enable');
@@ -203,8 +264,9 @@ try {
     && !document.querySelector('.async-loading')), 'detail requests settle');
   await waitForForms();
   assert.equal(await buttonDisabled(), true);
-  await mode('error');
   await fill('text', 'Tin nhắn kiểm tra Admin');
+  await checkFieldErrors('/api/conversations/c-linh/messages', 'Gửi', { text: 'Kiểm tra 400: Tin nhắn' });
+  await mode('error');
   await click('Gửi');
   await see('Máy chủ đang gặp sự cố');
   assert.equal(await run(() => document.querySelector('textarea[name=text]').value), 'Tin nhắn kiểm tra Admin');
@@ -235,6 +297,15 @@ try {
   await fill('items.1.roomId', 'r-b');
   await see('GS-1021');
   await checkWidths(detail);
+  await fill('note', 'Ghi chú nghiệm thu');
+  const proposalFields = { date: 'Kiểm tra 400: Ngày', items: 'Kiểm tra 400: Số ca' };
+  for (const index of [0, 1]) {
+    for (const name of ['kind', 'start', 'end', 'staffId', 'roomId']) {
+      proposalFields['items.' + index + '.' + name] = 'Kiểm tra 400: ca ' + index + ' ' + name;
+    }
+  }
+  proposalFields.note = 'Kiểm tra 400: Ghi chú';
+  await checkFieldErrors('/api/conversations/c-linh/proposals', 'Đề xuất giờ này cho khách', proposalFields);
   await click('Kiểm tra trùng lịch');
   await see('Mai bận 08:00–12:00');
   await click('Đề xuất giờ này cho khách');
@@ -251,12 +322,24 @@ try {
   const { token: linh } = await api('POST', '/api/auth/login', null, credentials('linh'), 200);
   const { conversation } = await api('GET', '/api/conversations/c-linh', linh, null, 200);
   const proposalId = conversation.messages.at(-1).proposal.id;
-  await api('PATCH', '/api/conversations/c-linh/proposals/' + proposalId, linh, { decision: 'accepted' }, 200);
+  await switchRole('/chat', 'linh');
+  await see('Chat với GradStudio');
+  await click('Đồng ý giờ này');
+  await see('Khách đã đồng ý');
+  await switchRole(detail, 'thao');
+  await see('Khách đã đồng ý');
   await click('Làm mới hội thoại');
   await waitFor(async () => (await buttonDisabled()) === false, 'create enabled after acceptance');
   await fill('shootType', 'Tốt nghiệp cá nhân');
   await fill('packageId', 'pkg-tn-premium');
   await see('540.000đ');
+  await waitForForms();
+  await run(() => document.querySelector('#extraIds input[type=checkbox]').click());
+  await checkFieldErrors('/api/bookings', 'Tạo booking', {
+    shootType: 'Kiểm tra 400: Loại chụp', packageId: 'Kiểm tra 400: Gói chụp',
+    extraIds: 'Kiểm tra 400: Dịch vụ thêm',
+  });
+  console.log('PASS UI: simulated API 400 messages, aria-describedby, focus and preserved form values');
   const beforeBooking = requests.filter((request) => request === 'POST /api/bookings').length;
   await run(() => {
     const submit = [...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Tạo booking');
@@ -272,7 +355,7 @@ try {
   await see('GS-1024');
   await send('Page.reload');
   await see('GS-1024');
-  console.log('PASS HTTP + UI: customer accepts via HTTP, Admin refreshes/creates and sees API amounts');
+  console.log('PASS UI: Customer accepts in chat, Admin signs in again, refreshes and creates once; amounts from API');
 
   const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
   await api('POST', '/api/bookings/GS-1024/cancel', thao, { reason: 'Kiểm tra booking thay thế' }, 200);
