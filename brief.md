@@ -2367,3 +2367,37 @@ Tin nhắn 3:
 ```text
 oke giờ test thât kĩ các biên và chuẩn theo yêu cầu, bật dev tools chrome lên test chặt vào
 ```
+
+
+## 30. [TV1 · 25/11/2026 · Antigravity Assistant] CI Gate 3 & Harness: bổ sung `tools/tv2-reminders-id.test.mjs` (31/31 test)
+
+Tin nhắn 1:
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `chore/ci-include-tv2-tests` từ `main` mới nhất (`cf2ccf2`, sau khi PR #28 và PR #29 đã merge). Bổ sung bộ kiểm thử `tools/tv2-reminders-id.test.mjs` vào Gate 3 của CI và đồng bộ tài liệu Harness/Rules để CI tự động chạy đủ 31/31 test hồi quy của cả 3 thành viên (TV1 + TV2 + TV3).
+
+Ràng buộc bắt buộc:
+1. KHÔNG sửa `docs/api/`, `mock/`, `client/` hay bất kỳ file test nào trong `tools/`. KHÔNG thêm dependency.
+2. Mọi lệnh chạy kiểm tra ghi vào `AI-LOG.md` phải là kết quả chạy thật trong phiên này, không bịa số liệu.
+3. Không tự chạy `git add`, `git commit`, `git push` (sau khi xong, gợi ý cách tách commit rõ ràng, giữ `AGENTS.md` thành commit riêng theo quy ước PA#5).
+
+Yêu cầu chi tiết:
+1. `.github/workflows/ci.yml` (Gate 3, dòng 49–50):
+   - Cập nhật lệnh `node --test` thành:
+     `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs`
+2. `HARNESS.md`:
+   - Cập nhật dòng **Verification scripts** (mục 1) và **Gate 3 — Business Rules Tests** (mục 3) cho khớp chính xác lệnh mới (thêm `tools/tv2-reminders-id.test.mjs`).
+   - Bổ sung dòng mốc commit `1c2073b` vào bảng Timeline `AGENTS.md` nếu cần giữ khớp `git log -- AGENTS.md` (đối chiếu trực tiếp từ `git log`, không viết lại các mốc cũ).
+3. `AGENTS.md` (mục *Verification gate*, dòng 222):
+   - Cập nhật lệnh tham chiếu `node --test` thêm `tools/tv2-reminders-id.test.mjs` cho đồng bộ với CI và `HARNESS.md`.
+4. Kiểm tra thực tế trước khi kết thúc:
+   - Chạy toàn bộ 5 gate giống hệt `.github/workflows/ci.yml` trên máy local (Gate 1 → Gate 5), xác nhận Gate 3 đạt **31/31 PASS, 0 FAIL, 0 TODO**.
+   - Xác nhận `git diff -- docs/api mock client tools` trống hoàn toàn và `git diff --check` 0 lỗi.
+   - Ghi mục mới tiếp theo vào `brief.md` và `AI-LOG.md` (nối vào cuối file).
+```
+
+Tin nhắn 2:
+
+```text
+Rà soát kỹ toàn bộ diff trên nhánh `chore/ci-include-tv2-tests` (.github/workflows/ci.yml, HARNESS.md, AGENTS.md, brief.md, AI-LOG.md). Sửa lại lỗi dư dòng trống trước mục 30 ở cuối `brief.md` và `AI-LOG.md` về đúng 2 dòng trống đồng nhất với mục 28/29, rồi kiểm tra lại `git diff --check` và xác nhận không còn tiến trình nền. Không tự commit/push
+```
