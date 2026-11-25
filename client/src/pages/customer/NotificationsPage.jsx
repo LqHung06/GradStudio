@@ -22,9 +22,16 @@ function formatChannels(channels) {
   return channels.map((ch) => CHANNEL_LABELS[ch] || ch).join(', ');
 }
 
+function formatSendAt(iso) {
+  if (!iso) return 'Chưa xác định';
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return iso;
+  return momentFormatter.format(dt);
+}
+
 export function NotificationsPage() {
   const { data, error, loading, reload } = useFetch('/api/reminders');
-  const reminders = data?.reminders || [];
+  const reminders = Array.isArray(data?.reminders) ? data.reminders : [];
 
   return (
     <Layout>
@@ -51,9 +58,11 @@ export function NotificationsPage() {
               <div className="booking-card-top">
                 <p className="reminder-meta">
                   Gửi lúc{' '}
-                  <time dateTime={reminder.sendAt}>
-                    {momentFormatter.format(new Date(reminder.sendAt))}
-                  </time>{' '}
+                  {reminder.sendAt ? (
+                    <time dateTime={reminder.sendAt}>{formatSendAt(reminder.sendAt)}</time>
+                  ) : (
+                    <span>Chưa xác định</span>
+                  )}{' '}
                   · Kênh: <strong>{formatChannels(reminder.channels)}</strong> · E-mail:{' '}
                   <StatusBadge map={REMINDER_EMAIL_STATUS} status={reminder.emailStatus} />
                 </p>

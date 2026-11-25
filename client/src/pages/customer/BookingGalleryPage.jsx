@@ -11,16 +11,27 @@ import '../../styles/customer-pages.css';
 
 export function BookingGalleryPage() {
   const { code } = useParams();
+  return <BookingGalleryContent key={code || ''} code={code || ''} />;
+}
+
+function BookingGalleryContent({ code }) {
   const navigate = useNavigate();
 
   const bookingReq = useFetch(code ? `/api/bookings/${encodeURIComponent(code)}` : null);
   const photosReq = useFetch(code ? `/api/bookings/${encodeURIComponent(code)}/photos` : null);
 
   const booking = bookingReq.data?.booking || null;
-  const photos = photosReq.data?.photos || [];
-  const limit = photosReq.data?.limit ?? booking?.selection?.limit ?? booking?.package?.editedPhotos ?? 30;
-  const savedIds = photosReq.data?.selectedIds || [];
-  const isNotFound = bookingReq.error?.status === 404 || photosReq.error?.status === 404;
+  const photos = Array.isArray(photosReq.data?.photos) ? photosReq.data.photos : [];
+  const limit =
+    photosReq.data?.limit ??
+    booking?.selection?.limit ??
+    booking?.package?.editedPhotos ??
+    30;
+  const savedIds = Array.isArray(photosReq.data?.selectedIds)
+    ? photosReq.data.selectedIds
+    : [];
+  const isNotFound =
+    bookingReq.error?.status === 404 || photosReq.error?.status === 404;
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [limitNotice, setLimitNotice] = useState(null);
@@ -45,12 +56,27 @@ export function BookingGalleryPage() {
     }
   }, [photosReq.data?.selectedIds]);
 
-  const isSelectionLocked =
-    !booking ||
-    booking.paymentStatus === 'paid_in_full' ||
-    booking.status === 'completed' ||
-    booking.status === 'cancelled' ||
-    booking.status !== 'booked';
+  const paidButClashed =
+    booking?.status === 'awaiting_deposit' &&
+    booking?.paymentStatus === 'deposit_paid';
+
+  let selectionLockReason = '';
+  if (booking) {
+    if (booking.status === 'cancelled') {
+      selectionLockReason = 'Booking đã hủy — danh sách ảnh chỉ hiển thị để xem lịch sử.';
+    } else if (booking.status === 'completed') {
+      selectionLockReason = 'Booking đã hoàn thành — danh sách ảnh đã khóa.';
+    } else if (booking.paymentStatus === 'paid_in_full') {
+      selectionLockReason = 'Đã thanh toán 70%, danh sách ảnh đã khóa và không thể chỉnh sửa thêm.';
+    } else if (paidButClashed) {
+      selectionLockReason =
+        'Đã nhận cọc 30% nhưng khung giờ bị trùng nên lịch chưa được giữ. Chưa mở chọn ảnh.';
+    } else if (booking.status !== 'booked') {
+      selectionLockReason = 'Booking đang Chờ cọc 30% nên chưa mở chọn ảnh.';
+    }
+  }
+
+  const isSelectionLocked = !booking || Boolean(selectionLockReason);
 
   const savedSet = new Set(savedIds);
   const hasUnsavedChanges =
@@ -78,6 +104,7 @@ export function BookingGalleryPage() {
   async function handleSaveSelection(event) {
     event.preventDefault();
     if (isSelectionLocked || savingRef.current) return;
+    setLimitNotice(null);
     setSaveError(null);
     setSaveSuccess(null);
 
@@ -169,18 +196,27 @@ export function BookingGalleryPage() {
 
   let payRemainingReason = '';
   if (booking) {
-    if (booking.status !== 'booked') {
-      payRemainingReason = 'Booking cần ở trạng thái Đã đặt lịch trước khi thanh toán phần còn lại.';
+    if (booking.status === 'cancelled') {
+      payRemainingReason = 'Booking đã bị hủy nên không thể thanh toán phần còn lại.';
+    } else if (paidButClashed) {
+      payRemainingReason =
+        'Lịch chưa được giữ do trùng giờ. Vui lòng nhắn studio trong chat để xử lý.';
+    } else if (booking.status !== 'booked') {
+      payRemainingReason =
+        'Booking cần ở trạng thái Đã đặt lịch trước khi thanh toán phần còn lại.';
     } else if (savedCount === 0) {
       payRemainingReason = 'Lưu lựa chọn ảnh trước khi thanh toán phần còn lại.';
     } else if (hasUnsavedChanges) {
-      payRemainingReason = 'Hãy bấm Lưu lựa chọn để cập nhật thay đổi trước khi thanh toán 70%.';
+      payRemainingReason =
+        'Hãy bấm Lưu lựa chọn để cập nhật thay đổi trước khi thanh toán 70%.';
     }
   }
 
   let receiveReason = '';
   if (booking && booking.status !== 'completed') {
-    if (booking.status !== 'booked') {
+    if (booking.status === 'cancelled') {
+      receiveReason = 'Booking đã bị hủy nên không thể xác nhận nhận ảnh.';
+    } else if (booking.status !== 'booked') {
       receiveReason = 'Booking chưa ở trạng thái Đã đặt lịch.';
     } else if (booking.paymentStatus !== 'paid_in_full') {
       receiveReason = 'Cần thanh toán đủ 70% còn lại trước khi nhận ảnh.';
@@ -192,7 +228,7 @@ export function BookingGalleryPage() {
   return (
     <Layout>
       <nav className="breadcrumb-nav" aria-label="Đường dẫn">
-        <Link className="text-link" to={`/my-bookings/${encodeURIComponent(code || '')}`}>
+        <Link className="text-link" to={`/my-bookings/${encodeURIComponent(code)}`}>
           ← Quay lại chi tiết booking {code}
         </Link>
       </nav>
@@ -245,21 +281,34 @@ export function BookingGalleryPage() {
                     {savedCount > 0 ? ` (đã lưu ${savedCount} ảnh)` : ''}
                   </p>
 
-                  {booking.paymentStatus === 'paid_in_full' && (
-                    <p className="chat-hold-notice">
-                      Đã thanh toán 70%, danh sách ảnh đã khóa và không thể chỉnh sửa thêm.
-                    </p>
+                  {paidButClashed && (
+                    <div className="payment-warning-box" role="alert">
+                      <p>
+                        <strong>
+                          Đã nhận cọc 30% (<Money amount={booking.deposit} />) nhưng khung giờ bị trùng nên lịch chưa được giữ.
+                        </strong>
+                      </p>
+                      <p>
+                        Bạn không cần đặt cọc lại — vui lòng nhắn studio trong chat để thống nhất xử lý hoặc tạo booking thay thế.
+                      </p>
+                      <Link className="button button-coral" to="/chat">
+                        Nhắn studio trong chat
+                      </Link>
+                    </div>
                   )}
 
-                  {booking.status === 'cancelled' && (
-                    <p className="booking-muted-note">
-                      Booking đã hủy — danh sách ảnh chỉ hiển thị để xem lịch sử.
-                    </p>
-                  )}
-
-                  {booking.status === 'awaiting_deposit' && (
-                    <p className="booking-warning-note">
-                      Booking đang Chờ cọc 30% nên chưa mở chọn ảnh.
+                  {selectionLockReason && !paidButClashed && (
+                    <p
+                      id="selection-lock-reason"
+                      className={
+                        booking.status === 'cancelled'
+                          ? 'booking-muted-note'
+                          : booking.paymentStatus === 'paid_in_full' || booking.status === 'completed'
+                            ? 'chat-hold-notice'
+                            : 'booking-warning-note'
+                      }
+                    >
+                      {selectionLockReason}
                     </p>
                   )}
 
@@ -273,7 +322,7 @@ export function BookingGalleryPage() {
                     <form onSubmit={handleSaveSelection} noValidate>
                       <fieldset className="gallery-fieldset">
                         <legend>
-                          Chọn tối đa {limit} ảnh cho gói {booking.package.name}
+                          Chọn tối đa {limit} ảnh cho gói {booking.package?.name || 'đã đặt'}
                         </legend>
                         <div className="gallery-photo-grid">
                           {photos.map((photo) => {
@@ -326,6 +375,11 @@ export function BookingGalleryPage() {
                           type="submit"
                           className="button button-dark"
                           disabled={isSelectionLocked || saving}
+                          aria-describedby={
+                            selectionLockReason && !paidButClashed
+                              ? 'selection-lock-reason'
+                              : undefined
+                          }
                         >
                           {saving ? 'Đang lưu lựa chọn…' : 'Lưu lựa chọn'}
                         </button>
@@ -339,6 +393,9 @@ export function BookingGalleryPage() {
                   {booking.paymentStatus === 'paid_in_full' ? (
                     <p className="form-success-note">
                       Đã thanh toán đủ 100% (<Money amount={booking.price} />) cho booking {booking.code}.
+                      {booking.status === 'cancelled'
+                        ? ' Booking hiện đã hủy; khoản tiền đã thu vẫn được giữ trong lịch sử.'
+                        : ''}
                     </p>
                   ) : (
                     <div className="payment-action-box">
