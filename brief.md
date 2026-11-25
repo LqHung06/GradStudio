@@ -2344,3 +2344,26 @@ Kiểm tra kỹ toàn bộ nhánh hiện tại `feat/g9-gallery` (`#18`: `/notif
 
 Báo bảng PASS/FAIL từng ca (chỉ báo PASS ca đã chạy thật); nếu thấy lỗi thì chỉ rõ file + dòng, sửa dứt điểm, test lại đến khi PASS và cập nhật `AI-LOG.md`. Không tự `git add`/`commit`/`push`.
 ````
+
+
+## 29. [TV2 · 25/11/2026 · Antigravity Assistant] Fix mock/lib/reminders.mjs: sinh ID theo max(rm-<n>) + 1 tránh trùng sau khi xóa nhắc queued
+
+Tin nhắn 1:
+
+```text
+1 lỗi nhỏ trong mock/lib/reminders.mjs (TV3 Nhựt đã note ở FRONTEND.md):
+Hiện sinh ID theo rm-${db.reminders.length + 1} → nếu hủy xóa 1 nhắc queued rồi tạo mới có thể trùng ID với rm-* đang tồn tại.
+Nên sửa ở 1 nhánh riêng fix/mock-reminder-id tách từ main (đổi sang max id + 1 + test nhỏ), không trộn vào PR #28. lỗi này là task nào, và giờ sửa luôn dc o
+```
+
+Tin nhắn 2:
+
+```text
+làm luôn
+```
+
+Tin nhắn 3:
+
+```text
+oke giờ test thât kĩ các biên và chuẩn theo yêu cầu, bật dev tools chrome lên test chặt vào
+```

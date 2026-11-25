@@ -905,3 +905,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - **Responsive 360 / 768 / 1280 px** (qua ảnh chụp trực quan trên `/notifications` và `/my-bookings/GS-1023/gallery` có đủ 36 ảnh): 0 tràn ngang, 0 cắt chữ, 0 lỗi Console; đã sửa wrap nút 70% ở 360px bằng `formatMoney` và thêm `.button:disabled { opacity: 0.55 }`.
   - **Chưa kiểm tra trong lượt này:** W3C Nu HTML Checker thủ công (thuộc mốc M6).
 - **Commits:** TV2 tự kiểm tra diff và tách thành các commit nhỏ riêng biệt (`docs(brief)`, `feat(G7)`, `feat(G9)`, `docs(ai-log)`).
+
+
+### [TV2] 29. Fix `mock/lib/reminders.mjs`: cấp ID theo `max(rm-<n>) + 1` tránh trùng sau khi xóa nhắc `queued` (25/11/2026)
+
+- **Tool:** Antigravity Assistant, Node.js (`node:test`).
+- **Request:** `brief.md` mục 29. Trên nhánh `fix/mock-reminder-id` tách từ `main` (`f3d9858`), khắc phục góp ý của TV3 trong `FRONTEND.md` mục 7 về cách sinh ID nhắc lịch khi hủy booking xóa phần tử `queued` ở giữa danh sách.
+- **Changed:**
+  - `mock/lib/reminders.mjs`: thêm hàm `nextReminderId(reminders)` lấy số lớn nhất hiện có của các ID dạng `rm-<n>` cộng 1, thay cho `rm-${db.reminders.length + 1}` ở cả `ensureBookingReminder` và `recalculateBookingReminders`; đồng thời lọc an toàn các ca có `start` đúng định dạng `HH:mm` trong `buildReminderPayload` để không lỗi khi gặp ca `start: null`.
+  - `tools/tv2-reminders-id.test.mjs` (file mới): 5 ca kiểm thử `node:test` gồm: (1) xóa `rm-1` (`queued`) khi `rm-2` còn tồn tại → tạo mới cấp `rm-3`/`rm-4`; (2) so sánh số học `rm-10 > rm-2` và bỏ qua ID sai mẫu/`null`; (3) ca chưa sắp xếp thứ tự + `start: null` + mốc 48 giờ vắt qua cuối tháng (`2026-11-01` → `2026-10-30`); (4) tính idempotent & bỏ qua booking chưa `booked`; (5) HTTP E2E tái hiện đúng luồng hủy xóa `rm-2` ở giữa rồi đổi lịch `GS-1024` phải cấp `rm-4`.
+  - `brief.md` mục 29 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Khi rà biên `buildReminderPayload`, phát hiện `items.sort((a, b) => a.start.localeCompare(b.start))` sẽ ném `TypeError` nếu gặp ca có `start: null`; đã lọc trước bằng regex `HH:mm`.
+  - Không sửa `docs/api/`, `client/`, hay file của TV1/TV3 (nhắn TV1/TV3 gỡ dòng note tương ứng trong `FRONTEND.md` mục 7 sau khi merge).
+- **Checked:**
+  - `node --check mock/lib/reminders.mjs tools/tv2-reminders-id.test.mjs`: **PASS**.
+  - `node --test tools/tv2-reminders-id.test.mjs tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs`: **31/31 PASS, 0 FAIL, 0 TODO**.
+  - `cd client && npm run build`: **PASS** (`91 modules`, `2.81s`).
+  - `node tools/contract-check.mjs` trên mock khởi động mới: **112/112 PASS, 0 FAIL (40/40 endpoints)**.
+  - Kiểm thử liên vai trò trực tiếp trên **Chrome DevTools** (`http://localhost:4173` + `node mock/server.mjs`): Superadmin đổi `reminderHoursBefore = 48` → Hân cọc `GS-1023` (`rm-1` lúc `2026-10-23T13:00:00+07:00`) → Thảo đề xuất 24/10 → Linh đồng ý trong `/chat` → Thảo tạo `GS-1024` (`1.800.000đ` / cọc `540.000đ`) → Linh cọc `GS-1024` (`rm-2` lúc `2026-10-22T13:00:00+07:00`) — **6/6 PASS, 0 lỗi Console**; tiếp tục đổi/hủy `GS-1023` và đổi `GS-1024` sang `2026-11-01 09:00` → xác nhận `GS-1023` giữ `rm-1` (`sent`), `GS-1024` giữ `rm-2` (`sent`) và sinh `rm-3` (`queued`) lúc `2026-10-30T09:00:00+07:00` (0 trùng ID).
+- **Commits:** TV2 tự kiểm tra diff và commit sau.

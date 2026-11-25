@@ -15,7 +15,9 @@ function formatDateVi(dateStr) {
 }
 
 export function buildReminderPayload(db, booking) {
-  const items = [...(booking.items || [])].sort((a, b) => a.start.localeCompare(b.start));
+  const items = [...(booking.items || [])]
+    .filter((it) => typeof it?.start === 'string' && /^\d{2}:\d{2}$/.test(it.start))
+    .sort((a, b) => a.start.localeCompare(b.start));
   const earliest = items[0];
   if (!earliest) return null;
   const leadHours = Number(db.settings?.reminderHoursBefore ?? 24);
@@ -28,13 +30,25 @@ export function buildReminderPayload(db, booking) {
   };
 }
 
+function nextReminderId(reminders) {
+  let maxId = 0;
+  for (const r of reminders || []) {
+    const match = typeof r?.id === 'string' && /^rm-(\d+)$/.exec(r.id);
+    if (match) {
+      const num = Number(match[1]);
+      if (num > maxId) maxId = num;
+    }
+  }
+  return `rm-${maxId + 1}`;
+}
+
 export function ensureBookingReminder(db, booking) {
   if (!Array.isArray(db.reminders)) db.reminders = [];
   if (db.reminders.some((r) => r.bookingCode === booking.code)) return null;
   const payload = buildReminderPayload(db, booking);
   if (!payload) return null;
   const reminder = {
-    id: `rm-${db.reminders.length + 1}`,
+    id: nextReminderId(db.reminders),
     bookingCode: booking.code,
     sendAt: payload.sendAt,
     channels: payload.channels,
@@ -70,7 +84,7 @@ export function recalculateBookingReminders(db, booking) {
 
   // Sent history stays intact; create a fresh queued reminder for the new schedule version.
   const next = {
-    id: `rm-${db.reminders.length + 1}`,
+    id: nextReminderId(db.reminders),
     bookingCode: booking.code,
     sendAt: payload.sendAt,
     channels: payload.channels,
