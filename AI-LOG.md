@@ -925,3 +925,23 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node tools/contract-check.mjs` trên mock khởi động mới: **112/112 PASS, 0 FAIL (40/40 endpoints)**.
   - Kiểm thử liên vai trò trực tiếp trên **Chrome DevTools** (`http://localhost:4173` + `node mock/server.mjs`): Superadmin đổi `reminderHoursBefore = 48` → Hân cọc `GS-1023` (`rm-1` lúc `2026-10-23T13:00:00+07:00`) → Thảo đề xuất 24/10 → Linh đồng ý trong `/chat` → Thảo tạo `GS-1024` (`1.800.000đ` / cọc `540.000đ`) → Linh cọc `GS-1024` (`rm-2` lúc `2026-10-22T13:00:00+07:00`) — **6/6 PASS, 0 lỗi Console**; tiếp tục đổi/hủy `GS-1023` và đổi `GS-1024` sang `2026-11-01 09:00` → xác nhận `GS-1023` giữ `rm-1` (`sent`), `GS-1024` giữ `rm-2` (`sent`) và sinh `rm-3` (`queued`) lúc `2026-10-30T09:00:00+07:00` (0 trùng ID).
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
+
+
+### [TV1] 30. CI Gate 3 & Harness: bổ sung `tools/tv2-reminders-id.test.mjs` (31/31 test) — 25/11/2026
+
+- **Tool:** Antigravity Assistant, Node.js (`node:test`, `node --check`), Vite 7.
+- **Request:** `brief.md` mục 30. Trên nhánh `chore/ci-include-tv2-tests` (tách từ `main` `cf2ccf2` sau khi PR #28 và PR #29 đã merge), đưa `tools/tv2-reminders-id.test.mjs` vào Gate 3 của `.github/workflows/ci.yml` và đồng bộ `HARNESS.md`, `AGENTS.md`.
+- **Changed:**
+  - `.github/workflows/ci.yml`: cập nhật Gate 3 thành `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs`.
+  - `HARNESS.md`: bổ sung `tools/tv2-reminders-id.test.mjs` vào mục 1 (*Verification scripts*) và mục 3 (*Gate 3 — Business Rules Tests*), đồng thời ghi thêm mốc commit `1c2073b` (`2026-11-24`) vào bảng Timeline `AGENTS.md` đúng theo `git log -- AGENTS.md`.
+  - `AGENTS.md`: cập nhật mục *Verification gate* số 8 (dòng 222) đồng bộ lệnh `node --test` cả 3 bộ test TV1 + TV2 + TV3.
+  - `brief.md` mục 30 và `AI-LOG.md` mục này.
+- **Rejected:** Không có sai phạm trong lượt này; không chạm `docs/api/`, `mock/`, `client/`, `tools/` và không thêm dependency.
+- **Checked (chạy đủ 5 gate giống hệt `.github/workflows/ci.yml` trên máy local):**
+  - **Gate 1 (Syntax & JSON):** `node --check` mọi `mock/**/*.mjs` và `tools/*.mjs` **PASS**; `Parsed 14 seed JSON file(s) successfully.`
+  - **Gate 2 (Contract Check):** mock khởi động sạch trên cổng `3001` + `node tools/contract-check.mjs --base http://127.0.0.1:3001` → **112/112 examples answered as written; 0 FAIL; 40/40 endpoints**.
+  - **Gate 3 (Regression Tests):** `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs` → **31/31 PASS, 0 FAIL, 0 TODO** (`9847.26ms`).
+  - **Gate 4 (Client Build):** `cd client && npm ci && npm run build` → **PASS** (`93 modules transformed`, built in `1.55s`, 0 lỗi).
+  - **Gate 5 (Repo Hygiene):** `git grep` conflict markers → `No conflict markers found.`
+  - `git diff -- docs/api mock client tools`: trống; `git diff --check`: 0 lỗi.
+- **Commits:** TV1 tự kiểm tra diff và tách commit (`docs(brief)`, `chore(ci)`, `docs(harness)`, `docs(agents)` tách riêng, `docs(ai-log)`).
