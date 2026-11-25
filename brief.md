@@ -2305,6 +2305,47 @@ vậy làm tiếp thôi
 *(Tiếp nối sau khi kiểm tra tiến độ `#15b` ngày 24/11 và kéo `main` mới nhất `cfca1b7`: triển khai 4 màn G7 `/my-bookings`, `/my-bookings/:code`, `/test-gateway/:paymentId`, `/payments/:paymentId/result` trên nhánh `feat/g7-bookings-deposit`.)*
 
 
+## 28. [TV2 · 24–25/11/2026 · Antigravity Assistant] Front end #18: G7 Nhắc lịch (/notifications) và G9 Gallery chọn ảnh, trả 70%, Nhận ảnh (/my-bookings/:code/gallery)
+
+Tin nhắn 1:
+
+```text
+vậy giờ làm cái tiếp theo 
+```
+*(Triển khai `#18` trên nhánh `feat/g9-gallery-notifications` tách từ `feat/g7-bookings-deposit`: hoàn thiện `/notifications` và `/my-bookings/:code/gallery`, đồng thời tách sẵn các commit nhỏ theo quy tắc mục 8.2/8.5.)*
+
+Tin nhắn 2 (25/11/2026 — kiểm thử toàn diện các trường hợp biên, 4 chế độ MOCK_MODE và Chrome DevTools trên nhánh `feat/g9-gallery`):
+
+````text
+Kiểm tra kỹ toàn bộ nhánh hiện tại `feat/g9-gallery` (`#18`: `/notifications` và `/my-bookings/:code/gallery`) trên bản build (`cd client && npm run build && npx vite preview --port 4173`) kết hợp `node mock/server.mjs`, tự mở Chrome DevTools chạy test thực tế:
+
+1. Phạm vi & cổng cơ bản:
+- Chạy `npm run build`, `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs`, `node tools/contract-check.mjs` trên mock mới.
+- Xác nhận `git diff -- docs/api mock` trống, 0 `localhost`, 0 `fixtures.js`, 0 `!important`, 0 `href="#"`.
+
+2. Test trực tiếp Chrome DevTools cho `/notifications` (G7):
+- Tài khoản chưa có nhắc (`linh`): hiện đúng empty message.
+- Tài khoản có nhắc (`han` sau cọc `GS-1023`): hiện đúng thời gian, kênh `E-mail, Tài khoản`, badge trạng thái (`Chờ gửi / Đã gửi / Gửi lỗi`), nội dung và link tới booking.
+- Bấm F5 giữ nguyên dữ liệu, 0 lỗi Console.
+
+3. Test trực tiếp Chrome DevTools cho `/my-bookings/:code/gallery` (G9) + các ca biên dễ sai:
+- Mở trước G6 (`/my-bookings/GS-1024/gallery`): hiện 404 thân thiện, không trắng màn.
+- Booking chưa có ảnh preview: hiện thông báo trống, nút trả 70% và `Nhận ảnh` bị khóa kèm lý do rõ ngay bên cạnh.
+- Booking có ảnh preview (36 ảnh):
+  * Tick ảnh hiện `✓ Đã chọn` (không chỉ màu), bộ đếm `aria-live="polite"` nhảy đúng.
+  * Chọn đến ảnh thứ 31 bị chặn + báo giới hạn gói.
+  * Lưu lựa chọn (`PUT .../selection`), sửa lại lựa chọn trước khi trả 70%, thử bấm trả 70% khi chưa lưu / khi còn thay đổi chưa lưu / khi job `shoot` chưa `done` (R19 `409`).
+  * Sau khi trả đủ 70% (`paid_in_full`): toàn bộ checkbox và nút `Lưu lựa chọn` khóa kèm lý do; nút `Nhận ảnh` khóa khi chưa có `finalLink`, và khi có `finalLink` bấm `Nhận ảnh` chuyển sang `Hoàn thành` không cần reload.
+- Ca biên đặc biệt: đổi giữa 2 mã booking `:code` không dính state cũ; booking `cancelled` chỉ cho xem lịch sử và khóa trả 70% / `Nhận ảnh`; ca cọc trùng giờ R08 (`awaiting_deposit` + `deposit_paid`) hiện cảnh báo + link `/chat`, không mời cọc lại.
+
+4. 4 chế độ `MOCK_MODE` (`normal`, `slow`, `error`, `empty`) & Responsive trên 2 màn này:
+- `slow` hiện đang tải; `error` hiện lỗi + nút **Thử lại** phục hồi không cần F5 khi mock về `normal`; `empty` không crash.
+- Kiểm tra `360px`, `768px`, `1280px`: không tràn ngang, không cắt chữ, nút cao ≥ 44px, 0 lỗi Console.
+
+Báo bảng PASS/FAIL từng ca (chỉ báo PASS ca đã chạy thật); nếu thấy lỗi thì chỉ rõ file + dòng, sửa dứt điểm, test lại đến khi PASS và cập nhật `AI-LOG.md`. Không tự `git add`/`commit`/`push`.
+````
+
+
 ## 29. [TV2 · 25/11/2026 · Antigravity Assistant] Fix mock/lib/reminders.mjs: sinh ID theo max(rm-<n>) + 1 tránh trùng sau khi xóa nhắc queued
 
 Tin nhắn 1:

@@ -879,6 +879,34 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Commits:** TV2 tự kiểm tra diff và commit sau.
 
 
+### [TV2] 28. Front end #18: G7 Nhắc lịch (`/notifications`) và G9 Gallery chọn ảnh, trả 70%, Nhận ảnh (`/my-bookings/:code/gallery`) (24–25/11/2026)
+
+- **Tool:** Antigravity Assistant, React 19, Vite 7.
+- **Request:** `brief.md` mục 28. Trên nhánh `feat/g9-gallery-notifications`, triển khai nốt 2 màn cuối của TV2 theo `docs/api/07-reminders.md`, `09-gallery.md`, `11-receive.md` và `06-payments.md`.
+- **Changed:**
+  - `client/src/pages/customer/NotificationsPage.jsx` (file mới — **G7 `/notifications`**): `<h1>Thông báo và nhắc lịch</h1>`, tải `GET /api/reminders` qua `useFetch` + `AsyncState`, hiển thị thời điểm gửi (`<time dateTime>`), kênh (`E-mail, Tài khoản`), trạng thái e-mail qua `StatusBadge` (`REMINDER_EMAIL_STATUS`: *Chờ gửi / Đã gửi / Gửi lỗi*), nội dung nhắc và link tới chi tiết booking.
+  - `client/src/pages/customer/BookingGalleryPage.jsx` (file mới — **G9 `/my-bookings/:code/gallery`**): `<h1>Chọn ảnh để chỉnh · {code}</h1>`, xử lý `404` thân thiện khi mở trước G6; lưới ảnh trong `<fieldset>`/`<legend>`, mỗi ảnh là `<label>` bọc checkbox + `<img>` + chữ trạng thái **`✓ Đã chọn` / `Chưa chọn`** (không chỉ đổi màu); bộ đếm `aria-live="polite"`; chặn vượt quá giới hạn gói (30 ảnh với GS-1024), cho sửa trước khi trả 70% và khóa toàn bộ checkbox + nút lưu sau `paid_in_full`; nút **`Thanh toán 70% còn lại`** (khóa kèm lý do rõ nếu chưa lưu lựa chọn hoặc còn thay đổi chưa lưu, hiển thị lỗi `409` R19 từ server nếu buổi chụp chưa `done`); nút **`Nhận ảnh`** (khóa kèm lý do rõ nếu chưa trả đủ 70% hoặc chưa có `finalLink`, cập nhật trạng thái *Hoàn thành* trực tiếp từ response `POST /api/bookings/:code/receive`).
+  - `client/src/routes/customer.jsx`: đăng ký đủ toàn bộ 7 route customer (`/chat`, `/my-bookings`, `/my-bookings/:code`, `/my-bookings/:code/gallery`, `/test-gateway/:paymentId`, `/payments/:paymentId/result`, `/notifications`) bọc `<RequireRole roles={['customer']}>`.
+  - `client/src/styles/customer-pages.css`: bổ sung CSS cho danh sách nhắc lịch và lưới chọn ảnh gallery dùng token Blue Theme & `--space-*`, không `!important`.
+  - `brief.md` mục 28 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Khi rà soát sâu các trường hợp biên trước khi mở PR `#18`, phát hiện và sửa 5 điểm: (1) tách `BookingGalleryContent` kèm `key={code}` để reset state sạch khi chuyển mã booking; (2) tách riêng trạng thái `awaiting_deposit` + `deposit_paid` (PO #8 / R08 — đã nhận cọc nhưng trùng giờ) hiển thị cảnh báo kèm link `/chat`, không mời cọc lại; (3) ghi lý do khóa riêng cho booking `cancelled` ở cả phần 70% và phần Nhận ảnh, đồng thời giữ thông báo rõ nếu đã trả đủ tiền trước khi hủy; (4) gắn `aria-describedby` nối nút `Lưu lựa chọn` bị khóa với thông báo lý do khóa; (5) thêm `formatSendAt` an toàn với ngày không hợp lệ và guard `Array.isArray` trong `NotificationsPage.jsx` & `BookingGalleryPage.jsx`.
+  - Không sửa `docs/api/`, `mock/`, `tools/` hay file của TV1/TV3; không thêm dependency; không tự chạy `git add`/`commit`/`push`.
+- **Checked:**
+  - `cd client && npm run build`: **PASS** (`93 modules`, `2.76s`, 0 lỗi).
+  - `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs`: **26/26 PASS, 0 FAIL, 0 TODO**.
+  - `node tools/contract-check.mjs` trên mock khởi động mới: **112/112 PASS, 0 FAIL (40/40 endpoints)**.
+  - Kiểm tra tĩnh (`Select-String`) trên toàn bộ file TV2 vừa tạo/sửa: 0 `localhost`, 0 `fixtures.js`, 0 `!important`, 0 `href="#"`, 0 `position: fixed`.
+  - `git diff -- docs/api mock`: trống.
+  - Kiểm thử trực tiếp trên **Chrome DevTools** (`http://localhost:4173` + `node mock/server.mjs` đủ cả 4 chế độ `normal`, `slow`, `error`, `empty`):
+    - **Đợt 1 (trạng thái khởi đầu & cọc)**: `linh` `/notifications` rỗng & 404 thân thiện `/my-bookings/GS-1024/gallery`; `han` `/notifications` rỗng trước cọc → `/my-bookings/GS-1023/gallery` hiện cảnh báo khóa trước cọc → cọc thành công → `/notifications` hiện thẻ nhắc `GS-1023` (thời gian, `E-mail, Tài khoản`, `Đã gửi`, link booking) + F5 sạch; `/my-bookings/GS-1023/gallery` sau cọc hiện chưa có ảnh & khóa nút 70% / Nhận ảnh kèm lý do + F5 sạch.
+    - **Đợt 2 (36 ảnh preview thật qua API G8 `POST .../previews`)**: lưu 0 ảnh báo lỗi; chọn `ph-01`/`ph-02` hiện `✓ Đã chọn` + bộ đếm `2/30` → lưu `200`; chọn thêm `ph-03` chưa lưu làm khóa nút 70% kèm lý do → lưu `3/30`; bấm trả 70% trước khi `J-GS-1023-shoot` đạt `done` trả đúng lỗi R19 `409`; chọn đủ `30/30` và bấm ảnh thứ 31 (`ph-31`) bị chặn kèm thông báo `"Gói cho phép tối đa 30 ảnh."` → lưu `30/30`; sau khi `shoot` xong (`done`), thanh toán 70% thất bại (`PAY-2`) → thử lại (`PAY-3`) → thành công (`paid_in_full`), quay về gallery xác nhận toàn bộ 36 checkbox & nút `Lưu lựa chọn` đã khóa, nút `Nhận ảnh` khóa vì chưa có `finalLink`. Đã bổ sung `setLimitNotice(null)` trong `handleSaveSelection` để xóa cảnh báo giới hạn cũ khi lưu thành công.
+    - **Đợt 3 (Nhận ảnh, ca biên & 4 `MOCK_MODE`)**: sau khi Admin gắn `finalLink`, bấm **`Nhận ảnh`** cập nhật ngay sang `Hoàn thành` không cần reload và đồng bộ `c-han` thành `Hoàn thành`; kiểm tra `GS-1024` (`cancelled`) và `GS-1025` (R08 cọc đã nhận nhưng trùng giờ thật) + chuyển đổi `:code` không dính state cũ + `/payments/PAY-4/result` (hiện đủ `reservationFailure` + lý do trùng + link `/chat`, không mời cọc lại); kiểm tra cả 3 chế độ `MOCK_MODE=slow` (hiện `Đang tải…`), `error` (hiện lỗi + bấm **`Thử lại`** phục hồi sạch khi mock về `normal` không cần F5), `empty` (0 crash JS).
+    - **Responsive 360 / 768 / 1280 px** (qua ảnh chụp trực quan trên `/notifications` và `/my-bookings/GS-1023/gallery` có đủ 36 ảnh): 0 tràn ngang, 0 cắt chữ, 0 lỗi Console; đã sửa wrap nút 70% ở 360px bằng `formatMoney` và thêm `.button:disabled { opacity: 0.55 }`.
+  - **Chưa kiểm tra trong lượt này:** W3C Nu HTML Checker thủ công (thuộc mốc M6).
+- **Commits:** TV2 tự kiểm tra diff và tách thành các commit nhỏ riêng biệt (`docs(brief)`, `feat(G7)`, `feat(G9)`, `docs(ai-log)`).
+
+
 ### [TV2] 29. Fix `mock/lib/reminders.mjs`: cấp ID theo `max(rm-<n>) + 1` tránh trùng sau khi xóa nhắc `queued` (25/11/2026)
 
 - **Tool:** Antigravity Assistant, Node.js (`node:test`).
