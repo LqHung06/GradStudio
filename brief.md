@@ -2303,3 +2303,26 @@ Tin nhắn 1:
 vậy làm tiếp thôi
 ```
 *(Tiếp nối sau khi kiểm tra tiến độ `#15b` ngày 24/11 và kéo `main` mới nhất `cfca1b7`: triển khai 4 màn G7 `/my-bookings`, `/my-bookings/:code`, `/test-gateway/:paymentId`, `/payments/:paymentId/result` trên nhánh `feat/g7-bookings-deposit`.)*
+
+
+## 29. [TV2 · 25/11/2026 · Antigravity Assistant] Fix mock/lib/reminders.mjs: sinh ID theo max(rm-<n>) + 1 tránh trùng sau khi xóa nhắc queued
+
+Tin nhắn 1:
+
+```text
+1 lỗi nhỏ trong mock/lib/reminders.mjs (TV3 Nhựt đã note ở FRONTEND.md):
+Hiện sinh ID theo rm-${db.reminders.length + 1} → nếu hủy xóa 1 nhắc queued rồi tạo mới có thể trùng ID với rm-* đang tồn tại.
+Nên sửa ở 1 nhánh riêng fix/mock-reminder-id tách từ main (đổi sang max id + 1 + test nhỏ), không trộn vào PR #28. lỗi này là task nào, và giờ sửa luôn dc o
+```
+
+Tin nhắn 2:
+
+```text
+làm luôn
+```
+
+Tin nhắn 3:
+
+```text
+oke giờ test thât kĩ các biên và chuẩn theo yêu cầu, bật dev tools chrome lên test chặt vào
+```
