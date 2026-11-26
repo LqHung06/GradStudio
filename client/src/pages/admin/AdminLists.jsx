@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AsyncState } from '../../components/AsyncState.jsx';
 import { Layout } from '../../components/Layout.jsx';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { CONVERSATION_STATUS } from '../../constants/status.js';
+import { BOOKING_STATUS, CONVERSATION_STATUS } from '../../constants/status.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import { BookingSummary } from './BookingSummary.jsx';
 
@@ -48,22 +48,35 @@ export function ConversationsPage() {
 
 export function AdminBookingsPage() {
   const { data, loading, error, reload } = useFetch('/api/bookings');
+  const [filter, setFilter] = useState('');
   const bookings = data?.bookings ?? [];
+  const visible = bookings.filter((booking) => !filter || booking.status === filter);
 
   return (
     <Layout mainClassName="section-shell page-main admin-workspace">
       <h1>Booking</h1>
-      <AsyncState loading={loading} error={error} onRetry={reload} isEmpty={!bookings.length}
-        emptyMessage="Chưa có booking nào.">
+      {data && !loading && !error && (
+        <div className="admin-actions" role="group" aria-label="Lọc trạng thái booking">
+          {[['', 'Tất cả'], ...Object.entries(BOOKING_STATUS)].map(([status, label]) => (
+            <button type="button" className="button button-outline" key={status}
+              aria-pressed={filter === status} onClick={() => setFilter(status)}>{label}</button>
+          ))}
+        </div>
+      )}
+      <AsyncState loading={loading} error={error} onRetry={reload} isEmpty={!visible.length}
+        emptyMessage={filter ? 'Không có booking ở trạng thái này.' : 'Chưa có booking nào.'}>
         <ul className="admin-cards">
-          {bookings.map((booking) => (
+          {visible.map((booking) => (
             <li key={booking.code} className="admin-card">
               <BookingSummary booking={booking} heading="h2" />
-              {booking.conversationId && (
-                <Link className="admin-link" to={'/admin/conversations/' + encodeURIComponent(booking.conversationId)}>
-                  Mở hội thoại của {booking.customer.name}
-                </Link>
-              )}
+              <div className="admin-actions">
+                <Link className="admin-link" to={encodeURIComponent(booking.code)}>Xem chi tiết {booking.code}</Link>
+                {booking.conversationId && (
+                  <Link className="admin-link" to={'/admin/conversations/' + encodeURIComponent(booking.conversationId)}>
+                    Mở hội thoại của {booking.customer.name}
+                  </Link>
+                )}
+              </div>
             </li>
           ))}
         </ul>
