@@ -24,6 +24,12 @@ const allowed = [
   /^POST \/api\/(conversations\/[^/]+\/(messages|proposals)|availability\/check|bookings)$/,
   /^PATCH \/api\/conversations\/[^/]+\/proposals\/[^/]+$/,
   /^POST \/api\/bookings\/GS-\d+\/cancel$/,
+  /^(GET|PATCH) \/api\/bookings\/GS-\d+$/,
+  /^PUT \/api\/bookings\/GS-\d+\/(final-link|selection)$/,
+  /^POST \/api\/bookings\/GS-\d+\/(payments|previews|receive)$/,
+  /^GET \/api\/(reminders|bookings\/GS-\d+\/photos)$/,
+  /^POST \/api\/test-gateway\/PAY-\d+$/,
+  /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-shoot$/,
 ];
 
 function start(command, args, options = {}) {
@@ -78,9 +84,9 @@ async function api(method, path, token, body, status) {
     method,
     headers: {
       ...(token && { Authorization: 'Bearer ' + token }),
-      ...(body && { 'Content-Type': 'application/json' }),
+      ...(body && !(body instanceof FormData) && { 'Content-Type': 'application/json' }),
     },
-    body: body && JSON.stringify(body),
+    body: body instanceof FormData ? body : body && JSON.stringify(body),
   });
   requests.push(method + ' ' + path.split('?')[0]);
   assert.equal(response.status, status, method + ' ' + path);
@@ -131,6 +137,10 @@ try {
     pending.set(id, { resolve, reject });
     ws.send(JSON.stringify({ id, method, params }));
   });
+  ws.addEventListener('close', () => {
+    for (const { reject } of pending.values()) reject(new Error('Chrome disconnected from the harness'));
+    pending.clear();
+  });
   const run = async (fn, ...args) => {
     const result = await send('Runtime.evaluate', {
       expression: '(' + fn.toString() + ')(...' + JSON.stringify(args) + ')',
@@ -177,7 +187,7 @@ try {
 
   // Supply field errors on an otherwise valid form. Only these isolated requests
   // are intercepted, so the actual role flow and successful writes use the mock.
-  async function checkFieldErrors(path, button, fields) {
+  async function checkFieldErrors(path, button, fields, verb = 'POST') {
     const before = await run((names) => names.map((name) => {
       const el = document.getElementById(name) || document.querySelector('[name="' + name + '"]');
       return el.value ?? [...el.querySelectorAll(':checked')].map((input) => input.parentElement.textContent);
@@ -188,7 +198,7 @@ try {
       const { method, params } = JSON.parse(data);
       if (method !== 'Fetch.requestPaused') return;
       try {
-        if (params.request.method !== 'POST' || handled) {
+        if (params.request.method !== verb || handled) {
           await send('Fetch.continueRequest', { requestId: params.requestId });
           return;
         }
@@ -234,8 +244,16 @@ try {
   await send('Runtime.enable');
   await send('Network.enable');
 
-  await navigate(detail);
+  const bookingList = '/admin/bookings';
+  const firstDetail = bookingList + '/GS-1024';
+  const firstApi = '/api/bookings/GS-1024';
+  await navigate(firstDetail);
   await login('thao');
+  await see('Không tìm thấy booking GS-1024');
+  assert.equal(await run(() => location.pathname), firstDetail);
+  await click('Về danh sách booking');
+  await see('Xem chi tiết GS-1021');
+  await navigate(detail);
   await see('Kiểm tra và đề xuất giờ');
   assert.equal(await run(() => location.pathname), detail);
   await send('Page.reload');
@@ -358,7 +376,75 @@ try {
   console.log('PASS UI: Customer accepts in chat, Admin signs in again, refreshes and creates once; amounts from API');
 
   const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
-  await api('POST', '/api/bookings/GS-1024/cancel', thao, { reason: 'Kiểm tra booking thay thế' }, 200);
+  const { token: tuan } = await api('POST', '/api/auth/login', null, credentials('tuan'), 200);
+  async function pay(path, kind) {
+    const { redirectUrl } = await api('POST', path + '/payments', linh, { kind }, 201);
+    await api('POST', '/api' + redirectUrl, linh, { result: 'success' }, 200);
+  }
+  const upload = () => {
+    const body = new FormData();
+    body.append('file', new Blob([Uint8Array.of(0xff, 0xd8, 0xff, 0xd9)], { type: 'image/jpeg' }), 'preview.jpg');
+    return body;
+  };
+  await pay(firstApi, 'deposit');
+  await click('Xem chi tiết GS-1024');
+  await see('Áp dụng lịch mới');
+  await send('Page.reload');
+  await see('Áp dụng lịch mới');
+  await checkWidths(firstDetail);
+  const original = (await api('GET', firstApi, thao, null, 200)).booking;
+  const remindersForFirst = async () => (await api('GET', '/api/reminders', linh, null, 200)).reminders
+    .filter(({ bookingCode }) => bookingCode === 'GS-1024');
+  const sent = (await remindersForFirst()).find(({ emailStatus }) => emailStatus === 'sent');
+  assert(sent);
+  await checkFieldErrors(firstApi, 'Áp dụng lịch mới', { 'items.0.staffId': 'Kiểm tra 400: Nhân sự' }, 'PATCH');
+  await fill('items.0.start', '09:00');
+  await fill('items.0.end', '10:00');
+  await click('Áp dụng lịch mới');
+  await see('Mai bận 08:00–12:00');
+  await see('Dùng giờ này');
+  assert.deepEqual((await api('GET', firstApi, thao, null, 200)).booking, original);
+  await click('Dùng giờ này');
+  await fill('date', '2026-11-01');
+  const beforeMove = requests.filter((request) => request === 'PATCH ' + firstApi).length;
+  await run(() => {
+    const submit = [...document.querySelectorAll('button')].find((el) => el.textContent.trim() === 'Áp dụng lịch mới');
+    submit.click();
+    submit.click();
+  });
+  await see('Đã áp dụng lịch mới.');
+  assert.equal(requests.filter((request) => request === 'PATCH ' + firstApi).length, beforeMove + 1);
+  const rescheduled = (await api('GET', firstApi, thao, null, 200)).booking;
+  assert.equal(rescheduled.date, '2026-11-01');
+  assert.equal(rescheduled.paymentStatus, 'deposit_paid');
+  const jobPath = '/api/jobs/J-GS-1024-shoot';
+  const { job } = await api('GET', jobPath, tuan, null, 200);
+  assert.equal(job.date, rescheduled.date);
+  assert.equal(job.start, rescheduled.items.find(({ kind }) => kind === 'shoot').start);
+  const reminders = await remindersForFirst();
+  assert.deepEqual(reminders.find(({ id }) => id === sent.id), sent);
+  assert.equal(reminders.find(({ emailStatus }) => emailStatus === 'queued').sendAt,
+    '2026-10-31T' + rescheduled.items[0].start + ':00+07:00');
+  await click('Hủy booking');
+  await click('Xác nhận hủy');
+  await see('Nhập lý do từ 5 đến 500 ký tự.');
+  await click('Không hủy');
+  await click('Hủy booking');
+  await fill('reason', 'Kiểm tra booking thay thế');
+  await checkFieldErrors(firstApi + '/cancel', 'Xác nhận hủy', { reason: 'Kiểm tra 400: Lý do' });
+  await click('Xác nhận hủy');
+  await see('Đã hủy booking.');
+  assert.deepEqual((await api('GET', firstApi, thao, null, 200)).booking, { ...rescheduled, status: 'cancelled' });
+  assert.deepEqual(await remindersForFirst(), [sent]);
+  const day = await api('GET', '/api/schedule?date=' + rescheduled.date, thao, null, 200);
+  assert(!day.rows.some(({ busy }) => busy.some(({ bookingCode }) => bookingCode === 'GS-1024')));
+  assert.deepEqual((await api('GET', jobPath, tuan, null, 200)).job, job);
+  await api('PATCH', jobPath, tuan, { status: 'done' }, 409);
+  await api('POST', firstApi + '/previews', tuan, upload(), 409);
+  await send('Page.reload');
+  await see('Đã hủy');
+  assert.equal(await run(() => Boolean(document.getElementById('date'))), false);
+  console.log('PASS G10: missing/direct/F5, reschedule 400/409 and success, jobs/reminders, cancel and Staff locks');
   await api('POST', '/api/bookings', thao, {
     conversationId: 'c-linh', proposalId, shootType: 'Tốt nghiệp cá nhân',
     packageId: 'pkg-tn-premium', extraIds: [],
@@ -384,7 +470,44 @@ try {
   await see('GS-1025');
   await see('GS-1024');
   await see('Đã hủy');
-  console.log('PASS HTTP + UI: cancel via HTTP, fresh proposal and booking replace while preserving history');
+  await click('Xem danh sách booking');
+  await see('Xem chi tiết GS-1025');
+  await click('Đã hủy');
+  await see('Xem chi tiết GS-1024');
+  assert.equal(await run(() => document.querySelector('main').innerText.includes('Xem chi tiết GS-1025')), false);
+  await click('Tất cả');
+  await see('Xem chi tiết GS-1025');
+  console.log('PASS G10: cancellation history, replacement and list filter');
+
+  const replacementApi = '/api/bookings/GS-1025';
+  const replacementDetail = bookingList + '/GS-1025';
+  await pay(replacementApi, 'deposit');
+  const { photo } = await api('POST', replacementApi + '/previews', tuan, upload(), 201);
+  await api('PATCH', '/api/jobs/J-GS-1025-shoot', tuan, { status: 'done' }, 200);
+  await api('PUT', replacementApi + '/selection', linh, { photoIds: [photo.id] }, 200);
+  await pay(replacementApi, 'remaining');
+  await click('Xem chi tiết GS-1025');
+  await see('Đã thanh toán đủ');
+  await fill('url', 'http://example.com/photos');
+  await click('Lưu link ảnh');
+  await see('Nhập link HTTPS hợp lệ');
+  const finalLink = 'https://example.com/photos/gs-1025';
+  await fill('url', finalLink);
+  await checkFieldErrors(replacementApi + '/final-link', 'Lưu link ảnh', { url: 'Kiểm tra 400: Link' }, 'PUT');
+  await click('Lưu link ảnh');
+  await see('Đã lưu link ảnh hoàn chỉnh.');
+  const saved = (await api('GET', replacementApi, thao, null, 200)).booking;
+  assert.equal(saved.status, 'booked');
+  assert.equal(saved.finalLink, finalLink);
+  await checkWidths(replacementDetail);
+  await switchRole('/my-bookings/GS-1025/gallery', 'linh');
+  await click('Nhận ảnh');
+  await see('Hoàn thành');
+  assert.equal((await api('GET', replacementApi, linh, null, 200)).booking.status, 'completed');
+  assert.equal((await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.status, 'done');
+  await navigate(replacementDetail);
+  await see('Không có quyền truy cập');
+  await switchRole(replacementDetail, 'thao');
 
   async function checkWidths(path) {
     for (const width of [360, 768, 1280]) {
@@ -407,6 +530,27 @@ try {
   await see('Không tìm thấy hội thoại.');
   await click('Về danh sách hội thoại');
   await see('Trần Minh Khoa');
+  await navigate(bookingList);
+  await see('Xem chi tiết GS-1021');
+  await mode('error');
+  await click('Xem chi tiết GS-1021');
+  await see('Thử lại');
+  const pageEpoch = await run(() => performance.timeOrigin);
+  await mode('normal');
+  await click('Thử lại');
+  await see('Áp dụng lịch mới');
+  assert.equal(await run(() => performance.timeOrigin), pageEpoch);
+  await mode('slow');
+  await click('Về danh sách booking');
+  await see('Đang tải…');
+  await see('Xem chi tiết GS-1021');
+  await click('Xem chi tiết GS-1021');
+  await see('Đang tải…');
+  await see('Áp dụng lịch mới');
+  await mode('normal');
+  console.log('PASS G10: Customer receive, role guard, slow list/detail and retry without reload');
+  await navigate(list);
+  await see('Trần Minh Khoa');
   await mode('error');
   await click('Linh');
   await see('Thử lại');
@@ -423,6 +567,8 @@ try {
   await see('Chưa có hội thoại nào.');
   await click('Booking');
   await see('Chưa có booking nào.');
+  await navigate(bookingList + '/GS-1021');
+  await see('Chưa có nhân sự để xếp lịch.');
   await navigate(detail);
   await see('Chưa có nhân sự để xếp lịch.');
   await see('Chưa có gói chụp.');
@@ -433,6 +579,12 @@ try {
   await login('linh');
   await see('Lịch chụp của tôi');
   await navigate(detail);
+  await see('Không có quyền truy cập');
+  await click('Đăng xuất');
+  await navigate('/sign-in');
+  await login('tuan');
+  await see('Việc của tôi');
+  await navigate(firstDetail);
   await see('Không có quyền truy cập');
   assert.deepEqual(errors, []);
   assert.deepEqual(requests.filter((request) => !allowed.some((rule) => rule.test(request))), []);
