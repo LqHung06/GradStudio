@@ -59,7 +59,8 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
 | `/admin/conversations` | admin | G4 | GET `/api/conversations` | Lọc theo trạng thái hội thoại |
 | `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule?date=...`, POST `/api/availability/check`, GET `/api/packages`, GET `/api/extras`, GET/POST `/api/bookings` | Kết quả tạo và lịch sử booking hiện trong hội thoại |
-| `/admin/bookings` | admin | G6 | GET `/api/bookings` | Danh sách chỉ đọc, mở hội thoại liên quan nếu có |
+| `/admin/bookings` | admin | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
+| `/admin/bookings/:code` | admin | G10 | GET `/api/bookings/:code`, GET `/api/resources`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link` | Đổi lịch trực tiếp, hủy có xác nhận và lưu link ảnh |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
 | `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
 | `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins`, PATCH `/api/admins/:id` | |
@@ -114,10 +115,10 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
 
 
-### TV3 — phần còn chờ sau tích hợp reminders
+### TV3 — giới hạn tích hợp còn lại
 
-Mock đã dùng helper của TV2 để tính lại nhắc lịch khi đổi và dừng nhắc chờ gửi khi hủy (R04/R05). `reservationFailure` đã có trong contract và mock payments. TV2 cần sửa cách cấp ID trong helper dùng chung: nếu hủy xóa một nhắc queued trước một ID còn tồn tại, lần tạo tiếp theo theo độ dài danh sách có thể trùng ID. Quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca chờ TV1. Mock hiện trả 409 cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy, đồng thời giữ quyền đọc lịch sử. Kiểm tra hồi quy bằng `node --test tools/tv3-booking-rules.test.mjs`.
+Mock tính lại nhắc lịch khi đổi và dừng nhắc chờ gửi khi hủy (R04/R05). Bản sửa của TV2 (`84a9c34`) cấp ID theo hậu tố số lớn nhất hiện có. G10 đọc trạng thái đã nhận cọc và chưa giữ được chỗ từ Booking. Chi tiết `reservationFailure` nằm trong Payment, còn GET `/api/bookings/:code` thiếu trường này và mã giao dịch. Quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca chờ TV1. Mock hiện trả 409 cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy, đồng thời giữ quyền đọc lịch sử.
 
 ### TV3 — phạm vi R14 trong brief mục 25–26
 
-G4/G5/G6 đã có các route ở bảng trên. Khách có thể đồng ý đề xuất ở `/chat`. G10 còn thiếu route chi tiết `/admin/bookings/:code` và các thao tác trên giao diện để đổi lịch trực tiếp bằng `date/items`, hủy và lưu link ảnh cuối. Khi tạo booking thay thế, API kiểm tra đề xuất có trước thời điểm hủy hay đã được dùng. Contract hiện thiếu trường cho phép giao diện phân biệt các trường hợp đó nếu khách trả lời một đề xuất cũ sau khi hủy.
+G4/G5/G6 và G10 có các route ở bảng trên. Admin đổi lịch trực tiếp bằng `date/items`, hủy có lý do và xác nhận, hoặc lưu link ảnh cho booking đã đặt lịch. Khách xác nhận Nhận ảnh trong gallery sau khi đủ điều kiện. Khi tạo booking thay thế, API kiểm tra đề xuất có trước thời điểm hủy hay đã được dùng. Contract hiện thiếu trường cho phép giao diện phân biệt các trường hợp đó nếu khách trả lời một đề xuất cũ sau khi hủy.
