@@ -27,7 +27,7 @@ const allowed = [
   /^(GET|PATCH) \/api\/bookings\/GS-\d+$/,
   /^PUT \/api\/bookings\/GS-\d+\/(final-link|selection)$/,
   /^POST \/api\/bookings\/GS-\d+\/(payments|previews|receive)$/,
-  /^GET \/api\/(reminders|bookings\/GS-\d+\/photos)$/,
+  /^GET \/api\/(jobs|reminders|bookings\/GS-\d+\/photos)$/,
   /^POST \/api\/test-gateway\/PAY-\d+$/,
   /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-shoot$/,
 ];
