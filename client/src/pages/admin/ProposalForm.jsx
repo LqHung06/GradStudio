@@ -6,7 +6,7 @@ import { JOB_KIND, formatDate } from '../../constants/status.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import { useForm } from '../../hooks/useForm.js';
 
-const kinds = ['shoot', 'makeup'];
+export const kinds = ['shoot', 'makeup'];
 const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 const isDate = (value) => {
   const date = new Date(value + 'T00:00:00Z');
@@ -14,7 +14,7 @@ const isDate = (value) => {
     && date.toISOString().slice(0, 10) === value;
 };
 
-function makeItems(values) {
+export function makeItems(values) {
   return Array.from({ length: Number(values.items) }, (_, index) => {
     const prefix = 'items.' + index + '.';
     return {
@@ -25,6 +25,27 @@ function makeItems(values) {
       roomId: values[prefix + 'roomId'] || null,
     };
   });
+}
+
+export function validateSchedule(values, staff, rooms) {
+  const errors = {};
+  if (!isDate(values.date)) errors.date = 'Vui lòng nhập ngày hợp lệ.';
+  if (!['1', '2', '3', '4'].includes(values.items)) {
+    errors.items = 'Chọn từ 1 đến 4 ca.';
+    return errors;
+  }
+  makeItems(values).forEach((item, index) => {
+    const prefix = 'items.' + index + '.';
+    if (!isTime(item.start)) errors[prefix + 'start'] = 'Vui lòng nhập giờ bắt đầu.';
+    if (!isTime(item.end) || item.end <= item.start) {
+      errors[prefix + 'end'] = 'Giờ kết thúc phải sau giờ bắt đầu.';
+    }
+    if (!staff.some(({ id }) => id === item.staffId)) errors[prefix + 'staffId'] = 'Vui lòng chọn nhân sự.';
+    if ((item.kind === 'shoot' || item.roomId) && !rooms.some(({ id }) => id === item.roomId)) {
+      errors[prefix + 'roomId'] = 'Vui lòng chọn phòng.';
+    }
+  });
+  return errors;
 }
 
 function DaySchedule({ date }) {
@@ -50,7 +71,7 @@ function DaySchedule({ date }) {
   </>;
 }
 
-function AvailabilityResult({ result, onApply, busy }) {
+export function AvailabilityResult({ result, onApply, busy }) {
   if (!result) return null;
   return (
     <div className="admin-card" aria-live="polite">
@@ -81,20 +102,7 @@ export function ProposalForm({ preferredDate, busy, onPropose }) {
   const form = useForm({
     initial: { date: preferredDate, items: '1', note: '' },
     validate(values) {
-      const errors = {};
-      if (!isDate(values.date)) errors.date = 'Vui lòng nhập ngày hợp lệ.';
-      makeItems(values).forEach((item, index) => {
-        const prefix = 'items.' + index + '.';
-        if (!isTime(item.start)) errors[prefix + 'start'] = 'Vui lòng nhập giờ bắt đầu.';
-        if (!isTime(item.end) || item.end <= item.start) {
-          errors[prefix + 'end'] = 'Giờ kết thúc phải sau giờ bắt đầu.';
-        }
-        if (!staff.some(({ id }) => id === item.staffId)) errors[prefix + 'staffId'] = 'Vui lòng chọn nhân sự.';
-        if ((item.kind === 'shoot' || item.roomId) && !rooms.some(({ id }) => id === item.roomId)) {
-          errors[prefix + 'roomId'] = 'Vui lòng chọn phòng.';
-        }
-      });
-      return errors;
+      return validateSchedule(values, staff, rooms);
     },
     async onSubmit(values) {
       setResult(null);
