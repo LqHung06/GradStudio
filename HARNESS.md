@@ -12,7 +12,7 @@ Tài liệu này mô tả hệ thống **Harness Engineering** của dự án Gr
 | **Contract-first spec** | `docs/api/README.md`, `01`–`13` | Hợp đồng API viết trước mock và UI; mọi thay đổi đều ghi vào mục `## Changes`. |
 | **Prompt log** | `brief.md` | Lưu nguyên văn prompt theo thứ tự thời gian trước khi triển khai từng bước. |
 | **Execution & Verification log** | `AI-LOG.md` | Ghi các file đã sửa, lỗi phát hiện/từ chối và bằng chứng kiểm tra thực tế sau mỗi task. |
-| **Verification scripts** | `tools/contract-check.mjs`, `tools/tv1-rules.test.mjs`, `tools/tv3-booking-rules.test.mjs` | Kiểm tra tự động hợp đồng (40 endpoints) và các quy tắc nghiệp vụ cốt lõi không cần phụ thuộc ngoài. |
+| **Verification scripts** | `tools/contract-check.mjs`, `tools/tv1-rules.test.mjs`, `tools/tv2-reminders-id.test.mjs`, `tools/tv3-booking-rules.test.mjs` | Kiểm tra tự động hợp đồng (40 endpoints) và các quy tắc nghiệp vụ cốt lõi (TV1, TV2, TV3) không cần phụ thuộc ngoài. |
 | **Automated CI** | `.github/workflows/ci.yml` | Chạy tự động 5 Verification Gates trên mọi `push` và `pull_request` vào `main`. |
 
 ---
@@ -29,8 +29,9 @@ Trích trực tiếp từ `git log --date=short --format="%h | %ad | %an | %s" -
 | `2026-11-22` | `cc07b27` | Lê Quốc Hưng | Cập nhật mô tả `AuthContext`, `RequireRole` và route bảo vệ vai trò sau khi hoàn thành G2 (`/sign-in`). |
 | `2026-11-23` | `bb72a2b` | Lê Công Minh Nhựt | Tài liệu hóa props và mẫu tích hợp cho shared chat components (`ChatThread`, `ProposalCard`). |
 | `2026-11-23` | `9c14d5b` | Lê Quốc Hưng | Sửa lỗi ví dụ payload proposal trong `AGENTS.md` từ `{status}` sang `{decision}` (R16), cập nhật giới hạn upload 5 MiB (`5 242 880` byte) và tóm tắt quyết định PO / quy ước nhóm 23/11. |
+| `2026-11-24` | `1c2073b` | Lê Quốc Hưng | Bổ sung tham chiếu tới bộ kiểm thử hồi quy `node:test`, 5 gates trong `.github/workflows/ci.yml` và tài liệu `HARNESS.md` (R17). |
 
-*(Sau khi thêm tham chiếu tới CI gates và `HARNESS.md` ở bước R17, lịch sử commit tiếp theo trên `AGENTS.md` được giữ nguyên bằng `git log -- AGENTS.md`.)*
+*(Lịch sử commit tiếp theo trên `AGENTS.md` tiếp tục được theo dõi trực tiếp qua `git log -- AGENTS.md`.)*
 
 ---
 
@@ -42,7 +43,7 @@ Toàn bộ 5 gate dưới đây chạy tự động trong `.github/workflows/ci.
 | :--- | :--- | :--- | :--- |
 | **Gate 1 — Syntax & Seed JSON** | Chặn lỗi cú pháp ES module mock/tools và file JSON seed hỏng | `for f in mock/server.mjs mock/lib/*.mjs mock/routes/*.mjs tools/*.mjs; do node --check "$f"; done` + `JSON.parse` mọi `mock/data/*.json` | Bất kỳ file `.mjs` lỗi cú pháp hoặc `.json` không parse được. |
 | **Gate 2 — API Contract Check** | Đảm bảo 100% endpoint/ví dụ trong `docs/api/` khớp câu trả lời thật của mock | Khởi động `node mock/server.mjs` mới + `node tools/contract-check.mjs --base http://127.0.0.1:3001` | Có ví dụ lệch status / thiếu field, hoặc bảng endpoint `README.md` chưa đủ ví dụ. |
-| **Gate 3 — Business Rules Tests** | Kiểm tra các quy tắc nghiệp vụ trọng yếu bằng `node:test` | `node --test tools/tv1-rules.test.mjs tools/tv3-booking-rules.test.mjs` | Bất kỳ assertion nghiệp vụ nào thất bại (`FAIL`). *(Ca `TODO` ghi rõ bàn giao còn chờ được giữ tách biệt, không ngụy tạo thành pass.)* |
+| **Gate 3 — Business Rules Tests** | Kiểm tra các quy tắc nghiệp vụ trọng yếu bằng `node:test` | `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs` | Bất kỳ assertion nghiệp vụ nào thất bại (`FAIL`). *(Ca `TODO` ghi rõ bàn giao còn chờ được giữ tách biệt, không ngụy tạo thành pass.)* |
 | **Gate 4 — Client Production Build** | Đảm bảo ứng dụng React/Vite đóng gói sạch từ `package-lock.json` | `cd client && npm ci && npm run build` | Lỗi import, cú pháp JSX hoặc đóng gói Vite thất bại. |
 | **Gate 5 — Repo Hygiene** | Chặn sót conflict markers sau khi merge chéo giữa các thành viên | `git grep -n -E '^(<<<<<<<|=======$|>>>>>>>)' -- client docs mock tools '*.md' '*.yml'` | Xuất hiện marker xung đột Git chưa xử lý ở bất kỳ file nào. |
 
