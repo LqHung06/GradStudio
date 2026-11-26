@@ -945,3 +945,20 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - **Gate 5 (Repo Hygiene):** `git grep` conflict markers → `No conflict markers found.`
   - `git diff -- docs/api mock client tools`: trống; `git diff --check`: 0 lỗi.
 - **Commits:** TV1 tự kiểm tra diff và tách commit (`docs(brief)`, `chore(ci)`, `docs(harness)`, `docs(agents)` tách riêng, `docs(ai-log)`).
+
+
+### [TV3] 31. G10 — danh sách, chi tiết và thao tác booking Admin (26/11/2026)
+
+- **Tool:** Codex, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** [brief.md mục 31](brief.md#31-tv3--26112026--codex-g10-danh-sách-chi-tiết-và-thao-tác-booking-admin). Hoàn tất phần G10 còn lại trong kế hoạch ngày 25/11. Nhánh `feat/g10-admin-bookings` tách từ `origin/main` tại `244a6a5` sau fast-forward. Base có G4/G5/G6, đồng bộ reminders (`ce4b4c8`) và bản sửa cấp ID (`84a9c34`).
+- **Changed:**
+  - Danh sách lấy `GET /api/bookings`, lọc trạng thái trên dữ liệu đã tải và mở chi tiết hoặc hội thoại. Chi tiết dùng `GET /api/bookings/:code` và `GET /api/resources`, trình bày phần 70% theo giá gói và tiến độ thu tiền riêng.
+  - Đổi lịch qua `PATCH /api/bookings/:code` với `date/items`. Tái dùng validate lịch và hiển thị lý do/gợi ý trùng từ G5. Hủy có xác nhận qua `POST /api/bookings/:code/cancel`. Lưu link HTTPS qua `PUT /api/bookings/:code/final-link` khi booking đã đặt lịch. Cả ba cập nhật từ phản hồi API.
+  - Mở rộng harness Admin trên production build. Cập nhật Routes và giới hạn tích hợp trong `FRONTEND.md`, gồm thông tin bản sửa ID reminders.
+- **Rejected / lỗi phát hiện:** Chrome trong sandbox báo GPU process unusable. Chạy lại ngoài sandbox bằng cùng production build. Hai lần chạy đầu ngoài sandbox phát hiện harness đợi sai tiêu đề trang Staff và thiếu GET `/api/jobs` trong danh sách đối chiếu endpoint. Đã sửa harness và chạy lại từ đầu. Booking API thiếu `reservationFailure` và mã Payment nên UI báo trạng thái đã nhận cọc, chưa giữ được chỗ dựa trên hai trạng thái Booking. Quy tắc ánh xạ jobs khi thêm/bớt/lặp loại ca còn chờ TV1. API trả 409 trong trường hợp này.
+- **Checked:**
+  - Gate 1: syntax 22 mô-đun và parse 14 JSON seed. Gate 2: contract-check trên mock mới, **112/112 ví dụ, 40/40 endpoint, 0 FAIL**. Gate 3: **31/31 PASS, 0 FAIL, 0 TODO**. Gate 4: `npm ci` và `npm run build` tạo `client/dist` (95 modules). Gate 5: kiểm tra conflict markers và `git diff --check` sạch.
+  - Harness Chrome trên `vite preview` thoát với mã 0. Đã kiểm tra direct/F5, quay về route sau sign-in, chặn Customer/Staff, bộ lọc, 404 có thông báo, bốn chế độ mock, Thử lại không reload và 360/768/1280 px không tràn ngang, nút/link trong main ít nhất 44 px. Kiểm tra gửi lặp khi đổi lịch, không có ngoại lệ JS hoặc `console.error`, và các request khớp endpoint đã khai báo.
+  - Đổi lịch thành công và trùng 409 qua UI với mock thật. Đối chiếu jobs và reminders bằng API. Hủy qua UI giữ tiền/lịch sử, nhả tài nguyên, dừng nhắc queued, giữ sent và khóa hai thao tác ghi của Staff. Tạo booking thay thế trong cùng hội thoại sau bước đồng ý đề xuất qua API. Kiểm tra dữ liệu sai ở client và dùng phản hồi 400 mô phỏng để kiểm tra lỗi theo field, focus và giữ dữ liệu.
+  - Sau khi chuẩn bị ảnh, thanh toán và lựa chọn qua API, Admin lưu link và Customer bấm Nhận ảnh qua UI. API xác nhận booking và hội thoại hoàn thành sau Nhận ảnh. Chưa chạy W3C Nu và chưa tái hiện riêng trạng thái cọc thành công nhưng trùng giờ qua UI Admin.
+- **Commits:** `9653e86` brief; `6870535` BookingSummary; `8ed6c8f` AdminLists; `2d6b5f5` ProposalForm; `0efaf5e` RescheduleForm; `445c257` AdminBookingDetailPage; `25b0df8` route; `5fbe034` và `d4d9bc2` harness; `f08fed4` FRONTEND.md. Mục này được commit riêng sau khi hoàn tất kiểm tra.
