@@ -26,7 +26,7 @@ export function BookingSummary({ booking, heading: Heading = 'h3' }) {
     <dl className="admin-amounts">
       <div><dt>Giá gói</dt><dd><Money amount={booking.price} /></dd></div>
       <div><dt>Cọc</dt><dd><Money amount={booking.deposit} /></dd></div>
-      <div><dt>Còn lại theo giá gói</dt><dd><Money amount={booking.remaining} /></dd></div>
+      <div><dt>Phần 70% theo giá gói</dt><dd><Money amount={booking.remaining} /></dd></div>
     </dl>
   </>;
 }

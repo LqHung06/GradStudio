@@ -2401,3 +2401,233 @@ Tin nhắn 2:
 ```text
 Rà soát kỹ toàn bộ diff trên nhánh `chore/ci-include-tv2-tests` (.github/workflows/ci.yml, HARNESS.md, AGENTS.md, brief.md, AI-LOG.md). Sửa lại lỗi dư dòng trống trước mục 30 ở cuối `brief.md` và `AI-LOG.md` về đúng 2 dòng trống đồng nhất với mục 28/29, rồi kiểm tra lại `git diff --check` và xác nhận không còn tiến trình nền. Không tự commit/push
 ```
+
+## 31. [TV3 · 26/11/2026 · Codex] G10: danh sách, chi tiết và thao tác booking Admin
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy hoàn thiện G10, phần việc theo kế hoạch ngày 25/11 còn thiếu.
+
+Ngày thực hiện hiện tại là 26/11/2026. Ghi ngày thực tế vào nhật ký, không ghi lùi ngày để khớp kế hoạch.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+1. Đọc tài liệu và kiểm tra tiền đề
+
+Đọc:
+- AGENTS.md, FRONTEND.md và HARNESS.md.
+- ../ke-hoach/ke-hoach/TV3-chat-booking-admin.md:
+  mục 2.5–2.8, 4.1, 5.4, 5.5 và 5.9.
+- ../bao-cao-doi-chieu-ke-hoach-ma-nguon.md:
+  R03/R04/R05/R07/R08/R14 và phần đang đúng cần giữ.
+- docs/api/README.md, 04-availability.md,
+  05-bookings.md và 10-admin-bookings.md.
+- Contract 06/07/08 để hiểu thanh toán, nhắc lịch và jobs.
+- Các trang Admin, component chat, hooks và API client hiện có.
+- tools/tv3-booking-rules.test.mjs.
+- tools/tv3-admin-build-check.mjs.
+- Các mục brief/AI-LOG gần nhất của TV3.
+
+Kiểm tra source thực tế trước khi kết luận.
+G4/G5/G6 đã được triển khai; không làm lại.
+Mock đã tích hợp tính lại/dừng reminders và sửa ID nhắc lịch.
+Không tiếp tục dùng ghi chú “chờ TV2” đã lỗi thời để dừng task.
+
+2. Tạo nhánh làm việc
+
+Kiểm tra git status, branch, remote và lịch sử commit.
+
+Nếu working tree sạch:
+git fetch origin
+git switch main
+git merge --ff-only origin/main
+git switch -c feat/g10-admin-bookings
+
+Main cục bộ có thể đang cũ; không tạo nhánh từ main chưa cập nhật.
+
+Xác nhận base đã có G4/G5/G6 và các sửa mock mới. Nếu thiếu,
+báo commit/phần thiếu; không tự cherry-pick hoặc merge nhánh
+khác để bỏ qua quy trình review.
+
+Nếu nhánh đã tồn tại, kiểm tra trước khi tiếp tục.
+Không reset, xóa nhánh, stash hoặc ghi đè thay đổi có sẵn.
+Nếu fetch thất bại, ghi rõ trạng thái và phần có thể làm an toàn.
+
+3. Phạm vi được sửa
+
+Được tạo/sửa:
+- client/src/pages/admin/.
+- client/src/routes/admin.jsx.
+- API wrapper của TV3 trong client/src/api/.
+- Component phụ trợ Admin và CSS liên quan.
+- Công cụ kiểm tra G10 và hồi quy Admin.
+- Các dòng Routes, quyết định và Not done thuộc TV3
+  trong FRONTEND.md.
+- brief.md và AI-LOG.md.
+
+Không sửa docs/api/, mock/, helper TV2, trang Customer,
+phần nền TV1 hoặc dependency trong task frontend này.
+
+Nếu API thiếu dữ liệu, chỉ ra endpoint/field thiếu.
+Không thêm endpoint, đoán payment ID hoặc dựng dữ liệu.
+
+4. Hoàn thiện danh sách booking
+
+Nâng cấp /admin/bookings:
+- Dữ liệu từ GET /api/bookings.
+- Lọc theo trạng thái booking.
+- Hiện mã, khách, ngày giờ, gói, trạng thái booking
+  và trạng thái thanh toán.
+- Mỗi booking có Link tới /admin/bookings/:code.
+- Giữ link tới hội thoại liên quan.
+- Có loading, error + Thử lại và empty.
+- Hiển thị được cả booking cũ đã hủy và booking thay thế.
+- Ở 360px không cuộn ngang; tái sử dụng BookingSummary
+  và thiết kế hiện có.
+
+5. Trang chi tiết booking
+
+Đăng ký /admin/bookings/:code, bọc RequireRole admin.
+
+Tải dữ liệu theo params; mở trực tiếp/F5 phải hoạt động.
+Dùng Layout, useFetch, AsyncState, StatusBadge và Money.
+
+Hiện:
+- Mã, khách, loại chụp, gói và extras.
+- Ngày, từng ca, nhân sự và phòng.
+- Giá gói, cọc, phần còn lại và trạng thái thanh toán.
+- Link hội thoại và danh sách booking.
+- finalLink nếu đã có.
+
+Không coi remaining là “số tiền còn nợ” khi đã paid_in_full:
+đây là phần 70% theo giá gói, còn tiến độ thu tiền đọc từ API.
+
+Với awaiting_deposit + deposit_paid, giải thích đã nhận cọc
+nhưng chưa giữ được chỗ; không mời thanh toán cọc lại.
+Chỉ hiển thị lý do chi tiết nếu endpoint được phép gọi thực sự
+cung cấp dữ liệu đó.
+
+Booking không tồn tại hoặc GS-1024 chưa được tạo:
+hiện thông báo rõ và Link về danh sách.
+
+6. Đổi lịch trực tiếp
+
+Form có ngày, các ca, giờ bắt đầu/kết thúc, nhân sự và phòng.
+Điền dữ liệu hiện tại từ booking; danh mục lấy từ API resources.
+
+- Dùng useForm và FormField.
+- Validate đúng contract, không chặn ngày trong quá khứ.
+- Nút Áp dụng lịch mới gửi PATCH /api/bookings/:code
+  với date/items dạng staffId/roomId.
+- Không gửi proposalId hoặc bắt khách đồng ý lại.
+- Không thêm ignoreBooking vào request.
+- PATCH là bước kiểm tra trùng cuối cùng và bỏ qua chính booking.
+- Nếu có kiểm tra xem trước, không để kết quả tự trùng
+  với booking đang sửa chặn một lần lưu hợp lệ.
+- 409 CLASH hiện lý do và gợi ý bằng chữ.
+- Lỗi 400 gắn đúng field; giữ dữ liệu nhập khi lỗi.
+- Thành công cập nhật ngay từ response, không reload trang.
+- Khóa gửi lặp.
+
+Backend hiện có giới hạn ánh xạ nhiều ca cùng loại hoặc
+thêm/bớt loại ca khi đã có jobs. Hiện lỗi 409 rõ ràng từ API,
+không tự ánh xạ trên client hoặc ghi thành quyết định PO.
+
+7. Hủy booking
+
+- Chỉ cho hủy awaiting_deposit hoặc booked.
+- Lý do bắt buộc 5–500 ký tự.
+- Có bước xác nhận với Xác nhận hủy và Không hủy.
+- Gửi POST /api/bookings/:code/cancel.
+- Thành công cập nhật Đã hủy từ response.
+- Giữ thông tin tiền, lịch sử việc và link hội thoại.
+- Giải thích studio xử lý hoàn tiền ngoài hệ thống.
+- Không thêm thao tác hoàn tiền hoặc chuyển cọc.
+- Booking cancelled/completed không gửi lại yêu cầu hủy.
+
+Kiểm tra tác động thật: giờ được nhả, queued reminders dừng,
+sent giữ nguyên và Staff không sửa việc/upload sau hủy.
+Không sửa backend nếu ca này lỗi; báo bằng chứng cho chủ phần.
+
+8. Lưu link ảnh hoàn chỉnh
+
+- Ô có label, type=url.
+- HTTPS hợp lệ, tối đa 500 ký tự theo contract.
+- PUT /api/bookings/:code/final-link.
+- Giữ giá trị khi lỗi, hiện lỗi cạnh field và chặn gửi lặp.
+- Thành công hiện link từ response.
+- Chỉ thao tác khi trạng thái cho phép.
+- Không tự chuyển booking sang completed.
+
+Nhận ảnh vẫn thuộc Customer. Sau khi Admin lưu link,
+kiểm tra Customer có thể Nhận ảnh khi đã đủ điều kiện,
+booking và hội thoại mới chuyển Hoàn thành.
+
+9. Kiểm tra
+
+Tái sử dụng harness hiện có, bổ sung G10 thay vì chỉ kiểm build.
+
+Kiểm tra:
+- Danh sách/chi tiết mở trực tiếp và F5.
+- Chưa đăng nhập quay lại đúng route sau sign-in.
+- Customer/Staff không vào được màn Admin.
+- Đổi giờ trống thành công, không cần khách thao tác.
+- Giờ trùng trả 409, lịch cũ giữ nguyên.
+- Booking, jobs và reminders đồng bộ khi đổi.
+- Hủy giữ lịch sử và tiền, nhả tài nguyên, dừng nhắc queued.
+- Lý do hủy sai, URL sai và lỗi 400 hiển thị đúng field.
+- Lưu finalLink, sau đó Customer Nhận ảnh qua UI.
+- Booking đã hủy vẫn xem được; chốt giờ mới và tạo booking
+  thay thế trong cùng hội thoại vẫn hoạt động.
+- normal/slow/error/empty; Thử lại phục hồi không reload trang.
+- 360/768/1280px, không tràn ngang; nút/link đứng riêng >=44px.
+- Không lỗi Console, endpoint ngoài contract hoặc request lặp.
+
+Chạy các gate theo AGENTS.md/HARNESS.md hiện tại:
+syntax/JSON, contract-check trên mock mới, bộ hồi quy,
+client build và kiểm tra conflict markers.
+
+Không dùng số PASS cũ làm kết quả mới. Nếu tăng ca kiểm tra,
+báo đúng tổng hiện tại.
+
+Nếu môi trường bị EPERM hoặc Chrome GPU, ghi rõ phần
+chưa kiểm chứng; không sửa cấu hình sản phẩm chỉ để né lỗi.
+Có thể build ra TEMP để chẩn đoán, nhưng phân biệt với
+bản build đóng gói cuối cùng.
+
+10. Tài liệu và commit
+
+Trước khi sửa, ghi toàn bộ prompt này nguyên văn vào brief.md,
+đúng cấu trúc và số mục tiếp theo, ngày thực tế và công cụ.
+
+AI-LOG.md:
+- Thêm mục PA#3 theo mẫu hiện có.
+- Request dẫn đúng brief.
+- Ghi thay đổi, lỗi, kiểm tra và commit thật.
+- Không sửa lại lịch sử.
+
+FRONTEND.md:
+- Thêm route chi tiết và endpoint thực sự gọi.
+- Ghi G10 đã hoàn thành đến đâu.
+- Gỡ ghi chú đã lỗi thời sau khi xác minh, gồm lỗi ID reminder
+  đã được TV2 sửa.
+- Giữ nguyên giới hạn còn thật và phần của thành viên khác.
+
+Tôi cho phép git add và git commit từng file:
+Author/committer: Lê Công Minh Nhựt
+Email: lecongminhnhut6533@gmail.com
+
+Dùng cấu hình từng lệnh, không sửa global config.
+Stage từng đường dẫn; mỗi commit một file; đọc diff staged.
+Commit brief trước triển khai, AI-LOG cuối.
+Không amend, reset hoặc commit thay đổi có sẵn của người khác.
+
+Không push, mở PR, merge hoặc gửi tin nhắn cho người khác.
+
+Báo cáo cuối:
+- G10 đã hoàn thành những thao tác nào.
+- File/commit tương ứng.
+- Kết quả kiểm tra và phần chưa kiểm chứng.
+- Phụ thuộc hoặc lỗi cần phối hợp.
+- Git status và đề xuất nội dung PR cho Kiệt review.
+```
