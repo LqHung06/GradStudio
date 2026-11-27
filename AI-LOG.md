@@ -1050,3 +1050,19 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Gate 5 (`git diff --check`): **PASS**.
   - Production build Chrome check (`node tools/tv3-admin-build-check.mjs`): **PASS** (thoát 0, không lỗi JS/Console, đạt responsive 360/768/1280px và target ≥ 44px).
 - **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra diff trước khi tách commit.
+
+
+### [TV3] 36. QA10 khôi phục booking đã nhận cọc (27/11/2026)
+
+- **Tool:** Codex, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 36. Tích hợp B4.1 trên nhánh `fix/qa10-paid-deposit-recovery`, tách từ `origin/main` tại `3572675`.
+- **Changed:**
+  - `PATCH /api/bookings/:code` dùng helper xác nhận QA9 với ngày và ca mới trên bản nháp. Chỉ ghi booking, jobs và nhắc lịch sau khi helper thành công và kiểm lại dữ liệu đang dùng. Giữ mã, hội thoại, gói, giá, payment và người chỉnh đã chọn.
+  - Contract 05/10 và FRONTEND cập nhật trạng thái bàn giao. PA#3 trả 409 với đổi lịch cần thêm, bớt hoặc lặp loại ca khi có jobs, và với khôi phục cần nhiều job cùng loại.
+  - Thay kỳ vọng tạm bằng ca HTTP cọc qua gateway, trùng, rồi đổi lịch thành công. Harness Chrome thực hiện cùng luồng trong màn Admin.
+- **Rejected / lỗi phát hiện:** Handler test gây lỗi ở bước chuẩn bị nhắc lịch để kiểm rằng không có bản ghi nào bị thay đổi. Hai yêu cầu khôi phục đồng thời chỉ ghi một lần. Sau PATCH, UI đổi trạng thái booking ngay. Lý do khóa giao link vẫn lấy từ lần đọc chi tiết trước và cập nhật khi bấm Làm mới booking.
+- **Checked:**
+  - HTTP B4.1 trả 200 và booked trên cùng mã, giữ nguyên payment đã thành công, gán job chỉnh cho Hà khi Tuấn chụp và tạo một nhắc đúng mốc 36 giờ trước ca đầu. PATCH lặp giữ nguyên jobs/nhắc. Lịch trùng trả 409 CLASH kèm lý do. Lịch sai hoặc ngoài khung trả 400, thiếu quyền trả 403, payment còn hạn trả 409 kèm retryAt.
+  - Bốn bộ hồi quy TV1/TV2/TV3/QA9 đạt **46/46**, 0 FAIL, 0 skip/TODO. Contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Kiểm cú pháp 27 mô-đun và parse 14 seed JSON, `npm ci` + `npm run build`, conflict markers và `git diff --check` đều đạt.
+  - Harness Chrome trên production build thoát mã 0. Admin thấy booking chuyển Đã đặt lịch từ phản hồi PATCH, không tải lại và không có request thanh toán mới. Luồng đổi lịch thường, hủy và Customer Nhận ảnh đều qua.
+- **Commits:** `1252315` brief; `8fd2b4e`, `9f8e690` contract; `39848f6` route; `1dc8675` hồi quy HTTP; `884d59f` harness Chrome; `3d857fb` FRONTEND. Nhật ký được commit riêng sau cùng.
