@@ -42,6 +42,19 @@ export function expirePendingPayments(db, { nowMs = Date.now(), bookingCode = nu
   return expired;
 }
 
+function closeSiblingPendingPayments(db, { bookingCode, kind, excludeId = null, reason }) {
+  for (const payment of db.payments || []) {
+    if (payment.bookingCode !== bookingCode || payment.kind !== kind || payment.id === excludeId) {
+      continue;
+    }
+    if (payment.status === 'pending') {
+      payment.status = 'failed';
+      payment.failureReason = reason;
+      payment.reservationFailure = null;
+    }
+  }
+}
+
 export function createPaymentAttempt(db, { booking, kind, nowMs = Date.now() }) {
   if (booking.status === 'cancelled' || booking.status === 'completed') {
     return failResult(409, 'CONFLICT', 'Trạng thái booking hiện tại không thể thanh toán');
@@ -73,6 +86,12 @@ export function createPaymentAttempt(db, { booking, kind, nowMs = Date.now() }) 
   }
 
   if (!Array.isArray(db.payments)) db.payments = [];
+  // Supersede older unexpired pending attempts for the same (bookingCode, kind) so activePaymentLock never stays stale.
+  closeSiblingPendingPayments(db, {
+    bookingCode: booking.code,
+    kind,
+    reason: 'Đã thay thế bởi giao dịch mới',
+  });
   const payment = {
     id: `PAY-${db.payments.length + 1}`,
     bookingCode: booking.code,
@@ -159,6 +178,12 @@ export async function processGatewayCallback(
     payment.failureReason = null;
     payment.reservationFailure = null;
     booking.paymentStatus = payment.kind === 'deposit' ? 'deposit_paid' : 'paid_in_full';
+    closeSiblingPendingPayments(db, {
+      bookingCode: booking.code,
+      kind: payment.kind,
+      excludeId: payment.id,
+      reason: 'Booking đã được thanh toán',
+    });
 
     return {
       ok: true,
@@ -213,6 +238,12 @@ export async function processGatewayCallback(
       payment.failureReason = null;
       payment.reservationFailure = null;
     }
+    closeSiblingPendingPayments(db, {
+      bookingCode: booking.code,
+      kind: payment.kind,
+      excludeId: payment.id,
+      reason: 'Booking đã được thanh toán',
+    });
   } else {
     if (booking.status !== 'booked' || booking.paymentStatus !== 'deposit_paid') {
       return failResult(
@@ -239,6 +270,12 @@ export async function processGatewayCallback(
     payment.failureReason = null;
     payment.reservationFailure = null;
     booking.paymentStatus = 'paid_in_full';
+    closeSiblingPendingPayments(db, {
+      bookingCode: booking.code,
+      kind: payment.kind,
+      excludeId: payment.id,
+      reason: 'Booking đã được thanh toán',
+    });
   }
 
   return {

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { confirmBookingReservation } from '../mock/lib/booking-confirmation.mjs';
+import { activePaymentLock } from '../mock/lib/admin-booking-rules.mjs';
 import {
   PAYMENT_EXPIRY_MS,
   EXPIRED_FAILURE_REASON,
@@ -258,6 +259,61 @@ test('B4.2, B4.3, BS.1: both deposit & remaining expire at +15m boundary, refuse
   assert.equal(replay.status, 409);
 });
 
+test('B4.2–B4.3 / G10 integration: creating a new attempt or succeeding closes older pending attempts of same (bookingCode, kind) so activePaymentLock unlocks cleanly', async () => {
+  const t0 = Date.UTC(2026, 9, 20, 11, 0, 0);
+  const b1 = makeSampleBooking('GS-2050');
+  const db = baseDb({
+    bookingEditors: { 'GS-2050': { id: 'u-ha', name: 'Hà' } },
+    bookings: [b1],
+  });
+
+  // Customer starts PAY-1 (pending), then returns and starts PAY-2 while PAY-1 has not expired.
+  const first = createPaymentAttempt(db, { booking: b1, kind: 'deposit', nowMs: t0 });
+  assert.equal(first.ok, true);
+  assert.equal(first.body.payment.id, 'PAY-1');
+
+  const second = createPaymentAttempt(db, { booking: b1, kind: 'deposit', nowMs: t0 + 10_000 });
+  assert.equal(second.ok, true);
+  assert.equal(second.body.payment.id, 'PAY-2');
+  assert.equal(db.payments[0].status, 'failed');
+  assert.equal(db.payments[0].failureReason, 'Đã thay thế bởi giao dịch mới');
+  assert.ok(activePaymentLock(db, 'GS-2050', t0 + 20_000), 'only PAY-2 remains active');
+
+  // Calling gateway on superseded PAY-1 fails with 409.
+  const stale = await processGatewayCallback(db, {
+    paymentId: 'PAY-1',
+    result: 'success',
+    user: { id: 'u-linh', role: 'customer' },
+    nowMs: t0 + 20_000,
+  });
+  assert.equal(stale.ok, false);
+  assert.equal(stale.status, 409);
+
+  // Inject an extra sibling pending record to verify success also closes any leftover siblings.
+  db.payments.push({
+    id: 'PAY-STALE',
+    bookingCode: 'GS-2050',
+    kind: 'deposit',
+    amount: b1.deposit,
+    status: 'pending',
+    failureReason: null,
+    reservationFailure: null,
+    createdAt: first.body.payment.createdAt,
+    expiresAt: second.body.payment.expiresAt,
+  });
+
+  const paid = await processGatewayCallback(db, {
+    paymentId: 'PAY-2',
+    result: 'success',
+    user: { id: 'u-linh', role: 'customer' },
+    nowMs: t0 + 20_000,
+  });
+  assert.equal(paid.ok, true);
+  assert.equal(db.payments[2].status, 'failed');
+  assert.equal(db.payments[2].failureReason, 'Booking đã được thanh toán');
+  assert.equal(activePaymentLock(db, 'GS-2050', t0 + 20_000), null);
+});
+
 test('B4.12 & B4.13: queued creation, due-once dispatch, preserved sent/failed history, and lead-hour update isolation', () => {
   const bFuture = makeSampleBooking('GS-3001', { status: 'booked', date: '2027-11-10' });
   const bDue = makeSampleBooking('GS-3002', { status: 'booked', date: '2026-10-25' });
@@ -431,13 +487,17 @@ test('HTTP E2E QA9: B4.6 chat routing, B4.5 superseded 409, B4.11 editor job own
     const persisted = (await req(`/api/bookings/${created.code}/photos`, 'GET', linh, null, 200)).data;
     assert.deepEqual(persisted.selectedIds, [pids[0], pids[1]]);
 
-    // 6. B4.2/B4.3 HTTP integration: active pending payment with real expiresAt locks Admin cancel (retryAt), and decline releases lock
+    // 6. B4.2/B4.3 HTTP integration: superseding PAY closes older pending attempt cleanly; latest pending locks cancel (retryAt); decline releases lock
+    const hanDepOld = (await req('/api/bookings/GS-1023/payments', 'POST', han, { kind: 'deposit' }, 201)).data.payment;
     const hanDep = (await req('/api/bookings/GS-1023/payments', 'POST', han, { kind: 'deposit' }, 201)).data.payment;
     assert.ok(hanDep.expiresAt, 'deposit payment must include expiresAt');
+    assert.equal((await req(`/api/payments/${hanDepOld.id}`, 'GET', han, null, 200)).data.payment.status, 'failed');
+    await req(`/api/test-gateway/${hanDepOld.id}`, 'POST', han, { result: 'success' }, 409);
+
     const lockRes = await req('/api/bookings/GS-1023/cancel', 'POST', thao, { reason: 'Hủy khi khách đang mở cổng thanh toán' }, 409);
     assert.equal(lockRes.data.error.details.retryAt, new Date(Date.parse(hanDep.expiresAt)).toISOString());
 
-    // After payment fails, Admin cancel succeeds cleanly and any subsequent payment retry returns 409
+    // After latest payment fails, Admin cancel succeeds cleanly (not blocked by PAY-old) and retry returns 409
     await req(`/api/test-gateway/${hanDep.id}`, 'POST', han, { result: 'failed' }, 200);
     await req('/api/bookings/GS-1023/cancel', 'POST', thao, { reason: 'Hủy sau khi giao dịch thanh toán thất bại' }, 200);
     await req('/api/bookings/GS-1023/payments', 'POST', han, { kind: 'deposit' }, 409);

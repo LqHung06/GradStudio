@@ -41,7 +41,7 @@ Every endpoint that returns a payment returns all fields below:
 
 ## POST /api/bookings/:code/payments
 
-Starts a payment for a booking and returns the gateway URL to open. Any overdue `pending` payment on this booking (`now >= expiresAt`) is transitioned to `failed` first so the customer can start a fresh payment if the booking is still eligible (`B4.2`, `B4.3`).
+Starts a payment for a booking and returns the gateway URL to open. Any overdue `pending` payment on this booking (`now >= expiresAt`) is transitioned to `failed` first, and any older unexpired `pending` payment of the same `(bookingCode, kind)` is closed as `failed` (`"Đã thay thế bởi giao dịch mới"`) — and likewise closed (`"Booking đã được thanh toán"`) when a sibling attempt settles as `succeeded` — so Admin payment locks (`activePaymentLock`) never stay blocked on stale attempts (`B4.2`, `B4.3`).
 
 - **Roles:** `customer` (only for their own booking).
 - **Path parameters:** `code` (booking code, e.g. `GS-1024`).
@@ -379,4 +379,4 @@ Content-Type: application/json
 
 - 2026-11-20: initial version: deposit and remaining payments, PA#3 test gateway, failure and success examples. (TV2)
 - 2026-11-23: added `reservationFailure` for succeeded-but-clashed deposits (PO #8 / R08), re-checked booking/payment state at gateway callback (R09), and required `shoot` jobs to be `done` before remaining 70% payment (R19). (TV2)
-- 2026-11-27: QA9 added `Payment.expiresAt` (+15 min expiry rule, retry allowed after expiry, `409` on expired gateway callback), documented `gatewayCaptured` post-cancel late-callback exception (`B4.2`), and extracted `confirmBookingReservation` with assigned editor provisioning (`B4.1`, `B4.11`). (TV2)
+- 2026-11-27: QA9 added `Payment.expiresAt` (+15 min expiry rule, retry allowed after expiry, `409` on expired gateway callback), superseded/closed older pending attempts of the same `(bookingCode, kind)` on new attempt or settlement (`activePaymentLock` clean unlock), documented `gatewayCaptured` post-cancel late-callback exception (`B4.2`), and extracted `confirmBookingReservation` with assigned editor provisioning (`B4.1`, `B4.11`). (TV2)
