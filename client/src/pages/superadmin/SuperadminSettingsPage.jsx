@@ -10,26 +10,45 @@ import '../../styles/superadmin.css';
 
 const HHMM_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const INITIAL_SETTINGS_FORM = {
-  open: '08:00',
-  close: '20:00',
+  weekdayOpen: '08:00',
+  weekdayClose: '20:00',
+  weekendOpen: '08:00',
+  weekendClose: '20:00',
   reminderHoursBefore: '24',
 };
 
-function validateSettings(values) {
-  const errors = {};
-  const open = String(values.open || '').trim();
-  const close = String(values.close || '').trim();
+function settingsToFormValues(settings) {
+  const weekday = settings?.openingHours?.weekday || settings?.openingHours || {};
+  const weekend = settings?.openingHours?.weekend || settings?.openingHours || {};
+  return {
+    weekdayOpen: weekday.open || '08:00',
+    weekdayClose: weekday.close || '20:00',
+    weekendOpen: weekend.open || '08:00',
+    weekendClose: weekend.close || '20:00',
+    reminderHoursBefore: String(settings?.reminderHoursBefore ?? 24),
+  };
+}
+
+function validateTimePair(openVal, closeVal, openKey, closeKey, errors) {
+  const open = String(openVal || '').trim();
+  const close = String(closeVal || '').trim();
   const openOk = HHMM_RE.test(open);
   const closeOk = HHMM_RE.test(close);
 
   if (!openOk) {
-    errors.open = 'Giờ không đúng định dạng HH:mm';
+    errors[openKey] = 'Giờ không đúng định dạng HH:mm';
   }
   if (!closeOk) {
-    errors.close = 'Giờ không đúng định dạng HH:mm';
+    errors[closeKey] = 'Giờ không đúng định dạng HH:mm';
   } else if (openOk && close <= open) {
-    errors.close = 'Giờ đóng cửa phải sau giờ mở cửa';
+    errors[closeKey] = 'Giờ đóng cửa phải sau giờ mở cửa';
   }
+}
+
+function validateSettings(values) {
+  const errors = {};
+  validateTimePair(values.weekdayOpen, values.weekdayClose, 'weekdayOpen', 'weekdayClose', errors);
+  validateTimePair(values.weekendOpen, values.weekendClose, 'weekendOpen', 'weekendClose', errors);
 
   const rawHours = String(values.reminderHoursBefore ?? '').trim();
   if (!/^\d+$/.test(rawHours)) {
@@ -46,8 +65,10 @@ function validateSettings(values) {
 
 function mapApiSettingsFields(apiFields = {}) {
   const mapped = {};
-  if (apiFields['openingHours.open']) mapped.open = apiFields['openingHours.open'];
-  if (apiFields['openingHours.close']) mapped.close = apiFields['openingHours.close'];
+  if (apiFields['openingHours.weekday.open']) mapped.weekdayOpen = apiFields['openingHours.weekday.open'];
+  if (apiFields['openingHours.weekday.close']) mapped.weekdayClose = apiFields['openingHours.weekday.close'];
+  if (apiFields['openingHours.weekend.open']) mapped.weekendOpen = apiFields['openingHours.weekend.open'];
+  if (apiFields['openingHours.weekend.close']) mapped.weekendClose = apiFields['openingHours.weekend.close'];
   if (apiFields.reminderHoursBefore) mapped.reminderHoursBefore = apiFields.reminderHoursBefore;
   return mapped;
 }
@@ -65,17 +86,19 @@ export function SuperadminSettingsPage() {
       try {
         const res = await saveSettings({
           openingHours: {
-            open: String(values.open).trim(),
-            close: String(values.close).trim(),
+            weekday: {
+              open: String(values.weekdayOpen).trim(),
+              close: String(values.weekdayClose).trim(),
+            },
+            weekend: {
+              open: String(values.weekendOpen).trim(),
+              close: String(values.weekendClose).trim(),
+            },
           },
           reminderHoursBefore: Number(String(values.reminderHoursBefore).trim()),
         });
         setData({ settings: res.settings });
-        form.setValues({
-          open: res.settings.openingHours?.open || '08:00',
-          close: res.settings.openingHours?.close || '20:00',
-          reminderHoursBefore: String(res.settings.reminderHoursBefore ?? 24),
-        });
+        form.setValues(settingsToFormValues(res.settings));
         setSavedMessage('Đã lưu cài đặt');
       } catch (err) {
         if (err instanceof ApiError && err.status === 400 && err.fields && Object.keys(err.fields).length > 0) {
@@ -93,11 +116,7 @@ export function SuperadminSettingsPage() {
   const { setValues } = form;
   useEffect(() => {
     if (!settings) return;
-    setValues({
-      open: settings.openingHours?.open || '08:00',
-      close: settings.openingHours?.close || '20:00',
-      reminderHoursBefore: String(settings.reminderHoursBefore ?? 24),
-    });
+    setValues(settingsToFormValues(settings));
   }, [settings, setValues]);
 
   const handleFieldChange = (event) => {
@@ -111,7 +130,7 @@ export function SuperadminSettingsPage() {
         <header className="superadmin-header">
           <h1 id="superadmin-settings-heading">Cài đặt hệ thống</h1>
           <p className="superadmin-lead">
-            Thiết lập khung giờ mở cửa của studio và thời gian gửi nhắc lịch trước buổi chụp.
+            Thiết lập khung giờ mở cửa ngày thường, cuối tuần của studio và thời gian gửi nhắc lịch trước buổi chụp.
           </p>
         </header>
 
@@ -129,28 +148,57 @@ export function SuperadminSettingsPage() {
             <h2 id="settings-form-heading">Giờ hoạt động &amp; Nhắc lịch</h2>
 
             <form onSubmit={form.handleSubmit} noValidate>
-              <div className="superadmin-time-grid">
-                <FormField
-                  name="open"
-                  label="Giờ mở cửa"
-                  type="time"
-                  required
-                  value={form.values.open}
-                  error={form.errors.open}
-                  onChange={handleFieldChange}
-                />
+              <fieldset className="superadmin-hours-group">
+                <legend>Ngày thường (T2–T6)</legend>
+                <div className="superadmin-time-grid">
+                  <FormField
+                    name="weekdayOpen"
+                    label="Giờ mở cửa (T2–T6)"
+                    type="time"
+                    required
+                    value={form.values.weekdayOpen}
+                    error={form.errors.weekdayOpen}
+                    onChange={handleFieldChange}
+                  />
 
-                <FormField
-                  name="close"
-                  label="Giờ đóng cửa"
-                  type="time"
-                  required
-                  value={form.values.close}
-                  error={form.errors.close}
-                  onChange={handleFieldChange}
-                  hint="Phải sau giờ mở cửa."
-                />
-              </div>
+                  <FormField
+                    name="weekdayClose"
+                    label="Giờ đóng cửa (T2–T6)"
+                    type="time"
+                    required
+                    value={form.values.weekdayClose}
+                    error={form.errors.weekdayClose}
+                    onChange={handleFieldChange}
+                    hint="Phải sau giờ mở cửa."
+                  />
+                </div>
+              </fieldset>
+
+              <fieldset className="superadmin-hours-group">
+                <legend>Cuối tuần (T7–CN)</legend>
+                <div className="superadmin-time-grid">
+                  <FormField
+                    name="weekendOpen"
+                    label="Giờ mở cửa (T7–CN)"
+                    type="time"
+                    required
+                    value={form.values.weekendOpen}
+                    error={form.errors.weekendOpen}
+                    onChange={handleFieldChange}
+                  />
+
+                  <FormField
+                    name="weekendClose"
+                    label="Giờ đóng cửa (T7–CN)"
+                    type="time"
+                    required
+                    value={form.values.weekendClose}
+                    error={form.errors.weekendClose}
+                    onChange={handleFieldChange}
+                    hint="Phải sau giờ mở cửa."
+                  />
+                </div>
+              </fieldset>
 
               <FormField
                 name="reminderHoursBefore"
@@ -160,7 +208,7 @@ export function SuperadminSettingsPage() {
                 value={form.values.reminderHoursBefore}
                 error={form.errors.reminderHoursBefore}
                 onChange={handleFieldChange}
-                hint="Số nguyên từ 1 đến 168 giờ (mặc định 24 giờ). Hệ thống luôn gửi nhắc qua cả e-mail và tài khoản."
+                hint="Số nguyên từ 1 đến 168 giờ (mặc định 24 giờ). Áp dụng cho nhắc lịch tạo mới hoặc tính lại khi đổi lịch."
                 inputProps={{ min: 1, max: 168, step: 1 }}
               />
 

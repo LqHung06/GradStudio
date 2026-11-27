@@ -52,6 +52,19 @@
   width: min(620px, 100%);
 }
 
+.superadmin-hours-group {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.superadmin-hours-group legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
 .superadmin-time-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
