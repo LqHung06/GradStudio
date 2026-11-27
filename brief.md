@@ -2680,3 +2680,44 @@ Yêu cầu chi tiết (QA8 — TV1):
    - Kiểm tra nhanh trên bản build (`npx vite preview --port 4173` + `mock/server.mjs`) cho `/superadmin/settings` (lưu 2 khung giờ + F5) và `/staff/jobs/J-GS-1022-shoot` / `/staff/jobs/J-GS-1022-edit` (xác nhận `shoot` còn mở và lùi trạng thái được, `edit` bị khóa kèm lý do rõ, 0 lỗi Console).
    - Ghi mục tiếp theo vào `brief.md` và `AI-LOG.md` (nối cuối file).
 ```
+
+
+## 33. [TV1 · 27/11/2026 · Antigravity Assistant] Chuẩn bị bản nháp PA#3 `SELF_ASSESSMENT_REPORT.md` và cập nhật mục 5 `FRONTEND.md` theo đợt QA 27/11
+
+Tin nhắn 1:
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `docs/qa12-pa3-report-draft` từ `main` mới nhất (`a8236fd`, sau khi PR #32 QA8 của TV1 đã merge). Chuẩn bị trước bản nháp hồ sơ PA#3 (`SELF_ASSESSMENT_REPORT.md`) và cập nhật mục 5 (`Product owner decisions`) của `FRONTEND.md` theo bản kế hoạch 27/11/2026 để sẵn sàng chốt số liệu cuối vào mốc `QA11–QA12` (CN 29/11).
+
+Ràng buộc bắt buộc:
+1. KHÔNG sửa bất kỳ file code/contract/mock/test nào (`docs/api/`, `mock/`, `client/`, `tools/`). Chỉ sửa `SELF_ASSESSMENT_REPORT.md`, `FRONTEND.md`, `brief.md`, `AI-LOG.md`.
+2. KHÔNG bịa điểm tự chấm cuối cùng, KHÔNG bịa link bài đăng PO, KHÔNG đánh dấu "đã pass" những mục chưa chạy (`QA9`, `QA10`, `QA11`, W3C Nu HTML Validator, kiểm thử zip cuối). Mọi chỗ còn chờ `QA11` ngày 29/11 phải ghi rõ nhãn `[CHỜ CHỐT QA11]`.
+3. Mọi bằng chứng (commit hash, số endpoint, số ví dụ contract, số test `node:test`, số module build, số mục `brief.md` / `AI-LOG.md`, danh sách route) phải đối chiếu trực tiếp từ `main` (`a8236fd`) và `git log`.
+4. Không tự chạy `git add`, `git commit`, `git push`.
+
+Yêu cầu chi tiết:
+1. **`SELF_ASSESSMENT_REPORT.md`** (ghi đè bản PA#2 cũ bằng khung hoàn chỉnh cho **PA#3 — Front end in React**, ghi rõ ở đầu file: `Trạng thái: BẢN NHÁP tại commit a8236fd — chờ chốt điểm & bằng chứng cuối sau QA11 ngày 29/11`):
+   - Thông tin học phần, đồ án PA#3, danh sách 3 thành viên + MSSV (`24120184`, `24120211`, `24120354`) và mẫu tên file zip `24120184-24120211-24120354_<tổng>.zip` (`[CHỜ CHỐT QA11]`).
+   - Bảng tự đánh giá đủ **9 tiêu chí theo rubric PA#3** (tổng 100 điểm):
+     1. Toàn bộ luồng G1–G11 bằng React (25đ)
+     2. Routing, đăng nhập, shared state (10đ)
+     3. Dữ liệu từ API: loading / error / empty (10đ)
+     4. Forms (10đ)
+     5. Contract và mock (15đ)
+     6. Responsive, semantic, valid (5đ)
+     7. `brief.md` và file rules `AGENTS.md` (10đ)
+     8. `AI-LOG.md` (10đ)
+     9. Lịch sử commit (5đ)
+   - Mỗi tiêu chí có cột: Điểm tối đa | Điểm tự chấm (`[CHỜ CHỐT QA11]`) | Bằng chứng cụ thể hiện có tại `a8236fd` (file, route, contract, test, CI, commit hash) | Phần chưa xong / cần chốt ở `QA11` (*What we did not manage*).
+   - Mục 2 **What We Did Not Manage / Known Limitations**: liệt kê trung thực các phần đang chờ tích hợp `QA9`/`QA10`, W3C Nu HTML Validator, và các giới hạn đã biết theo phạm vi PA#3 (cổng thanh toán thử nghiệm thay sandbox thật, nhắc lịch mô phỏng thay SMTP, kiểm tra chữ ký file upload chuyển sang PA#4).
+
+2. **`FRONTEND.md` (cập nhật mục 5 — *Product owner decisions*):**
+   - Giữ nguyên mục 5.1 (10 quyết định PO ngày 23/11) và ghi chú rõ các điểm được cập nhật/thay thế bởi đợt QA mới 27/11 (ví dụ `B2.2` thay thế quy ước cũ cho tạo booking thay thế cùng hội thoại).
+   - Bổ sung mục **5.2 (hoặc 5.3) — Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)**: bảng tóm tắt đầy đủ các quyết định `B2.1–B2.5`, `B3.1–B3.3`, `B4.1–B4.13`, `BS.1`, người phụ trách và trạng thái triển khai trung thực tại `a8236fd` (`QA8` đã xong trên `main`; `QA9` & `QA10` đang triển khai). Không tự tạo URL bài đăng PO.
+   - Rà nhẹ mục 5.2 (quy ước nhóm 23/11): đánh dấu rõ dòng *Hội thoại & booking thay thế sau hủy* đã được thay bằng `B2.2` (mỗi hội thoại tối đa 1 booking, kể cả đã hủy) để tránh mâu thuẫn trong cùng tài liệu.
+   - Chưa xóa các ghi chú trạng thái của TV3 trong mục 7 (*Not done*) cho đến khi `QA10` merge xong.
+
+3. **Kiểm tra & ghi log:**
+   - Xác nhận `git diff -- docs/api mock client tools` trống hoàn toàn và `git diff --check` 0 lỗi, 0 conflict markers.
+   - Ghi mục tiếp theo (mục 33) vào cuối `brief.md` và `AI-LOG.md`.
+```
