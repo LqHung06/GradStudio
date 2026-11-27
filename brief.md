@@ -3123,3 +3123,19 @@ Báo cáo cuối:
 - Nội dung Not done còn lại.
 - Git status cuối.
 ```
+
+
+### [TV1] 37. QA11 — Cập nhật CI Gate 3 và nghiệm thu bản build `client/dist/` (27/11/2026)
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `chore/qa11-ci-gate3-and-verification` từ `main` mới nhất (`c6e51b6`, sau khi QA8 PR #32, QA9 PR #35 và QA10 PR #33/#34/#36 đều đã merge). Thực hiện trọn phần Chặng 2 (QA11 — phần của TV1) theo kế hoạch PA#3 để chốt bằng chứng nghiệm thu trước khi bước sang QA12.
+
+1. Cập nhật `.github/workflows/ci.yml` Gate 3 bổ sung `tools/tv2-qa9.test.mjs` để chạy đủ cả 4 bộ hồi quy (`tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`).
+2. Chạy trọn 5 Gate tự động trên commit ứng viên (`c6e51b6` + thay đổi Gate 3): cấu trúc/cú pháp/14 seed JSON, `contract-check`, 4 bộ `node --test`, `client` production build, `git diff --check` & quét conflict markers.
+3. Nghiệm thu bản production build (`client/dist/` + SPA fallback + `/api` proxy -> mock server) bằng Chrome headless:
+   - Phân quyền 4 vai trò (RBAC) + khách chưa đăng nhập.
+   - G11 Superadmin (danh sách Admin, cài đặt giờ mở cửa tách T2–T6 / T7–CN).
+   - Đi trọn luồng `GS-1024` qua 4 vai trò (`linh` -> `thao` -> `tuan` -> `linh`, kiểm tra `B4.8` khóa/mở `shoot` và `edit`, G10 gắn link cuối, G9 *Nhận ảnh* -> `completed`).
+   - Đối soát toàn bộ log `/api` với `docs/api/`, kiểm Console 0 lỗi JS / 0 5xx.
+4. Ghi nhận kết quả chạy thật vào `brief.md` và `AI-LOG.md` (không tự chạy `git add`/`commit`/`push`).
+```
