@@ -21,7 +21,7 @@ const errors = [];
 const allowed = [
   /^(GET|POST) \/api\/auth\/(login|logout|me)$/,
   /^GET \/api\/(conversations(\/[^/]+)?|bookings|resources|schedule|services|packages|extras)$/,
-  /^POST \/api\/(conversations\/[^/]+\/(messages|proposals)|availability\/check|bookings)$/,
+  /^POST \/api\/(conversations(\/[^/]+\/(messages|proposals))?|availability\/check|bookings)$/,
   /^PATCH \/api\/conversations\/[^/]+\/proposals\/[^/]+$/,
   /^POST \/api\/bookings\/GS-\d+\/cancel$/,
   /^(GET|PATCH) \/api\/bookings\/GS-\d+$/,
@@ -29,7 +29,7 @@ const allowed = [
   /^POST \/api\/bookings\/GS-\d+\/(payments|previews|receive)$/,
   /^GET \/api\/(jobs|reminders|bookings\/GS-\d+\/photos)$/,
   /^POST \/api\/test-gateway\/PAY-\d+$/,
-  /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-shoot$/,
+  /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-(shoot|edit)$/,
 ];
 
 function start(command, args, options = {}) {
@@ -348,14 +348,38 @@ try {
   await see('Khách đã đồng ý');
   await click('Làm mới hội thoại');
   await waitFor(async () => (await buttonDisabled()) === false, 'create enabled after acceptance');
+  const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
+  await fill('date', '2026-10-24');
+  await fill('items', '2');
+  await fill('items.0.kind', 'makeup');
+  await fill('items.0.start', '13:00');
+  await fill('items.0.end', '14:00');
+  await fill('items.0.staffId', 'u-mai');
+  await fill('items.1.start', '14:00');
+  await fill('items.1.end', '16:00');
+  await fill('items.1.staffId', 'u-tuan');
+  await fill('items.1.roomId', 'r-b');
+  await click('Đề xuất giờ này cho khách');
+  await see('Đã bị thay thế');
+  assert.equal(await buttonDisabled(), true);
+  await api('PATCH', '/api/conversations/c-linh/proposals/' + proposalId, linh, { decision: 'accepted' }, 409);
+  await api('POST', '/api/bookings', thao, {
+    conversationId: 'c-linh', proposalId, shootType: 'Tốt nghiệp cá nhân',
+    packageId: 'pkg-tn-premium', extraIds: [], editorId: 'u-tuan',
+  }, 409);
+  const latest = (await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.messages.at(-1).proposal;
+  await api('PATCH', '/api/conversations/c-linh/proposals/' + latest.id, linh, { decision: 'accepted' }, 200);
+  await click('Làm mới hội thoại');
+  await waitFor(async () => (await buttonDisabled()) === false, 'latest accepted proposal enables booking');
   await fill('shootType', 'Tốt nghiệp cá nhân');
   await fill('packageId', 'pkg-tn-premium');
+  await fill('editorId', 'u-tuan');
   await see('540.000đ');
   await waitForForms();
   await run(() => document.querySelector('#extraIds input[type=checkbox]').click());
   await checkFieldErrors('/api/bookings', 'Tạo booking', {
     shootType: 'Kiểm tra 400: Loại chụp', packageId: 'Kiểm tra 400: Gói chụp',
-    extraIds: 'Kiểm tra 400: Dịch vụ thêm',
+    editorId: 'Kiểm tra 400: Người chỉnh ảnh', extraIds: 'Kiểm tra 400: Dịch vụ thêm',
   });
   console.log('PASS UI: simulated API 400 messages, aria-describedby, focus and preserved form values');
   const beforeBooking = requests.filter((request) => request === 'POST /api/bookings').length;
@@ -375,7 +399,6 @@ try {
   await see('GS-1024');
   console.log('PASS UI: Customer accepts in chat, Admin signs in again, refreshes and creates once; amounts from API');
 
-  const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
   const { token: tuan } = await api('POST', '/api/auth/login', null, credentials('tuan'), 200);
   async function pay(path, kind) {
     const { redirectUrl } = await api('POST', path + '/payments', linh, { kind }, 201);
@@ -389,6 +412,8 @@ try {
   await pay(firstApi, 'deposit');
   await click('Xem chi tiết GS-1024');
   await see('Áp dụng lịch mới');
+  await see('Người chỉnh ảnh: Tuấn');
+  await see('Chờ khách thanh toán đủ trước khi lưu link.');
   await send('Page.reload');
   await see('Áp dụng lịch mới');
   await checkWidths(firstDetail);
@@ -430,7 +455,7 @@ try {
   await see('Nhập lý do từ 5 đến 500 ký tự.');
   await click('Không hủy');
   await click('Hủy booking');
-  await fill('reason', 'Kiểm tra booking thay thế');
+  await fill('reason', 'Khách xin hủy để gửi yêu cầu khác');
   await checkFieldErrors(firstApi + '/cancel', 'Xác nhận hủy', { reason: 'Kiểm tra 400: Lý do' });
   await click('Xác nhận hủy');
   await see('Đã hủy booking.');
@@ -447,11 +472,18 @@ try {
   console.log('PASS G10: missing/direct/F5, reschedule 400/409 and success, jobs/reminders, cancel and Staff locks');
   await api('POST', '/api/bookings', thao, {
     conversationId: 'c-linh', proposalId, shootType: 'Tốt nghiệp cá nhân',
-    packageId: 'pkg-tn-premium', extraIds: [],
+    packageId: 'pkg-tn-premium', extraIds: [], editorId: 'u-tuan',
   }, 409);
   await navigate(detail);
-  await see('booking thay thế.');
-  assert.equal(await buttonDisabled(), true);
+  await see('Khách cần gửi yêu cầu mới để đặt lại.');
+  assert.equal(await buttonDisabled(), undefined);
+  const { conversation: newThread } = await api('POST', '/api/conversations', linh, {
+    text: 'Mình muốn đặt lịch mới',
+    request: { shootType: 'Tốt nghiệp cá nhân', packageId: 'pkg-tn-premium',
+      preferredDate: '2026-10-25', preferredTime: '14:00', extraIds: [] },
+  }, 201);
+  assert.notEqual(newThread.id, 'c-linh');
+  await navigate('/admin/conversations/' + newThread.id);
   await fill('date', '2026-10-25');
   await fill('items.0.start', '14:00');
   await fill('items.0.end', '16:00');
@@ -459,17 +491,18 @@ try {
   await fill('items.0.roomId', 'r-b');
   await click('Đề xuất giờ này cho khách');
   await see('Chờ khách trả lời');
-  const replacement = await api('GET', '/api/conversations/c-linh', linh, null, 200);
-  await api('PATCH', '/api/conversations/c-linh/proposals/' + replacement.conversation.messages.at(-1).proposal.id,
+  const nextThreadPath = '/api/conversations/' + newThread.id;
+  const next = await api('GET', nextThreadPath, linh, null, 200);
+  await api('PATCH', nextThreadPath + '/proposals/' + next.conversation.messages.at(-1).proposal.id,
     linh, { decision: 'accepted' }, 200);
   await click('Làm mới hội thoại');
   await waitFor(async () => (await buttonDisabled()) === false, 'replacement enabled');
   await fill('shootType', 'Tốt nghiệp cá nhân');
   await fill('packageId', 'pkg-tn-premium');
+  await fill('editorId', 'u-tuan');
   await click('Tạo booking');
   await see('GS-1025');
-  await see('GS-1024');
-  await see('Đã hủy');
+  assert.equal((await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.bookingCode, 'GS-1024');
   await click('Xem danh sách booking');
   await see('Xem chi tiết GS-1025');
   await click('Đã hủy');
@@ -477,7 +510,7 @@ try {
   assert.equal(await run(() => document.querySelector('main').innerText.includes('Xem chi tiết GS-1025')), false);
   await click('Tất cả');
   await see('Xem chi tiết GS-1025');
-  console.log('PASS G10: cancellation history, replacement and list filter');
+  console.log('PASS QA10: cancellation history, separate booking request and list filter');
 
   const replacementApi = '/api/bookings/GS-1025';
   const replacementDetail = bookingList + '/GS-1025';
@@ -488,6 +521,12 @@ try {
   await pay(replacementApi, 'remaining');
   await click('Xem chi tiết GS-1025');
   await see('Đã thanh toán đủ');
+  await see('Booking đã thanh toán đủ.');
+  await see('Chờ việc chỉnh ảnh hoàn thành trước khi lưu link.');
+  assert.equal(await run(() => Boolean(document.getElementById('url'))), false);
+  await api('PATCH', '/api/jobs/J-GS-1025-edit', tuan, { status: 'done' }, 200);
+  await click('Làm mới booking');
+  await see('Lưu link ảnh');
   await fill('url', 'http://example.com/photos');
   await click('Lưu link ảnh');
   await see('Nhập link HTTPS hợp lệ');
@@ -504,7 +543,7 @@ try {
   await click('Nhận ảnh');
   await see('Hoàn thành');
   assert.equal((await api('GET', replacementApi, linh, null, 200)).booking.status, 'completed');
-  assert.equal((await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.status, 'done');
+  assert.equal((await api('GET', nextThreadPath, linh, null, 200)).conversation.status, 'done');
   await navigate(replacementDetail);
   await see('Không có quyền truy cập');
   await switchRole(replacementDetail, 'thao');
@@ -523,7 +562,7 @@ try {
   }
   for (const path of [list, detail, '/admin/bookings']) {
     await navigate(path);
-    await see(path === list ? 'Trần Minh Khoa' : 'GS-1025');
+    await see(path === list ? 'Trần Minh Khoa' : path === detail ? 'GS-1024' : 'GS-1025');
     await checkWidths(path);
   }
   await navigate('/admin/conversations/c-absent');
