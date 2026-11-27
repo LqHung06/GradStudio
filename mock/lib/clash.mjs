@@ -5,6 +5,20 @@ import { getOpeningHoursForDate } from './opening-hours.mjs';
 const minutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 const timeAt = (value) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 const overlaps = (a, b) => a.start < b.end && b.start < a.end;
+
+export function openingHoursErrors(db, date, items) {
+  const hours = getOpeningHoursForDate(db.settings, date);
+  if (!hours) return { date: 'Chưa có cấu hình giờ mở cửa cho ngày đã chọn.' };
+  const day = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'UTC' })
+    .format(new Date(date + 'T00:00:00Z'));
+  const message = `${day} studio mở ${hours.open}–${hours.close}.`;
+  const fields = {};
+  items.forEach(({ start, end }, index) => {
+    if (start < hours.open) fields[`items.${index}.start`] = message;
+    if (end > hours.close) fields[`items.${index}.end`] = message;
+  });
+  return fields;
+}
 const inputItem = (item) => ({
   kind: item.kind, start: item.start, end: item.end,
   staffId: item.staffId ?? item.staff?.id,
@@ -59,32 +73,32 @@ export function checkClash(db, date, items, { ignoreBooking } = {}) {
 
   const suggestions = [];
   const hours = getOpeningHoursForDate(db.settings, date);
-  // TV1 owns settings. Still return actual clashes if it has not been delivered;
-  // never fabricate opening hours or suggest an unchecked alternative.
-  if (!hours) return { available: false, clashes, suggestions };
-
   const first = minutes(inputs[0].start);
   const add = (candidateDate, start) => {
-    const dayHours = getOpeningHoursForDate(db.settings, candidateDate);
-    if (!dayHours) return false;
+    const candidateHours = getOpeningHoursForDate(db.settings, candidateDate);
+    if (!candidateHours) return false;
+    const shift = start - first;
+    if (inputs.some((item) => minutes(item.start) + shift < minutes(candidateHours.open)
+      || minutes(item.end) + shift > minutes(candidateHours.close))) return false;
     const shifted = inputs.map((item) => ({ ...item,
-      start: timeAt(minutes(item.start) + start - first),
-      end: timeAt(minutes(item.end) + start - first) }));
-    if (shifted.some((item) => minutes(item.start) < minutes(dayHours.open) || minutes(item.end) > minutes(dayHours.close))) return false;
+      start: timeAt(minutes(item.start) + shift),
+      end: timeAt(minutes(item.end) + shift) }));
     if (findClashes(db, candidateDate, shifted, options).length) return false;
     suggestions.push({ date: candidateDate, label: describe(db, candidateDate, date, shifted), items: shifted });
     return true;
   };
   // Prefer the two alternatives shown in the contract, then scan hourly slots.
   // Shifting the entire sequence preserves duration, order and any gaps.
-  const starts = [...new Set([13 * 60, 14 * 60,
-    ...Array.from({ length: Math.ceil((minutes(hours.close) - minutes(hours.open)) / 60) }, (_, i) => minutes(hours.open) + i * 60)])];
+  const starts = hours ? [...new Set([13 * 60, 14 * 60,
+    ...Array.from({ length: Math.ceil((minutes(hours.close) - minutes(hours.open)) / 60) }, (_, i) => minutes(hours.open) + i * 60)])] : [];
   for (const start of starts) {
     add(date, start);
     if (suggestions.length === 2) break;
   }
   const next = new Date(`${date}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
-  add(next.toISOString().slice(0, 10), 9 * 60);
+  const nextDate = next.toISOString().slice(0, 10);
+  const nextHours = getOpeningHoursForDate(db.settings, nextDate);
+  if (nextHours && !add(nextDate, 9 * 60)) add(nextDate, minutes(nextHours.open));
   return { available: false, clashes, suggestions };
 }

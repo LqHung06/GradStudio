@@ -1,4 +1,4 @@
-import { checkClash, scheduleRows } from '../lib/clash.mjs';
+import { checkClash, openingHoursErrors, scheduleRows } from '../lib/clash.mjs';
 
 export const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 export const isId = (value) => typeof value === 'string' && value.trim().length > 0;
@@ -29,7 +29,7 @@ export function validateSchedule(db, body) {
       fields[prefix + 'roomId'] = 'Vui lòng chọn phòng tồn tại';
     }
   });
-  return fields;
+  return Object.keys(fields).length ? fields : openingHoursErrors(db, body.date, body.items);
 }
 
 const ref = ({ id, name }) => ({ id, name });

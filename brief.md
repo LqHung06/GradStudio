@@ -2679,4 +2679,133 @@ Yêu cầu chi tiết (QA8 — TV1):
      * Gate 5: 0 conflict markers và `git diff --check` 0 lỗi.
    - Kiểm tra nhanh trên bản build (`npx vite preview --port 4173` + `mock/server.mjs`) cho `/superadmin/settings` (lưu 2 khung giờ + F5) và `/staff/jobs/J-GS-1022-shoot` / `/staff/jobs/J-GS-1022-edit` (xác nhận `shoot` còn mở và lùi trạng thái được, `edit` bị khóa kèm lý do rõ, 0 lỗi Console).
    - Ghi mục tiếp theo vào `brief.md` và `AI-LOG.md` (nối cuối file).
+
+
+## 33. [TV3 · 27/11/2026 · Codex] QA10 hội thoại và booking Admin
+
+```text
+Tiếp tục PA#3 GradStudio trên checkout hiện tại. Tôi là Lê Công Minh Nhựt, TV3. Lượt này xử lý QA10 trong phạm vi hội thoại, đề xuất giờ, tạo booking phía Admin, đổi/hủy lịch và giao link ảnh.
+
+Đọc bản cập nhật ngày 27/11 trong:
+- ke-hoach/ke-hoach/TV3-chat-booking-admin.md
+- lo-trinh-PA3.html
+- GradStudio_PO_QA.md
+
+Đọc thêm rubric PA#3, brief dự án và GradStudio/AGENTS.md, rồi đối chiếu với contract, mock, React và test hiện tại. Nếu hai câu trả lời PO điều chỉnh cùng một quy tắc, áp dụng câu mới hơn và ghi rõ căn cứ.
+
+Kiểm tra Git và giữ nguyên thay đổi có sẵn. Làm trên checkout hiện tại, dừng ở diff để tôi review. Không commit hoặc push.
+
+1. Phạm vi và thứ tự thực hiện
+
+Tôi cho phép sửa contract, mock, React và test thuộc phần TV3. Thực hiện theo thứ tự contract → mock → React → kiểm thử; rà lại từng phần trước khi chuyển bước tiếp theo.
+
+Với file thuộc TV1/TV2, ghi rõ dữ liệu, hàm hoặc thay đổi cần bàn giao. Tiếp tục phần TV3 có thể hoàn thành độc lập. Không tự sửa file của thành viên khác hoặc tạo implementation giả để che phụ thuộc.
+
+2. Hội thoại và đề xuất giờ
+(B2.2–3, B2.5, B3.2–3, B4.5–6)
+
+Mỗi hội thoại gắn tối đa một booking:
+- Sau hủy, giữ trạng thái Đã chốt lịch, mã booking cũ và toàn bộ lịch sử.
+- Đặt lại phải qua yêu cầu mới.
+- Bỏ hành vi tạo booking thay thế trong cùng hội thoại cũ khỏi contract, mock, UI và các test liên quan.
+
+Chọn hội thoại khi khách gửi từ trang dịch vụ:
+- Ưu tiên hội thoại chưa Hoàn thành và chưa có booking.
+- Nếu có nhiều hội thoại mẫu phù hợp, chọn theo thời điểm tin nhắn mới nhất.
+- Kiểm tra riêng chat thường, yêu cầu mới và trường hợp khách gửi từ hội thoại đã chọn.
+- API trả ID hội thoại đích để TV2 nối giao diện.
+- Mô tả rõ request/response trong contract trước khi sửa handler.
+
+Chỉ đề xuất mới nhất được phản hồi:
+- Khi Admin gửi giờ mới, đề xuất đang chờ hoặc đã được đồng ý trước đó chuyển sang Đã bị thay thế.
+- Nếu chưa tạo booking, hội thoại về Đang tư vấn.
+- Khóa Tạo booking đến khi khách đồng ý đề xuất mới.
+- API phải kiểm tra lại tính hợp lệ khi khách phản hồi hoặc Admin tạo booking, kể cả request từ tab cũ.
+- UI hiển thị đúng trạng thái thay thế và lý do không thể tiếp tục.
+
+3. Kiểm giờ và đổi/hủy lịch
+(B4.1–4, B4.7, BS.1)
+
+Giờ mở cửa:
+- Kiểm tra khi kiểm lịch, gửi đề xuất, tạo booking và đổi lịch.
+- Dùng khung ngày thường/cuối tuần do TV1 bàn giao; không tự đặt giờ mặc định khác.
+- Cho phép hai ca liền giờ.
+- Giữ ngày mẫu 24/10/2026.
+- Giờ khách gửi trong yêu cầu là giờ mong muốn, chưa phải lịch được xác nhận.
+- Khi cọc, chỉ kiểm lại nhân sự và phòng theo quy tắc PO mới.
+
+Giao dịch đang chờ:
+- Khi giao dịch cọc hoặc 70% còn trong hạn 15 phút, đổi/hủy trả 409 kèm thời điểm có thể thử lại.
+- Dùng dữ liệu và quy tắc hết hạn do TV2 bàn giao.
+- UI hiện lý do và thời điểm thử lại từ API, không tự suy ra trạng thái giao dịch.
+
+Khóa đổi lịch khi:
+- Việc chụp đã Đang làm hoặc Hoàn thành.
+- Booking đã thanh toán đủ.
+
+Booking đã nhận cọc nhưng chưa giữ được chỗ vì trùng lịch:
+- Cho đổi sang giờ trống trên cùng mã booking.
+- Giữ nguyên gói và khoản cọc đã thu.
+- Sau khi đổi hợp lệ, dùng bước xác nhận booking do TV2 bàn giao để xác nhận và tạo việc/nhắc lịch đúng một lần.
+- Nếu giờ mới vẫn trùng, trả lỗi và giữ nguyên toàn bộ dữ liệu.
+- Không yêu cầu khách trả cọc lại hoặc tự chuyển tiền sang booking khác.
+
+Chuẩn bị đầy đủ thay đổi trước khi ghi. Validation, clash hoặc điều kiện nghiệp vụ thất bại không được để booking, jobs, reminders hay payments bị cập nhật một phần.
+
+4. Phân công chỉnh ảnh và giao link
+(B4.11)
+
+Khi tạo booking:
+- Admin chọn người chỉnh ảnh.
+- Ghi dữ liệu phân công vào contract và bàn giao cho phần sinh việc khi xác nhận booking.
+- Luồng mẫu GS-1024 gán Tuấn chỉnh ảnh.
+- Không tự mặc định người chỉnh ảnh luôn là người chụp.
+
+Khi lưu link ảnh:
+- Chỉ mở thao tác khi khách đã thanh toán đủ và việc chỉnh ảnh đã Hoàn thành.
+- API kiểm tra lại cả hai điều kiện, trả 409 kèm lý do nếu chưa đủ.
+- UI hiện lý do khóa và cập nhật từ response.
+- Lưu link không tự hoàn thành booking; giữ đúng bước Nhận ảnh của khách.
+
+5. Contract và kiểm thử
+
+Cập nhật ví dụ contract, ghi Changes với ngày thực hiện và căn cứ PO. Sửa các test cũ đang kỳ vọng tạo lại booking trong hội thoại đã có booking.
+
+Bổ sung hoặc điều chỉnh kiểm tra cho:
+- Chọn đúng hội thoại đích và giữ hội thoại khách đã chọn.
+- Đề xuất bị thay thế; phản hồi và tạo booking từ tab cũ.
+- Giờ ngày thường/cuối tuần, ca liền giờ và ngày mẫu.
+- Giao dịch còn hạn, hết hạn và thời điểm được thử lại.
+- Khóa đổi lịch theo trạng thái việc chụp hoặc thanh toán.
+- Đổi giờ cho booking đã nhận cọc nhưng trùng lịch.
+- Không cập nhật một phần, không tạo trùng việc/nhắc lịch.
+- Phân công người chỉnh ảnh.
+- Lưu link trước và sau khi đủ hai điều kiện.
+
+Chạy:
+- contract-check trên mock mới khởi động, đúng thứ tự ví dụ.
+- Ba bộ hồi quy hiện có theo AGENTS.md/HARNESS.md.
+- Build React.
+
+Nếu chạy được trình duyệt, kiểm tra luồng Admin và các điểm bàn giao liên vai trò. Ghi rõ ca chạy qua HTTP, qua UI hoặc bằng dữ liệu kiểm tra riêng. Không dùng kết quả cũ hoặc build thành công để thay cho nghiệm thu nghiệp vụ mới.
+
+Nếu thiếu phần bàn giao hoặc môi trường không chạy được, ghi đúng ca chưa kiểm chứng. Không đổi test thành skip/TODO chỉ để che lỗi.
+
+6. Nhật ký và bàn giao
+
+Trước khi sửa, ghi nguyên văn prompt này vào brief.md. Sau khi làm, cập nhật AI-LOG.md.
+
+Tuân thủ cấu trúc hiện có của cả hai file: tiếp tục số mục, dùng ngày thực tế, giữ tên/thứ tự các trường và toàn bộ lịch sử. Chỉ ghi thay đổi, lỗi và kiểm tra đã xảy ra; không bịa kết quả hoặc mã commit.
+
+Dùng Humanizer để viết phần mô tả ngắn, tự nhiên, giữ đúng dữ kiện. Prompt trong brief.md vẫn phải được lưu nguyên văn.
+
+Báo cáo cuối gồm:
+- Các quy tắc QA10 đã xử lý và căn cứ PO.
+- File đã sửa.
+- Lệnh kiểm tra và kết quả thực tế.
+- Ca chưa chạy hoặc chưa đạt.
+- Phần cần TV1/TV2 bàn giao, kèm dữ liệu hoặc giao diện hàm cụ thể.
+- Các giới hạn còn lại và Git status.
+
+Dừng ở diff để tôi review. Không commit hoặc push.
 ```

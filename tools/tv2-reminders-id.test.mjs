@@ -174,6 +174,7 @@ test('HTTP E2E: deleting an earlier queued reminder via cancel never collides on
     const b1024 = (await api('/api/bookings', 'POST', thao, {
       conversationId: 'c-linh',
       proposalId: p1.id,
+      editorId: 'u-tuan',
       shootType: 'Tốt nghiệp cá nhân',
       packageId: 'pkg-tn-premium',
       extraIds: ['ex-makeup'],

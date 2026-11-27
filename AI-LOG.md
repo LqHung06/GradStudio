@@ -994,3 +994,20 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - `/staff/jobs/J-GS-1022-edit` (`tuan`): form & nút lưu bị khóa (`disabled: true`), `aria-describedby="job-status-lock-reason"` trỏ đúng thông báo *"Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%."*
     - `pageErrors: []`; mock log toàn bộ request `/api/*` trả `200` (0 lỗi API 404; chỉ có 1 lỗi 404 mặc định của trình duyệt cho `/favicon.ico`). Đã dọn sạch mọi tiến trình nền.
 - **Commits:** TV1 tự kiểm tra diff và tách commit theo thứ tự contract → mock → UI → test → AI-LOG.
+
+
+### [TV3] 33. QA10 hội thoại và booking Admin (27/11/2026)
+
+- **Tool:** Codex, Humanizer, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 33. Thực hiện phần TV3 của QA10 trên checkout `effea64`, theo bản cập nhật kế hoạch và câu trả lời PO ngày 27/11.
+- **Changed:**
+  - B2.2 giữ mã booking và lịch sử trong hội thoại sau hủy. B4.6 làm rõ B2.5/B3.2: từ trang dịch vụ ưu tiên hội thoại mở chưa có booking theo tin nhắn mới nhất. API trả `conversation.id` của nơi nhận tin. B3.3/B4.5 đánh dấu đề xuất cũ bị thay thế và chặn phản hồi hoặc tạo booking từ tab cũ.
+  - B4.4 kiểm giờ cấu hình ở cả bốn bước Admin, cho phép ca liền giờ và giữ ngày 24/10/2026. B4.7 chặn đổi lịch khi việc chụp đã bắt đầu, đã xong hoặc khách đã trả đủ. G10 đọc thời hạn giao dịch khi có và trả mốc thử lại theo B4.2–3, BS.1.
+  - B4.11 thêm lựa chọn người chỉnh ảnh và lưu phân công riêng. API và UI kiểm đủ tiền và việc chỉnh hoàn thành trước khi mở giao link. Khách vẫn hoàn tất booking bằng Nhận ảnh.
+- **Rejected / lỗi phát hiện:** B4.1 thay phương án cũ ở B1.8 bằng xác nhận trên cùng mã booking đã thu cọc. Chưa có thao tác xác nhận dùng chung từ TV2, nên ca giờ trống trả 409 và giữ nguyên dữ liệu. Checkout hiện có một khung giờ cấu hình chung. Ca chia ngày thường/cuối tuần và ca hết hạn dựa trên dữ liệu đưa vào test. Hồi quy TV2 tại `tools/tv2-reminders-id.test.mjs:174` tạo booking thiếu `editorId`, trả 400. File của TV2 giữ nguyên.
+- **Checked:**
+  - `node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock mới: **111/111 ví dụ, 40/40 endpoint, 0 FAIL**.
+  - `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs`: **34/35 PASS, 1 FAIL, 0 skip/TODO**. Ca TV3 kiểm thời hạn, mở cửa hai khung và một số khóa nghiệp vụ bằng dữ liệu riêng. HTTP thật kiểm hội thoại đích, giao dịch pending cũ chặn đổi/hủy và luồng nhắc lịch.
+  - `npm run build` tạo `client/dist`. `node tools/tv3-admin-build-check.mjs` chạy Chrome ngoài sandbox, thoát mã 0. Admin thao tác đề xuất, tạo, đổi, hủy và giao link trên UI. Harness dùng HTTP để chuẩn bị yêu cầu mới, cọc, jobs, lựa chọn ảnh và phần thanh toán còn lại. Customer bấm Nhận ảnh trên UI. Đã kiểm bốn chế độ mock, ba chiều rộng, log JavaScript và API. Syntax 23 mô-đun, kiểm tra conflict markers và `git diff --check` đạt.
+  - Chưa kiểm được vòng đời 15 phút thật của cổng thanh toán, ca khôi phục cọc thành công và sinh jobs/nhắc đúng một lần, phân công người chỉnh khác thợ chụp đi qua bước xác nhận, hoặc điều hướng từ trang dịch vụ Customer.
+- **Commits:** `036851f` brief; `861b063`, `8390c06`, `6cc7117`, `5f9fad1` contract; `78f0598`, `d99184b`, `3ed7561`, `b4a5277`, `b225837`, `812d890` mock; `72981f7`, `e36c91b`, `2c34cbf`, `d4a10ac`, `590ff60` React; `4121632`, `ab89443` kiểm thử. Nhật ký được commit riêng sau cùng.

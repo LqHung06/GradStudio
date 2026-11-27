@@ -87,9 +87,11 @@ Content-Type: application/json
 | Field | Type | Required | Limits |
 |---|---|---|---|
 | `text` | string | yes | 1–1000 characters; non-blank |
+| `request` | BookingRequestInput | no | Same fields and validation as POST /api/conversations/:id/messages |
 
-- **201 Created:** `{conversation: ConversationDetail}`, with the first text Message, unanswered status, bookingCode and acceptedProposalId null. IDs are c-1, c-2, …: maximum numeric suffix among existing c-<digits> IDs plus one (c-linh/c-han do not participate). The owner comes from the token. topic is the first text; the first message, lastMessage and updatedAt share one timestamp. No one-conversation-per-customer restriction. Validation failures consume no IDs.
-- **Errors:** inherited 401/403/500; 400 VALIDATION with fields.text. No resource lookup or state conflict, so no 404/409.
+- This is the service-page entry point when the customer has not selected a conversation. Both ordinary chat and a booking request prefer the customer's non-done conversation without a booking. If several legacy or seed threads qualify, choose the latest `lastMessage.at`. Without such a thread, a request creates a new conversation. Ordinary chat uses the newest non-done thread or creates one if none exists.
+- **200 OK** when appending and **201 Created** when opening a thread. Both return `{conversation: ConversationDetail}` with the destination in `conversation.id` and the new message in its history. New threads start unanswered with null bookingCode and acceptedProposalId. Numbering uses the largest numeric c-* suffix plus one. The token supplies the owner, and validation failures consume no IDs.
+- **Errors:** inherited 401/403/500; 400 VALIDATION with fields.text or request and its child fields.
 
 ### Example
 
@@ -188,6 +190,8 @@ Content-Type: application/json
 ```
 
 ## POST /api/conversations/:id/messages
+
+The selected thread stays the destination for ordinary chat in an active thread, including one with a booking. A customer request in a thread with a booking, or a customer message in a completed thread, uses the customer's open thread without a booking if one exists, otherwise opens one. Read `conversation.id` from the response even if it differs from the path parameter. Admin text replies use the selected thread. Only customers send booking requests. Preferred date/time in a request express a preference and are not opening-hours constraints.
 
 - **Roles:** customer (own), admin.
 - **Path:** id, required conversation ID (proposed maximum 100 characters). **Query:** none.
@@ -376,8 +380,8 @@ Content-Type: application/json
 | `note` | string | no | Proposed 0–1000 characters; default empty string |
 
 - **201 Created:** `{proposal: Proposal, message: Message}`; the proposal is pending, and a studio Message of type proposal is appended. Its text is the proposal note; request is null. This does not hold a slot.
-- A proposal is for G5/G6 booking creation, including a replacement after cancellation; G10 changes date/items directly. Check clashes ignoring a linked booking where applicable. Acceptance alone never changes a booking schedule.
-- **Errors:** inherited 401/403/500; 404 NOT_FOUND for missing conversation; 400 VALIDATION for date, items, items.N.kind/start/end/staffId/roomId or note (unknown resource IDs are field errors); 409 CLASH with clashes and suggestions in error.details; 409 CONFLICT for a linked completed booking. A failed proposal allocates neither proposal nor message ID.
+- Proposals are for conversations without a booking. G10 changes a booking schedule directly. Sending a valid proposal marks earlier pending or accepted proposals `superseded` (Đã bị thay thế), clears acceptedProposalId and changes the conversation to consulting. Earlier declined proposals remain in history. Validate opening hours (04) and clashes before changing any existing proposal.
+- **Errors:** inherited 401/403/500; 404 NOT_FOUND for missing conversation; 400 VALIDATION for date, items, items.N.kind/start/end/staffId/roomId or note; 409 CLASH with clashes and suggestions; 409 CONFLICT if the conversation is completed or has any linked booking. A failed proposal allocates neither proposal nor message ID.
 
 ### Examples
 
@@ -611,6 +615,8 @@ Content-Type: application/json
 
 ## PATCH /api/conversations/:id/proposals/:proposalId
 
+Only the latest pending proposal in a conversation without a booking can be answered. An earlier proposal or an already linked booking returns 409 CONFLICT. Accepting sets acceptedProposalId and scheduled. Declining keeps consulting.
+
 - **Roles:** customer (own). Admin, staff and superadmin receive 403.
 - **Path:** id and proposalId, required non-empty IDs (proposed maximum 100 characters each); proposal must belong to this conversation. **Query:** none.
 - **Body:**
@@ -619,7 +625,7 @@ Content-Type: application/json
 |---|---|---|---|
 | `decision` | string | yes | accepted or declined |
 
-- **200 OK:** `{proposal: Proposal, conversation: ConversationSummary}`. Updates the embedded proposal in the existing Message, without allocating a Message or Proposal ID. Accepted sets acceptedProposalId in detail and changes a new-booking conversation to scheduled. Declining p-1 leaves c-linh consulting and acceptedProposalId null. For a linked booking, preserve conversation status and update acceptedProposalId on acceptance; only PATCH booking in file 10 applies the schedule. No slot is held by acceptance.
+- **200 OK:** `{proposal: Proposal, conversation: ConversationSummary}`. Updates the embedded proposal in the existing message without allocating IDs. Accepting sets acceptedProposalId and scheduled. Declining keeps consulting and acceptedProposalId null. Acceptance does not hold a slot.
 - **Errors:** inherited 401/403/500; 400 VALIDATION with fields.decision; 404 NOT_FOUND for missing/hidden conversation or proposal not in that conversation; 409 CONFLICT if the proposal is no longer pending.
 
 ### Examples (continue the same chain)
@@ -861,28 +867,28 @@ Content-Type: application/json
 }
 ```
 
-## Replacement after cancellation
-
-PO: proposals settle G5/G6 before creating a booking; G10 reschedules directly via PATCH booking, without another customer decision. Group choice: a cancelled linked booking permits a new proposal and acceptance for a replacement in the same conversation; completed remains 409 CONFLICT. Cancellation keeps the conversation scheduled. Proposals already present at cancellation cannot create its replacement; create a new proposal afterwards and obtain customer acceptance. Existing proposal responses and decision body stay unchanged.
-
 ### Successful new conversation (after the main chain)
+
+Hân's seeded thread already has a booking. A structured request opens a separate conversation.
 
 ```http
 POST /api/conversations
-Authorization: Bearer {{token:linh}}
+Authorization: Bearer {{token:han}}
 Content-Type: application/json
 
-{"text":"Tôi muốn tư vấn một lịch chụp mới"}
+{"text":"Tôi muốn tư vấn một lịch chụp mới","request":{"shootType":"Tốt nghiệp cá nhân","packageId":"pkg-tn-premium","preferredDate":"2026-10-24","preferredTime":"07:00","extraIds":[]}}
 ```
 
 ```http
 HTTP/1.1 201 Created
 Content-Type: application/json
 
-{"conversation":{"id":"c-1","customer":{"id":"u-linh","name":"Linh"},"topic":"Tôi muốn tư vấn một lịch chụp mới","status":"unanswered","lastMessage":{"text":"Tôi muốn tư vấn một lịch chụp mới","at":"…"},"bookingCode":null,"updatedAt":"…","messages":[{"id":"m-7","from":"customer","author":{"id":"u-linh","name":"Linh"},"type":"text","text":"Tôi muốn tư vấn một lịch chụp mới","request":null,"proposal":null,"at":"…"}],"acceptedProposalId":null}}
+{"conversation":{"id":"c-1","customer":{"id":"u-han","name":"Lê Ngọc Hân"},"topic":"Tôi muốn tư vấn một lịch chụp mới","status":"unanswered","lastMessage":{"text":"Tôi muốn tư vấn một lịch chụp mới","at":"…"},"bookingCode":null,"updatedAt":"…","messages":[{"id":"m-7","from":"customer","author":{"id":"u-han","name":"Lê Ngọc Hân"},"type":"request","text":"Tôi muốn tư vấn một lịch chụp mới","request":{"shootType":"Tốt nghiệp cá nhân","packageId":"pkg-tn-premium","packageName":"Gói Tốt nghiệp Premium","preferredDate":"2026-10-24","preferredTime":"07:00","extraIds":[],"extraNames":[]},"proposal":null,"at":"…"}],"acceptedProposalId":null}}
 ```
 
 ## Changes
+
+- 2026-11-27: QA10. B4.6 clarifies B2.5/B3.2 for destination selection. B3.3 and B4.5 replace earlier pending/accepted proposals. B2.2 supersedes the previous same-thread replacement rule.
 
 - 2026-11-23: R15: numeric conversation IDs and executable 201 (group implementation choice, plan 2.7); R07: new proposals after cancellation (group choice), G10 direct changes (PO, plan 2.5).
 

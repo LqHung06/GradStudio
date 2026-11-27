@@ -168,6 +168,8 @@ Content-Type: application/json
 
 ## POST /api/availability/check
 
+Admin scheduling uses Superadmin's configured opening hours for weekdays (Monday–Friday) and weekends (Saturday–Sunday). Each item must start at or after opening and end at or before closing. Return 400 VALIDATION on the relevant `items.N.start` or `items.N.end` with the applicable hours in the message. Apply the same rule when sending a proposal, creating a booking or rescheduling. Suggest only times within the applicable hours for the suggested date. A preferred customer time and the deposit resource recheck are outside this rule. Past dates and contiguous half-open intervals are valid. The shared settings helper still accepts a single configured interval for legacy data.
+
 - **Roles:** admin. **Path/query:** none.
 - **Body:**
 
@@ -338,5 +340,7 @@ Content-Type: application/json
 The exact same clashes/suggestions objects are placed inside error.details for 409 CLASH in files 03, 05 (if rechecked) and 10. A check never creates proposals, bookings or jobs.
 
 ## Changes
+
+- 2026-11-27: QA10, B4.4. Validate configured opening hours in scheduling operations, keep the past-date example and use half-open intervals.
 
 - 2026-11-20: first version: resources, readable daily schedule, read-only clash check and complete alternatives. Owner: TV3 Lê Công Minh Nhựt (24120211).
