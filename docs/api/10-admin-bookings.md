@@ -21,12 +21,12 @@ All bodies and answers are JSON. All fields of shared objects, including nulls, 
 
 Every error is `{"error": {"code": string, "message": string, "fields": object, "details": object or null}}`. Messages are Vietnamese; `fields` has one message per invalid field (dot/index paths), otherwise `{}`. CLASH details are `{clashes: Clash[], suggestions: Suggestion[]}`. A live pending payment (deposit or remaining) gives 409 CONFLICT for rescheduling and cancellation, with `details: {retryAt: string}` from the payment service. The lock ends at the 15-minute expiration (BS.1), and transaction expiration is managed by TV2. Errors never change data or consume IDs.
 
-Integration status (27/11): the Admin guard reads the transaction's `expiresAt` timestamp. Legacy pending transactions without an expiration remain locked and return a reason with null details. The affected booking remains unchanged if shared confirmation is unavailable for a deposit already paid.
+The Admin guard reads the transaction's `expiresAt` timestamp. Legacy pending transactions without an expiration remain locked and return a reason with null details.
 
 ### Payment service handoff
 
 - TV2 supplies a persisted ISO 8601 `Payment.expiresAt` for both deposit and remaining payments, calculated by the same clock and deadline as the gateway. An active transaction satisfies `now < expiresAt`. At the deadline, the payment service owns expiration, terminal status, retry eligibility and late callback handling. G10 reads the active lock and the returned deadline. It does not expire or create payments.
-- TV2 and TV3 share the confirmation operation used by deposit success and by G10 recovery. Its inputs are the booking, the already-recorded deposit and the checked schedule. It prepares updates on a draft or commits them in one transaction. On success it sets the same booking to booked and provisions the missing jobs and reminder once. It reads the editor reference described in file 05 and preserves the original successful payment, amounts and booking code. On failure it leaves booking, jobs, reminders and payments as before.
+- Deposit success and G10 recovery call `confirmBookingReservation(db, booking)`. The G10 call passes the paid booking with the new date and items on a draft. On success it sets the same booking to booked and provisions the jobs and reminder once. It reads the editor reference described in file 05. The original successful payment and amounts are retained.
 - Acceptance tests must create both payment kinds through the API, check the locking boundary with a test clock, and exercise recovery after a real deposit callback reports a resource clash. In the recovery case compare the booking code, payment history and job/reminder counts before and after a repeated request.
 
 `normal` delays about 150 ms; `slow` delays 2 s; `error` returns the README 500 shape; `empty` makes every list, including nested lists, `[]`. Empty list reads return 200, not 404. No future-date validation applies.
@@ -43,9 +43,9 @@ Integration status (27/11): the Admin guard reads the transaction's `expiresAt` 
 | `items` | ScheduleItemInput[] | yes | 1–4 items, validated exactly as file 04: kind makeup/shoot, HH:mm end > start, existing staffId and roomId (null allowed for makeup) |
 
 - **200 OK:** `{booking: Booking}`. Apply date/items directly. Check configured opening hours and recheck staff/room at save, ignoring only the same booking. Existing jobs retain IDs, status, notes and progress. The edit job keeps its assigned editor and null schedule fields.
-- For awaiting_deposit/unpaid, do not create jobs. For awaiting_deposit/deposit_paid, carry over the same code, package and deposit. After validation and a clash-free schedule, the shared confirmation operation from TV2 creates jobs and reminders once and confirms the booking. Never start a new charge. Prepare all related changes before publishing any of them. Recovery waits on the TV2 confirmation operation.
+- For awaiting_deposit/unpaid, do not create jobs. For awaiting_deposit/deposit_paid, carry over the same code, package and deposit. After validation and a clash-free schedule, the shared confirmation operation creates jobs and one reminder. Repeating the same schedule does not provision them again or start a charge. Prepare all related changes before publishing any of them. If confirmation fails or concurrent changes invalidate the draft, leave booking, jobs, reminders and payments unchanged by the failed request.
 - **Errors:** inherited 401/403/500; 400 VALIDATION with date/items.*; 404 NOT_FOUND for missing booking; 409 CONFLICT for cancelled/completed, paid_in_full, a shoot job in_progress/done, or a live payment; 409 CLASH with details.clashes/details.suggestions. Validation, clash and conflicts leave booking, jobs, reminders and payments unchanged.
-- **TV1 mapping dependency:** existing job IDs are J-code-kind. Multiple same-kind slots or adding/removing kinds with existing jobs have no agreed mapping. Until TV1 hands over that rule, return 409 CONFLICT without mutation for a non-bijective mapping, never pick the first slot or return a dependency 500. Schedules without existing jobs remain subject to normal ScheduleItemInput validation. This is a reported integration limitation, not a new PO restriction.
+- **PA#3 mapping limitation:** job IDs are J-code-kind. Return 409 CONFLICT without mutation when an existing job would require adding, removing or repeating a schedule kind, or when paid recovery would need more than one job for the same kind. Unpaid schedules without jobs are subject to normal ScheduleItemInput validation.
 
 ## POST /api/bookings/:code/cancel
 
@@ -511,6 +511,8 @@ Content-Type: application/json
 
 
 ## Changes
+
+- 2026-11-27: Integrate B4.1 paid-deposit recovery with QA9 confirmation on the new schedule. Document atomic failure behavior, retry behavior and the PA#3 job mapping limitation.
 
 - 2026-11-27: QA10 integration review after QA8. Describe the pending payment and confirmation handoffs and distinguish their API acceptance scenarios from the current interim guards.
 
