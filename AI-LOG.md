@@ -1011,3 +1011,19 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `npm run build` tạo `client/dist`. `node tools/tv3-admin-build-check.mjs` chạy Chrome ngoài sandbox, thoát mã 0. Admin thao tác đề xuất, tạo, đổi, hủy và giao link trên UI. Harness dùng HTTP để chuẩn bị yêu cầu mới, cọc, jobs, lựa chọn ảnh và phần thanh toán còn lại. Customer bấm Nhận ảnh trên UI. Đã kiểm bốn chế độ mock, ba chiều rộng, log JavaScript và API. Syntax 23 mô-đun, kiểm tra conflict markers và `git diff --check` đạt.
   - Chưa kiểm được vòng đời 15 phút thật của cổng thanh toán, ca khôi phục cọc thành công và sinh jobs/nhắc đúng một lần, phân công người chỉnh khác thợ chụp đi qua bước xác nhận, hoặc điều hướng từ trang dịch vụ Customer.
 - **Commits:** `036851f` brief; `861b063`, `8390c06`, `6cc7117`, `5f9fad1` contract; `78f0598`, `d99184b`, `3ed7561`, `b4a5277`, `b225837`, `812d890` mock; `72981f7`, `e36c91b`, `2c34cbf`, `d4a10ac`, `590ff60` React; `4121632`, `ab89443` kiểm thử. Nhật ký được commit riêng sau cùng.
+
+
+### [TV3] 34. QA10 rà tích hợp sau QA8 (27/11/2026)
+
+- **Tool:** Codex, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 34. Xác minh lại phần TV3 trên `c5dead9` sau khi ghép QA8 và xác định các điểm cần TV2 bàn giao.
+- **Changed:**
+  - Cập nhật `FRONTEND.md` theo B2.2, B4.5–6 và B4.11. Contract 05/10 ghi dữ liệu người chỉnh, thời điểm hết hạn và điều kiện của bước xác nhận dùng chung. B4.1 thay phương án cũ B1.8 cho cọc đã thu nhưng trùng lịch. BS.1 chốt cùng hạn 15 phút cho hai khoản.
+  - Thêm hai ca HTTP dùng mock thật. Ca QA8 cập nhật cấu hình qua Superadmin rồi kiểm bốn thao tác lịch Admin, giờ liền nhau, ngày mẫu và cọc sau khi thu hẹp giờ mở cửa. Ca B4.1 tạo hai booking cùng lịch, cọc thật để gây trùng, rồi kiểm từ chối lịch trùng hoặc sai định dạng và giữ booking, tiền, jobs và nhắc lịch.
+  - Trang chi tiết Admin gọi tên người chỉnh là người đã chọn để phân biệt với job do thanh toán sinh.
+- **Rejected / lỗi phát hiện:** Ref mới từ origin vẫn chưa có bàn giao QA9. Lượt HTTP riêng xác nhận cả payment cọc và 70% mới đều thiếu `expiresAt`, Admin trả 409 với details null. Booking cọc trùng vẫn trả 409 khi đổi sang giờ trống, giữ nguyên khoản thu. Tạo booking chọn Hà chỉnh và Tuấn chụp, rồi xác nhận bằng gateway, cho ra job edit thuộc Tuấn và Hà đọc job trả 404. Giữ nguyên phần TV2.
+- **Checked:**
+  - Handler: bộ hồi quy ba thành viên đạt **39/39**, 0 FAIL, 0 skip/TODO. Ranh giới hết hạn và vài điều kiện giao link dùng dữ liệu test. Test giữ nguyên khi thiếu confirmation chỉ kiểm giới hạn tạm.
+  - HTTP: contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Hai ca HTTP mới đạt với cấu hình và thanh toán do API tạo. Lượt HTTP riêng ghi nhận ba hạn chế tích hợp nêu trên.
+  - UI: `npm run build` tạo `client/dist`. Harness Chrome trên production build thoát 0. Đã chạy Admin và Nhận ảnh phía Customer, bốn mock mode và ba chiều rộng. Ca giao ảnh dùng Tuấn ở cả hai vai trò chụp và chỉnh. Chưa nghiệm thu UI với hạn thanh toán thật hoặc editor khác photographer.
+- **Commits:** `d89176a` brief; `26cbe15`, `26c39dc` contract; `96edde1` FRONTEND; `f85abc9` UI Admin; `962830d` harness Chrome; `778f2ec` hồi quy HTTP. Nhật ký được commit riêng sau cùng.
