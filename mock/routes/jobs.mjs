@@ -160,8 +160,22 @@ export default [
       if (!job) return fail(404, 'NOT_FOUND', JOB_NOT_FOUND);
 
       const booking = bookingOf(db, job.bookingCode);
-      if (booking && booking.status === 'cancelled') {
-        return fail(409, 'CONFLICT', 'Booking đã hủy, không thể cập nhật công việc');
+      if (booking) {
+        if (booking.status === 'cancelled') {
+          return fail(409, 'CONFLICT', 'Booking đã hủy, không thể cập nhật công việc');
+        }
+        if (job.kind === 'makeup' || job.kind === 'shoot') {
+          if (booking.paymentStatus === 'paid_in_full' || booking.status === 'completed') {
+            return fail(409, 'CONFLICT', 'Khách đã thanh toán đủ 70%, không thể cập nhật việc makeup/chụp ảnh');
+          }
+        } else if (job.kind === 'edit') {
+          if (booking.finalLink || booking.status === 'completed') {
+            return fail(409, 'CONFLICT', 'Booking đã gắn link ảnh hoàn chỉnh, không thể cập nhật việc chỉnh ảnh');
+          }
+          if (booking.paymentStatus !== 'paid_in_full' || !(booking.selection?.selectedCount > 0)) {
+            return fail(409, 'CONFLICT', 'Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%');
+          }
+        }
       }
 
       const fields = {};

@@ -1,1 +1,1 @@
-{"openingHours": {"open": "08:00", "close": "20:00"}, "reminderHoursBefore": 24}
+{"openingHours": {"weekday": {"open": "08:00", "close": "20:00"}, "weekend": {"open": "08:00", "close": "20:00"}}, "reminderHoursBefore": 24}

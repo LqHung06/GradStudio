@@ -1,5 +1,7 @@
 // Shared by proposals, rescheduling and deposit payment (docs/api/04, 06, 10).
 // Accepts ScheduleItemInput as well as the enriched ScheduleItem on a Booking.
+import { getOpeningHoursForDate } from './opening-hours.mjs';
+
 const minutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 const timeAt = (value) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 const overlaps = (a, b) => a.start < b.end && b.start < a.end;
@@ -56,19 +58,19 @@ export function checkClash(db, date, items, { ignoreBooking } = {}) {
   if (!clashes.length) return { available: true, clashes: [], suggestions: [] };
 
   const suggestions = [];
-  const hours = db.settings?.openingHours;
+  const hours = getOpeningHoursForDate(db.settings, date);
   // TV1 owns settings. Still return actual clashes if it has not been delivered;
   // never fabricate opening hours or suggest an unchecked alternative.
-  if (!hours || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hours.open)
-    || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hours.close)
-    || hours.open >= hours.close) return { available: false, clashes, suggestions };
+  if (!hours) return { available: false, clashes, suggestions };
 
   const first = minutes(inputs[0].start);
   const add = (candidateDate, start) => {
+    const dayHours = getOpeningHoursForDate(db.settings, candidateDate);
+    if (!dayHours) return false;
     const shifted = inputs.map((item) => ({ ...item,
       start: timeAt(minutes(item.start) + start - first),
       end: timeAt(minutes(item.end) + start - first) }));
-    if (shifted.some((item) => minutes(item.start) < minutes(hours.open) || minutes(item.end) > minutes(hours.close))) return false;
+    if (shifted.some((item) => minutes(item.start) < minutes(dayHours.open) || minutes(item.end) > minutes(dayHours.close))) return false;
     if (findClashes(db, candidateDate, shifted, options).length) return false;
     suggestions.push({ date: candidateDate, label: describe(db, candidateDate, date, shifted), items: shifted });
     return true;
