@@ -2631,3 +2631,52 @@ Báo cáo cuối:
 - Phụ thuộc hoặc lỗi cần phối hợp.
 - Git status và đề xuất nội dung PR cho Kiệt review.
 ```
+
+
+## 32. [TV1 · 27/11/2026 · Antigravity Assistant] QA8: Giờ mở cửa 2 khung (T2–T6 / T7–CN, B4.4) và quy tắc khóa việc Staff (B4.8, B4.11, B2.1)
+
+Tin nhắn 1:
+
+```text
+Bối cảnh: GradStudio PA#3, tách nhánh `feat/qa8-settings-and-job-locks` từ `main` mới nhất (`effea64`). Thực hiện trọn phần việc **QA8 của TV1** theo bản kế hoạch cập nhật 27/11/2026 (`B4.4`, `B4.8`, `B4.11`, `B2.1`) để bàn giao sáng 28/11 cho TV3 và TV2.
+
+Ràng buộc bắt buộc:
+1. Đúng thứ tự bắt buộc: sửa contract (`docs/api/`) trước → mock (`mock/`) → UI (`client/`) → test (`tools/tv1-rules.test.mjs`).
+2. KHÔNG sửa file thuộc TV2 (`02`, `06`, `07`, `09`, `11`, `payments.mjs`, `reminders.mjs`, `gallery.mjs`, `pages/customer/`) và KHÔNG sửa logic nghiệp vụ của TV3 (`03`, `04`, `05`, `10`, `pages/admin/`), NGOẠI TRỪ cập nhật tối thiểu đoạn đọc `db.settings.openingHours` trong `mock/lib/clash.mjs` sang dùng helper `getOpeningHoursForDate` mới để `contract-check` (`04-availability.md`) và CI không bị gãy khi tách 2 khung giờ.
+3. KHÔNG thêm dependency vào `client/package.json`. KHÔNG tự chạy `git add`, `git commit`, `git push` (khi xong gợi ý cách tách commit chuẩn contract → mock → UI → test → AI-LOG).
+4. Mọi kết quả kiểm tra ghi vào `AI-LOG.md` phải là kết quả chạy thật trong phiên này, dọn sạch mọi tiến trình nền sau khi test.
+
+Yêu cầu chi tiết (QA8 — TV1):
+1. **G11 · Giờ mở cửa tách T2–T6 & T7–CN (`B4.4`):**
+   - `docs/api/13-settings.md`: đổi cấu trúc `openingHours` sang 2 khung:
+     `{"openingHours": {"weekday": {"open": "08:00", "close": "20:00"}, "weekend": {"open": "08:00", "close": "20:00"}}, "reminderHoursBefore": 24}`
+     (bắt buộc seed cuối tuần bao được `09:00–16:00` ngày Thứ Bảy `24/10/2026`). Cập nhật bảng field, validation (`openingHours.weekday.open/close`, `openingHours.weekend.open/close`), các ví dụ `GET`/`PUT` (`200`, `400`, `403`) và mục `## Changes`.
+   - `mock/data/settings.json`: cập nhật seed theo đúng schema mới.
+   - `mock/lib/opening-hours.mjs` (file mới): xuất helper `getOpeningHoursForDate(settings, dateStr)` (T2–T6 dùng `weekday`, T7–CN dùng `weekend`, có fallback an toàn nếu nhận object legacy `{open, close}`) để bàn giao cho TV3 dùng ở G5/G6/G10.
+   - `mock/routes/settings.mjs`: cập nhật `validateSettings` kiểm tra đủ `HH:mm` và `close > open` cho cả `weekday` và `weekend`, giữ nguyên `reminderHoursBefore` (nguyên 1–168).
+   - `mock/lib/clash.mjs`: chỉ đổi đoạn đọc `db.settings?.openingHours` sang gọi `getOpeningHoursForDate(db.settings, candidateDate)` để `04-availability.md` và `tv3-booking-rules.test.mjs` vẫn PASS 100%.
+   - `client/src/pages/superadmin/SuperadminSettingsPage.jsx` (và `superadmin.css` nếu cần): cập nhật form dùng `useForm` + `FormField` với 2 nhóm rõ ràng **Ngày thường (T2–T6)** (Giờ mở cửa / Giờ đóng cửa) và **Cuối tuần (T7–CN)** (Giờ mở cửa / Giờ đóng cửa), map lỗi 400 từng field từ API, giữ responsive 360/768/1280px.
+
+2. **G8 · Quy tắc khóa/mở trạng thái việc Staff (`B4.8`, `B4.11`, `B2.1`):**
+   - `docs/api/08-jobs.md`:
+     * Cập nhật mô tả: Staff được đổi trạng thái việc của mình theo thứ tự bất kỳ (kể cả lùi trạng thái) khi chưa bị khóa; giữ nguyên quyền đọc lịch sử `GET` và quy tắc upload preview hiện tại; ghi rõ việc `edit` do Admin phân công khi tạo booking (đồng bộ với `B4.11`).
+     * Bổ sung đủ 4 điều kiện trả `409 CONFLICT` cho `PATCH /api/jobs/:id`:
+       (a) Booking `cancelled` (giữ nguyên);
+       (b) Việc `makeup` hoặc `shoot` khi booking đã `paid_in_full` hoặc `completed`;
+       (c) Việc `edit` khi booking chưa có danh sách ảnh đã lưu (`!(booking.selection?.selectedCount > 0)`) HOẶC chưa `paid_in_full`;
+       (d) Việc `edit` khi booking đã có `finalLink` hoặc đã `completed`.
+     * Bổ sung ví dụ `PATCH /api/jobs/J-GS-1024-edit` trả `409` trong chuỗi `08-jobs.md` (hợp lệ ngay trong chuỗi `contract-check` vì lúc `08` chạy, `GS-1024` chưa chọn ảnh & chưa trả 70%) và ghi mục `## Changes`.
+   - `mock/routes/jobs.mjs`: triển khai chính xác 4 điều kiện khóa `409` trên trong `PATCH /api/jobs/:id` (không thay đổi dữ liệu khi từ chối); giữ nguyên `GET /api/jobs`, `GET /api/jobs/:id` và `POST /api/bookings/:code/previews`.
+   - `client/src/pages/staff/StaffJobDetailPage.jsx`: ngoài trạng thái `cancelled`, tính `statusLockReason` theo `job.kind` và trạng thái `booking` (`paymentStatus`, `selection.selectedCount`, `finalLink`, `status`); khi bị khóa thì disable form cập nhật trạng thái và hiện rõ lý do bằng chữ gắn `aria-describedby` vào nút **Lưu cập nhật**; khi chưa bị khóa vẫn cho đổi bất kỳ kể cả lùi trạng thái.
+
+3. **Kiểm thử hồi quy & nghiệm thu thực tế:**
+   - `tools/tv1-rules.test.mjs`: bổ sung test cho `B4.4` (`GET`/`PUT` 2 khung giờ, validate lỗi từng khung, `getOpeningHoursForDate` cho ngày thường và T7 `24/10/2026` / CN `25/10/2026`) và `B4.8`/`B4.11` (lùi trạng thái `done → todo` khi còn mở; khóa `makeup`/`shoot` sau `paid_in_full`; khóa `edit` khi chưa chọn ảnh hoặc chưa `paid_in_full`; mở `edit` khi đủ cả hai; khóa `edit` khi đã có `finalLink`; vẫn đọc được và chặn `409` khi `cancelled`).
+   - Chạy đủ 5 gate giống hệt `.github/workflows/ci.yml`:
+     * Gate 1: `node --check` + parse 14 JSON.
+     * Gate 2: mock mới + `node tools/contract-check.mjs --base http://127.0.0.1:3001` (yêu cầu 0 FAIL, 40/40 endpoints).
+     * Gate 3: `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs` (0 FAIL).
+     * Gate 4: `cd client && npm run build`.
+     * Gate 5: 0 conflict markers và `git diff --check` 0 lỗi.
+   - Kiểm tra nhanh trên bản build (`npx vite preview --port 4173` + `mock/server.mjs`) cho `/superadmin/settings` (lưu 2 khung giờ + F5) và `/staff/jobs/J-GS-1022-shoot` / `/staff/jobs/J-GS-1022-edit` (xác nhận `shoot` còn mở và lùi trạng thái được, `edit` bị khóa kèm lý do rõ, 0 lỗi Console).
+   - Ghi mục tiếp theo vào `brief.md` và `AI-LOG.md` (nối cuối file).
+```
