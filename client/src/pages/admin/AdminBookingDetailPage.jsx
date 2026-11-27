@@ -80,6 +80,7 @@ function BookingDetail({ code }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const booking = data?.booking;
+  const actions = data?.adminActions;
   const editable = ['awaiting_deposit', 'booked'].includes(booking?.status);
 
   async function update(method, suffix, body, message) {
@@ -89,9 +90,18 @@ function BookingDetail({ code }) {
     setNotice('');
     try {
       const result = await apiFetch(path + suffix, { method, body });
-      setData(result);
+      setData((current) => ({ ...current, ...result }));
       setNotice(message);
       return result.booking;
+    } catch (error) {
+      const retryAt = new Date(error.details?.retryAt);
+      if (error.status === 409 && Number.isFinite(retryAt.getTime())) {
+        const formatted = new Intl.DateTimeFormat('vi-VN', {
+          dateStyle: 'short', timeStyle: 'medium', timeZone: 'Asia/Ho_Chi_Minh',
+        }).format(retryAt);
+        throw new Error(`${error.message} Có thể thử lại lúc ${formatted} (giờ Việt Nam).`);
+      }
+      throw error;
     } finally {
       lock.current = false;
       setBusy(false);
@@ -108,6 +118,8 @@ function BookingDetail({ code }) {
             Mở hội thoại của {booking.customer.name}
           </Link>
         )}
+        {booking && <button type="button" className="button button-outline" disabled={busy || loading}
+          onClick={reload}>Làm mới booking</button>}
       </div>
       <AsyncState loading={loading} error={error?.status === 404 ? null : error} onRetry={reload}
         isEmpty={!booking} emptyMessage={'Không tìm thấy booking ' + code + '. Booking có thể chưa được tạo.'}>
@@ -115,21 +127,26 @@ function BookingDetail({ code }) {
           <section className="admin-card">
             <BookingSummary booking={booking} heading="h2" />
             {booking.status === 'awaiting_deposit' && booking.paymentStatus === 'deposit_paid' && (
-              <p>Studio đã nhận cọc nhưng chưa giữ được chỗ. Studio sẽ liên hệ khách để xử lý lịch.</p>
+              <p>Studio đã nhận cọc nhưng chưa giữ được chỗ. Khoản cọc vẫn gắn với booking này.</p>
             )}
+            {actions?.editor && <p>Người chỉnh ảnh: {actions.editor.name}</p>}
             <h3>Dịch vụ thêm</h3>
             {booking.extras.length
               ? <ul>{booking.extras.map(({ id, name }) => <li key={id}>{name}</li>)}</ul>
               : <p>Booking này chưa có dịch vụ thêm.</p>}
           </section>
           {(busy || notice) && <p role="status">{busy ? 'Đang lưu thay đổi…' : notice}</p>}
-          {editable && <RescheduleForm booking={booking} busy={busy} update={update} />}
+          {editable && actions && (actions.rescheduleBlockedReason
+            ? <section className="admin-card"><h2>Đổi lịch</h2><p>{actions.rescheduleBlockedReason}</p></section>
+            : <RescheduleForm booking={booking} busy={busy} update={update} />)}
           <section className="admin-card">
             <h2>Ảnh hoàn chỉnh</h2>
             {booking.finalLink
               ? <a className="admin-link" href={booking.finalLink} target="_blank" rel="noreferrer">Mở link ảnh hoàn chỉnh</a>
               : <p>Chưa có link ảnh hoàn chỉnh.</p>}
-            {booking.status === 'booked' && <FinalLinkForm finalLink={booking.finalLink} busy={busy} update={update} />}
+            {editable && actions && (actions.finalLinkBlockedReason
+              ? <p>{actions.finalLinkBlockedReason}</p>
+              : <FinalLinkForm finalLink={booking.finalLink} busy={busy} update={update} />)}
           </section>
           {editable && <CancelBooking busy={busy} update={update} />}
         </>}
