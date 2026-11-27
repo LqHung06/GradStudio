@@ -9,6 +9,11 @@ import { PAYMENT_ITEM_STATUS } from '../../constants/status.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import '../../styles/customer-pages.css';
 
+function formatDateTimeVi(iso) {
+  const m = typeof iso === 'string' && /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/.exec(iso);
+  return m ? `${m[4]} ngày ${m[3]}/${m[2]}/${m[1]}` : iso || '';
+}
+
 export function TestGatewayPage() {
   const { paymentId } = useParams();
   const navigate = useNavigate();
@@ -34,6 +39,7 @@ export function TestGatewayPage() {
       navigate(res.redirectUrl);
     } catch (err) {
       setSubmitError(err?.message || 'Không thể xử lý giao dịch thử nghiệm, vui lòng thử lại.');
+      paymentReq.reload();
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -105,6 +111,12 @@ export function TestGatewayPage() {
                       <StatusBadge map={PAYMENT_ITEM_STATUS} status={payment.status} />
                     </dd>
                   </div>
+                  {payment.expiresAt && (
+                    <div className="package-summary-item">
+                      <dt>Hết hạn giao dịch</dt>
+                      <dd>{formatDateTimeVi(payment.expiresAt)}</dd>
+                    </div>
+                  )}
                 </dl>
 
                 {submitError && (
@@ -135,7 +147,8 @@ export function TestGatewayPage() {
                 ) : (
                   <div className="payment-muted-box">
                     <p>
-                      Giao dịch {payment.id} cho booking {booking?.code || payment.bookingCode} đã được xử lý và không còn ở trạng thái chờ.
+                      Giao dịch {payment.id} cho booking {booking?.code || payment.bookingCode} không còn ở trạng thái chờ thanh toán
+                      {payment.failureReason ? `: ${payment.failureReason}.` : '.'}
                     </p>
                     <Link
                       className="button button-dark"

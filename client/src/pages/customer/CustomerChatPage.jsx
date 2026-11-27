@@ -43,11 +43,16 @@ export function CustomerChatPage() {
 
   useEffect(() => {
     if (!selectedId && conversations.length > 0) {
-      setSelectedId(conversations[0].id);
+      if (initialPackageId) {
+        const preferred = conversations.find((c) => !c.bookingCode && c.status !== 'done');
+        setSelectedId((preferred || conversations[0]).id);
+      } else {
+        setSelectedId(conversations[0].id);
+      }
     } else if (selectedId && conversations.length > 0 && !conversations.some((c) => c.id === selectedId)) {
       setSelectedId(conversations[0].id);
     }
-  }, [conversations, selectedId]);
+  }, [conversations, initialPackageId, selectedId]);
 
   const detailReq = useFetch(selectedId ? `/api/conversations/${encodeURIComponent(selectedId)}` : null);
   const conversation = detailReq.data?.conversation || null;
@@ -91,7 +96,10 @@ export function CustomerChatPage() {
           updatedAt: created.updatedAt,
         };
         conversationsReq.setData((prev) => ({
-          conversations: [summary, ...(prev?.conversations || [])],
+          conversations: [
+            summary,
+            ...(prev?.conversations || []).filter((c) => c.id !== created.id),
+          ],
         }));
         setSelectedId(created.id);
         detailReq.setData({ conversation: created });
@@ -153,23 +161,33 @@ export function CustomerChatPage() {
             },
           },
         });
-        detailReq.setData((prev) => {
-          if (!prev?.conversation) return prev;
-          return {
-            conversation: {
-              ...prev.conversation,
-              status: res.conversation.status,
-              lastMessage: res.conversation.lastMessage,
-              updatedAt: res.conversation.updatedAt,
-              messages: [...prev.conversation.messages, res.message],
-            },
-          };
-        });
-        conversationsReq.setData((prev) => ({
-          conversations: (prev?.conversations || []).map((c) =>
-            c.id === res.conversation.id ? res.conversation : c,
-          ),
-        }));
+        if (res.conversation.id !== selectedId) {
+          conversationsReq.setData((prev) => ({
+            conversations: [
+              res.conversation,
+              ...(prev?.conversations || []).filter((c) => c.id !== res.conversation.id),
+            ],
+          }));
+          setSelectedId(res.conversation.id);
+        } else {
+          detailReq.setData((prev) => {
+            if (!prev?.conversation) return prev;
+            return {
+              conversation: {
+                ...prev.conversation,
+                status: res.conversation.status,
+                lastMessage: res.conversation.lastMessage,
+                updatedAt: res.conversation.updatedAt,
+                messages: [...prev.conversation.messages, res.message],
+              },
+            };
+          });
+          conversationsReq.setData((prev) => ({
+            conversations: (prev?.conversations || []).map((c) =>
+              c.id === res.conversation.id ? res.conversation : c,
+            ),
+          }));
+        }
         reset({
           packageId: v.packageId,
           shootType: v.shootType,
@@ -226,6 +244,16 @@ export function CustomerChatPage() {
       method: 'POST',
       body: { text },
     });
+    if (res.conversation.id !== selectedId) {
+      conversationsReq.setData((prev) => ({
+        conversations: [
+          res.conversation,
+          ...(prev?.conversations || []).filter((c) => c.id !== res.conversation.id),
+        ],
+      }));
+      setSelectedId(res.conversation.id);
+      return;
+    }
     detailReq.setData((prev) => {
       if (!prev?.conversation) return prev;
       return {
@@ -282,6 +310,10 @@ export function CustomerChatPage() {
       }));
     } catch (err) {
       setProposalError(err?.message || 'Không thể cập nhật phản hồi đề xuất giờ, vui lòng thử lại.');
+      if (err instanceof ApiError && err.status === 409) {
+        detailReq.reload();
+        conversationsReq.reload();
+      }
     } finally {
       setReplyingId(null);
     }

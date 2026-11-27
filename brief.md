@@ -2946,3 +2946,10 @@ Không đánh dấu QA10 hoàn tất khi B4.1, hạn giao dịch hoặc
 phân công chỉnh ảnh mới chỉ được kiểm bằng fixture.
 Dừng ở diff, không commit hoặc push.
 ```
+
+
+## 35. [TV2 · 27/11/2026 · Antigravity Assistant] QA9: Hạn giao dịch 15 phút, xác nhận cọc dùng chung, nhắc lịch đến hạn và đồng bộ giao diện khách
+
+```text
+merge xong rồi, bạn hãy kéo main mới nhất về và triển khai thật kĩ phần QA9, chạy các TH biên kĩ
+```

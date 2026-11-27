@@ -8,3 +8,8 @@ export function nowIso() {
   // Shift the UTC clock by +7 h, print it as UTC without the "Z" and milliseconds, then add the offset.
   return new Date(Date.now() + OFFSET_MS).toISOString().slice(0, 19) + '+07:00';
 }
+
+// Formats an epoch millisecond timestamp in +07:00 ISO 8601 format.
+export function isoFromMs(ms = Date.now()) {
+  return new Date(ms + OFFSET_MS).toISOString().slice(0, 19) + '+07:00';
+}
