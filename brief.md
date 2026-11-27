@@ -2953,3 +2953,173 @@ Dừng ở diff, không commit hoặc push.
 ```text
 merge xong rồi, bạn hãy kéo main mới nhất về và triển khai thật kĩ phần QA9, chạy các TH biên kĩ
 ```
+
+
+## 36. [TV3 · 27/11/2026 · Codex] QA10 khôi phục booking đã nhận cọc
+
+```text
+Nhánh đề xuất: fix/qa10-paid-deposit-recovery.
+
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy hoàn tất mảnh tích hợp B4.1 còn lại của QA10: đổi sang giờ trống trên booking đã nhận cọc nhưng chưa giữ được chỗ.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+QA8, QA9 và phần lớn QA10 đã lên main. TV2 đã bàn giao:
+confirmBookingReservation(db, booking)
+trong mock/lib/booking-confirmation.mjs.
+
+1. Cập nhật và tạo nhánh
+
+Kiểm tra git status, branch và remote. Giữ nguyên thay đổi có sẵn; không tự stash, reset hoặc ghi đè.
+
+Khi working tree sạch:
+git fetch origin
+git switch main
+git merge --ff-only origin/main
+git switch -c fix/qa10-paid-deposit-recovery
+
+Commit 3572675 là mốc đã có bàn giao. Nếu origin/main mới hơn, dùng bản mới nhất; không đưa main về commit cũ.
+
+Xác nhận helper và các cập nhật QA9 thực sự có trong base. Nếu nhánh đã tồn tại, kiểm tra trước khi tiếp tục.
+
+2. Đọc trước khi sửa
+
+Đọc:
+- AGENTS.md và FRONTEND.md §7.
+- Phần QA10 trong kế hoạch TV3.
+- GradStudio_PO_QA.md, nhất là B4.1–4, B4.7 và B4.11.
+- docs/api/05-bookings.md, 06-payments.md và 10-admin-bookings.md.
+- mock/lib/booking-confirmation.mjs.
+- Luồng gọi helper từ payments để hiểu cách bàn giao.
+- mock/routes/admin-bookings.mjs.
+- Các helper khóa giao dịch, kiểm lịch và reminders.
+- Test TV3, test QA9 và harness Admin hiện có.
+
+Không triển khai lại phần TV2 đã bàn giao hoặc giữ ghi chú
+“chưa có helper” từ checkout cũ.
+
+3. Tích hợp PATCH booking
+
+Trong PATCH /api/bookings/:code, hoàn thiện trường hợp:
+status = awaiting_deposit
+paymentStatus = deposit_paid
+
+Thay nhánh đang trả 409 “Chưa thể xác nhận lịch mới cho khoản cọc đã nhận” bằng tích hợp helper dùng chung.
+
+Yêu cầu:
+- Giữ các kiểm tra quyền, trạng thái booking, tiến độ chụp,
+  giao dịch đang chờ, validation và giờ mở cửa hiện có.
+- Kiểm tra trùng người/phòng theo lịch mới, bỏ qua chính booking.
+- Dùng date/items mới khi gọi xác nhận.
+- Helper là async: chuyển handler sang async và await kết quả.
+- Kiểm tra kết quả ok trước khi trả thành công.
+- Giữ nguyên mã booking, hội thoại, gói, giá, khoản cọc,
+  payments và người chỉnh đã phân công.
+- Thành công chuyển booked và sinh jobs/nhắc lịch qua helper
+  đúng một lần.
+- Không tạo payment mới, thu cọc lại hoặc tạo booking khác.
+
+Bảo đảm tính nguyên vẹn của thao tác:
+- Giờ trùng, validation lỗi, helper từ chối hoặc ném lỗi
+  không được để lịch mới, jobs hay reminders được ghi một phần.
+- Đọc rõ helper thay đổi db/booking như thế nào trước khi tích hợp.
+- Chuẩn bị thay đổi trên bản sao phù hợp nếu cần, rồi áp dụng
+  sau khi mọi bước thành công.
+- Không gọi helper trên lịch cũ rồi mới đổi ngày/giờ.
+- Không tự đánh dấu booked trước khi helper kiểm tra.
+- Trả lỗi đúng contract và giữ lý do trùng bằng chữ.
+
+Giữ nguyên hành vi đổi lịch của booking booked và chưa thu cọc.
+Không làm yếu các khóa pending payment, paid_in_full,
+shoot in_progress/done, cancelled hoặc completed.
+
+4. Phạm vi
+
+Được sửa:
+- mock/routes/admin-bookings.mjs.
+- Contract TV3 nếu cần cập nhật mô tả hoặc ví dụ B4.1.
+- Test TV3 và harness Admin liên quan.
+- FRONTEND.md, brief.md và AI-LOG.md trong phạm vi task.
+
+Không tự sửa helper xác nhận, payments hoặc file TV1/TV2.
+Nếu helper có lỗi, ghi ca tái hiện và phần cần bàn giao;
+không sao chép logic của helper vào route.
+
+Nếu thay đặc tả, sửa contract và Changes trước mock.
+Không thêm endpoint, field hoặc dependency ngoài phạm vi.
+
+5. Kiểm tra hồi quy
+
+Thêm ca thành công thay cho giới hạn tạm “helper chưa có”:
+- Tạo ca cọc thật đã thành công nhưng trùng lịch qua API.
+- Đổi sang giờ trống trên cùng mã: trả 200, status booked,
+  giữ deposit_paid và khoản đã thu.
+- Jobs đúng ca, người/phòng và người chỉnh đã chọn.
+- Nhắc lịch đúng mốc sớm nhất và cấu hình hiện tại.
+- Gọi lại không sinh trùng jobs/reminders hoặc ghi nhận tiền lại.
+- Đổi sang giờ vẫn trùng: 409 CLASH, toàn bộ dữ liệu giữ nguyên.
+- Thiếu quyền, giờ ngoài khung và giao dịch còn hạn vẫn bị chặn.
+- Các luồng đổi lịch/hủy/giao link hiện có không bị hồi quy.
+
+Không chỉ đặt sẵn trạng thái fixture rồi kết luận đã kiểm đủ
+luồng cọc → trùng → đổi lịch → xác nhận.
+
+Chạy các gate trong AGENTS.md/HARNESS.md hiện tại:
+- Syntax và seed JSON.
+- Contract-check trên mock mới khởi động.
+- Các bộ hồi quy được CI sử dụng, gồm TV1/TV2/TV3 và test QA9
+  nếu đã được bổ sung.
+- Build React.
+- Conflict markers và git diff --check.
+
+Nếu chạy được trình duyệt, kiểm tra thao tác đổi giờ của Admin
+từ awaiting_deposit/deposit_paid sang booked, cập nhật trực tiếp
+từ response và không phát sinh yêu cầu cọc lại.
+
+Ghi kết quả mới; không dùng số PASS từ nhật ký cũ.
+
+6. Tài liệu và giới hạn còn lại
+
+FRONTEND.md §7:
+- Chỉ gỡ B4.1 khỏi Not done sau khi kiểm tra thành công.
+- Với đổi lịch thêm/bớt/lặp loại ca, nếu nhóm không mở rộng
+  trong PA#3 thì ghi rõ giới hạn hiện tại và phản hồi 409.
+- Không ghi giới hạn này thành quy tắc PO hoặc tự mở rộng
+  ánh xạ jobs trong task B4.1.
+
+Ghi prompt nguyên văn vào brief.md trước khi sửa.
+Cập nhật AI-LOG.md đúng cấu trúc có sẵn, ngày thực tế,
+kết quả kiểm tra và giới hạn. Giữ nguyên lịch sử.
+
+7. Commit và mở PR
+
+Tôi cho phép commit, push nhánh task và mở PR vào main.
+Đây là ngoại lệ đối với quy định không commit/push trong AGENTS.md.
+
+Author/committer:
+Lê Công Minh Nhựt
+lecongminhnhut6533@gmail.com
+
+Dùng cấu hình từng lệnh, không sửa global config.
+Commit từng file, stage đường dẫn cụ thể và đọc diff staged.
+Không amend, force push hoặc commit thay đổi của người khác.
+
+PR:
+- Base: main.
+- Reviewer: Kiệt – TV2.
+- Tiêu đề đề xuất:
+  fix(qa10): confirm paid bookings after clash-free rescheduling
+- Mô tả hành vi trước/sau, kiểm tra đã chạy và giới hạn còn lại.
+
+Không push trực tiếp main. Chỉ merge sau khi review được
+chấp thuận và các gate bắt buộc đạt; dùng Create a merge commit.
+Nếu chưa đủ điều kiện, bàn giao link PR và lý do còn chờ.
+
+Báo cáo cuối:
+- File và commit.
+- Kết quả kiểm tra B4.1 và các gate.
+- Link PR, trạng thái review/CI/merge.
+- Nội dung Not done còn lại.
+- Git status cuối.
+```

@@ -101,6 +101,8 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 - B2.2 và B4.6. Mỗi hội thoại gắn tối đa một booking. Sau hủy, giữ Đã chốt lịch, mã booking, lịch sử và tiền đã thu. Khách gửi yêu cầu riêng để đặt lại. API trả ID hội thoại đích để màn Customer mở đúng chỗ.
 - B3.3 và B4.5. Đề xuất mới thay đề xuất đang chờ hoặc đã đồng ý. Chỉ đề xuất mới nhất có thể được phản hồi và dùng để tạo booking sau khi được khách đồng ý.
+- B4.1. Khi cọc đã thu nhưng lịch bị trùng, Admin đổi sang giờ trống trên cùng mã booking. QA9 xác nhận lại lịch, giữ khoản cọc và phân công người chỉnh đã chọn, rồi tạo jobs và nhắc lịch một lần.
+- B4.2–3 và BS.1. QA9 áp dụng hạn 15 phút cho cọc và khoản 70%. Admin bị khóa đổi/hủy khi giao dịch còn hạn. QA9 xử lý thử lại sau hết hạn và trường hợp cổng đã thực thu sau khi hủy.
 - B4.4, B4.7 và B4.11. Admin dùng giờ mở cửa theo ngày thường/cuối tuần khi kiểm, đề xuất, tạo và đổi lịch. Việc chụp đã bắt đầu hoặc booking đã trả đủ thì khóa đổi lịch. Chỉ giao link khi booking đã trả đủ và việc chỉnh đã hoàn thành. Khách hoàn tất qua Nhận ảnh.
 
 ## 6. Libraries
@@ -122,7 +124,4 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 ### TV3 — giới hạn tích hợp còn lại
 
-- B4.1. TV2 đã bàn giao `confirmBookingReservation(db, booking)` trong `mock/lib/booking-confirmation.mjs` (đã áp dụng cho luồng cọc và sẵn sàng để TV3 nối vào `PATCH /api/bookings/:code` khi đổi lịch từ trạng thái đã thu cọc nhưng trùng giờ).
-- B4.2–3 và BS.1. TV2 đã hoàn thành vòng đời 15 phút (`expiresAt`) cho cả `deposit` và `remaining`, chặn hết hạn (`409`) + mở thử lại, và xử lý ngoại lệ `gatewayCaptured: true` sau hủy.
-- B4.11. `confirmBookingReservation` đã đọc `db.bookingEditors[code]` để gán đúng người chỉnh ảnh cho `J-<code>-edit` (fallback người chụp khi thiếu `bookingEditors`).
-- B4.6 / B2.1. `CustomerChatPage` đã ưu tiên hội thoại mở chưa có booking khi đi từ `/packages/:id`, theo `res.conversation.id` trả về từ API, và reload khi gặp `409` đề xuất `superseded`. Các ca đổi lịch thêm, bớt hoặc lặp loại ca vẫn cần quy tắc ánh xạ jobs từ TV1.
+- PA#3 dùng một job theo mỗi loại ca. Đổi lịch có jobs hiện hữu mà thêm, bớt hoặc lặp loại ca trả `409 CONFLICT`. Khôi phục booking đã nhận cọc cũng trả `409 CONFLICT` nếu lịch mới cần nhiều job cùng loại. Đây là giới hạn ánh xạ jobs của bản PA#3.
