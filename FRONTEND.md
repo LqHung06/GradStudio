@@ -71,7 +71,9 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 
 Câu hỏi đặt dưới bài *GradStudio — questions for the product owners* (#WAD2431) trong group Facebook của môn. Đường dẫn tới bài trả lời PO chưa được cung cấp (sẽ bổ sung khi có, không tự tạo link).
 
-### 5.1 Phản hồi 10 mục từ Product Owner
+> **Nguyên tắc áp dụng sau cập nhật 27/11/2026:** Khi hai quyết định PO cùng điều chỉnh một quy tắc, áp dụng câu mới hơn (đợt QA ngày 27/11 ở mục **5.3**). Cụ thể, **B2.2** thay thế quy ước cũ ngày 23/11 về việc tạo booking thay thế trong cùng hội thoại.
+
+### 5.1 Phản hồi 10 mục từ Product Owner (23/11/2026)
 
 | Ngày | Link tới comment | Mục / Câu hỏi | Quyết định | Áp dụng ở |
 |---|---|---|---|---|
@@ -92,11 +94,40 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 |---|---|---|
 | Khóa/mở khóa Admin | Thêm `PATCH /api/admins/:id` (`{"active": boolean}`) cho Superadmin; tài khoản bị khóa bị từ chối đăng nhập (`403 FORBIDDEN`) và bị từ chối token cũ (`401 UNAUTHENTICATED`). Không mở sửa thông tin hay xóa Admin. | `README.md`, `01-auth.md`, `12-admins.md`, `server.mjs`, G11 |
 | Việc của Staff sau khi hủy booking | Giữ nguyên lịch sử việc (`GET` vẫn trả, không thêm `job.status = "cancelled"`), hiển thị booking Đã hủy và chặn Staff cập nhật việc / đăng preview (`409 CONFLICT`). | `08-jobs.md`, `10-admin-bookings.md`, G8 |
-| Hội thoại & booking thay thế sau hủy | Khi booking bị hủy, hội thoại giữ trạng thái `Đã chốt lịch` (`scheduled`) và hiển thị riêng booking Đã hủy. Cho phép chốt giờ mới và tạo mã booking thay thế trong cùng hội thoại; giữ nguyên lịch sử và tiền đã thu của booking cũ. | `03-conversations.md`, `05-bookings.md`, `10-admin-bookings.md`, G4, G6, G7, G10 |
+| Hội thoại & booking thay thế sau hủy | *(Đã thay bằng quyết định PO **B2.2** ngày 27/11 ở mục 5.3)* Quy ước cũ 23/11 cho tạo booking thay thế cùng hội thoại sau khi hủy nay không còn áp dụng: mỗi hội thoại chỉ gắn tối đa 1 booking (kể cả booking Đã hủy), hội thoại cũ giữ `scheduled` kèm lịch sử/tiền, đặt lại phải qua yêu cầu mới mở/chọn hội thoại mới theo `B4.6`. | `03-conversations.md`, `05-bookings.md`, `10-admin-bookings.md`, G4, G6, G7, G10 |
 | 4a / 4b Upload ảnh preview | Chỉ nhận JPEG/PNG (`image/jpeg`, `image/png`), mỗi request 1 file, tối đa đúng **5 MiB = 5.242.880 byte** phần nội dung file (cùng ngưỡng ở contract, form `file.size` và server). PA#4 kiểm tra thêm chữ ký file theo S5. | `08-jobs.md`, `mock/routes/jobs.mjs`, G8 |
-| 4c / 4d Nhắc lịch & cài đặt | Trạng thái e-mail `queued` / `sent` / `failed` (PA#4: `sent` khi SMTP chấp nhận). Nhắc qua cả e-mail và tài khoản; số giờ nhắc trước là số nguyên 1–168, mặc định 24, tính từ mốc sớm nhất; nhắc chờ gửi được tính lại khi đổi lịch và dừng gửi khi hủy. | `07-reminders.md`, `13-settings.md`, G7, G11 |
+| 4c / 4d Nhắc lịch & cài đặt | Trạng thái e-mail `queued` / `sent` / `failed` (PA#4: `sent` khi SMTP chấp nhận). Nhắc qua cả e-mail và tài khoản; số giờ nhắc trước là số nguyên 1–168, mặc định 24, tính từ mốc sớm nhất; nhắc chờ gửi được tính lại khi đổi lịch và dừng gửi khi hủy. *(Bổ sung chi tiết gửi đến hạn & giờ mở cửa 2 khung tại B4.4, B4.12–B4.13 mục 5.3.)* | `07-reminders.md`, `13-settings.md`, G7, G11 |
 | 4e Đại diện lớp (kỷ yếu) | Một tài khoản đại diện lớp sở hữu booking kỷ yếu và dùng trọn luồng Customer; không thêm chia tiền hay nhiều tài khoản đồng quản lý. | Toàn bộ luồng Customer & kiểm tra chủ sở hữu |
 | Quy ước kỹ thuật mục 2.7 | Làm tròn cọc `Math.round(price * 0.3)` (VND nguyên); Payment cọc trùng dùng `succeeded` + `deposit_paid` + `reservationFailure`; điều kiện trả 70% yêu cầu mọi job `shoot` của booking đã `done`; ID hội thoại mới sinh dạng `c-1`, `c-2`… | `README.md`, `03`, `06`, `08`, `10` |
+
+### 5.3 Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)
+
+Nguồn: các bài QA bổ sung (`B2`, `B3`, `B4`, `BS.1`) trong kế hoạch cập nhật 27/11/2026 (chưa có đường dẫn bài đăng Facebook để trích dẫn, không tự tạo link). Trạng thái dưới đây phản ánh đúng commit `a8236fd` trên `main`.
+
+| Mã QA | Bước / R | Quyết định PO | Phụ trách | Trạng thái tại `a8236fd` |
+|---|---|---|---|---|
+| `B2.1` | G8, G9 · R6 | Mở trả 70% khi các việc `shoot` đã `done` và danh sách ảnh đã lưu; hiện lý do khi khóa nút; việc `shoot` lùi trạng thái trước khi trả phải khóa nút 70% lại. | TV2 + TV1 | TV1 đã xong phần cho lùi trạng thái `shoot` trước trả 70% (`a8236fd`); chờ TV2 kiểm khớp UI ở `QA9`. |
+| `B2.2` | G4, G10 | Hủy booking vẫn giữ hội thoại `Đã chốt lịch`; **mỗi hội thoại gắn tối đa 1 booking, kể cả booking đã hủy**; đặt lại qua yêu cầu mới (thay quy ước R07 cũ). | TV3 + TV2 | Đang chờ `QA10` (TV3) & `QA9` (TV2). |
+| `B2.3` | G5, G6 · R2 | Khách từ chối đề xuất thì hội thoại vẫn `Đang tư vấn`; Admin đề xuất tiếp và chỉ mở *Tạo booking* sau khi khách đồng ý giờ hợp lệ. | TV3 + TV2 | Đã có nền trên `main`; rà lại cùng `B3.3`/`B4.5` ở `QA10`. |
+| `B2.4` | G1, G6, G9 · R3, R5 | Mỗi dịch vụ có ít nhất 1 gói đủ tên, thời lượng, số ảnh chỉnh và giá; giá *"từ"* là giá thấp nhất; máy chủ tính giá/cọc và giới hạn ảnh; giữ nguyên Premium cho `GS-1024`. | TV2 + TV3 | Đã có đủ gói trên `main`; kiểm lại hiển thị giá Kỷ yếu ở `QA9`/`QA10`. |
+| `B2.5` | G3, G4, G6 | Tin từ trang dịch vụ và yêu cầu mới áp dụng quy tắc chọn hội thoại ở `B4.6`; khách vẫn nhắn tiếp được trong hội thoại gắn booking. | TV3 + TV2 | Đang chờ `QA10` & `QA9`. |
+| `B3.1` | G3, G6, G10 · R3 | Nếu dùng đơn giá mỗi người (Kỷ yếu), phải có số người trước khi tạo booking và máy chủ kiểm tra số nguyên theo giới hạn nhóm chốt; khóa sau khi đã cọc. | TV3 + TV2 | Đang đối chiếu contract ở `QA9`/`QA10`. |
+| `B3.2` | G3 | Xếp độ gần theo thời điểm tin nhắn mới nhất; khi có nhiều hội thoại chưa hoàn thành và chưa có booking, ưu tiên hội thoại có tin nhắn mới nhất. | TV3 + TV2 | Đang chờ `QA10` & `QA9`. |
+| `B3.3` | G5, G6 · R2 | Đề xuất mới thay thế đề xuất đang `pending`; hiện chữ **Đã bị thay thế** trên đề xuất cũ và chỉ cho phản hồi đề xuất mới nhất. | TV3 + TV2 | Đang chờ `QA10` & `QA9`. |
+| `B4.1` | G7, G10 · R4, R7, R8 | Cọc thành công nhưng trùng giờ giữ tiền đã thu và `Chờ cọc 30%`; nếu giữ nguyên gói, đổi giờ trống trên **chính booking đó** để sang `Đã đặt lịch` và sinh việc/nhắc lịch đúng 1 lần; đổi gói hoặc bỏ chụp thì hủy (hoàn ngoài hệ thống). | TV3 + TV2 + TV1 | Đang chờ `QA9` (helper xác nhận chung) & `QA10` (G10 khôi phục). |
+| `B4.2` | G7, G9, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì hủy trả `409` kèm giờ được hủy; hết hạn chuyển `Thất bại`; ngoại lệ cổng thực thu sau khi hủy thì ghi tiền đã thu và giữ `Đã hủy`. Áp dụng cả 30% và 70%. | TV2 + TV3 | Đang chờ `QA9` & `QA10`. |
+| `B4.3` | G7, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì đổi giờ trả `409` kèm giờ mở khóa; cọc thành công kiểm tra người/phòng theo giờ booking tại lúc trả; cọc trùng xử lý theo `B4.1`. | TV2 + TV3 | Đang chờ `QA9` & `QA10`. |
+| `B4.4` | G5, G10, G11 · R1, R7 | Dùng khoảng `[bắt đầu, kết thúc)`, cho phép liền giờ; **giờ mở cửa tách T2–T6 (`weekday`) và T7–CN (`weekend`)**; kiểm ở đề xuất/tạo/đổi/gợi ý; đổi cấu hình giữ booking cũ, lúc cọc chỉ kiểm người/phòng. Seed T7 `24/10/2026` bao `09:00–16:00`. | TV1 + TV3 + TV2 | **TV1 đã xong `QA8`** (`13-settings.md`, `opening-hours.mjs`, `SuperadminSettingsPage.jsx`, `a8236fd`); chờ TV3 nối kiểm ngoài giờ ở `QA10`. |
+| `B4.5` | G5, G6 · R2 | Admin gửi đề xuất khác sau khi khách đã đồng ý và trước khi tạo booking thì giờ cũ hết hiệu lực, hội thoại về `Đang tư vấn` và khóa *Tạo booking* tới khi khách đồng ý giờ mới. | TV3 + TV2 | Đang chờ `QA10` & `QA9`. |
+| `B4.6` | G3, G4, G6 | Từ trang dịch vụ, chat và yêu cầu ưu tiên hội thoại chưa `Hoàn thành` và chưa có booking; nếu không có thì yêu cầu mở hội thoại mới, chat nối hội thoại chưa `Hoàn thành` có tin mới nhất hoặc mở mới; yêu cầu mới trong hội thoại đã có booking đi sang hội thoại mới. | TV3 + TV2 | Đang chờ `QA10` & `QA9`. |
+| `B4.7` | G6, G10 · R3, R7 | Chỉ đổi giờ khi `Chờ cọc` hoặc `Đã đặt lịch` và việc `shoot` chưa `Đang làm`; từ lúc `shoot` `in_progress`/`done`, đã `paid_in_full` hoặc `completed` thì trả `409`; khóa gói/giá từ lúc tạo. | TV3 + TV1 | Đang chờ `QA10` (TV3). |
+| `B4.8` | G8, G9, G10 · R6, R7 | Staff đổi trạng thái việc của mình theo thứ tự bất kỳ (kể cả lùi trạng thái) khi còn mở; **khóa `makeup`/`shoot` sau khi trả 70%**, **khóa `edit` sau khi gắn `finalLink`**; booking hủy vẫn hiện việc kèm nhãn, chặn cập nhật `409` và nhả lịch bận. | TV1 + TV2 + TV3 | **TV1 đã xong `QA8`** (`08-jobs.md`, `jobs.mjs`, `StaffJobDetailPage.jsx`, `tv1-rules.test.mjs`, `a8236fd`). |
+| `B4.9` | G9 · R5, R6 | Chọn từ 1 đến giới hạn gói; danh sách rỗng trả `400` và không đủ điều kiện trả 70%. | TV2 | Đã chặn rỗng trên `main`; TV2 rà lại biên 0/1/30/31 ở `QA9`. |
+| `B4.10` | G9 · R5, R6, R8 | Khi trả 70% thành công, khóa danh sách lưu thành công gần nhất; khoản trả theo giá gói, không đổi theo số ảnh. | TV2 | Mock đã khóa sau `paid_in_full`; TV2 bổ sung test 2 tab ở `QA9`. |
+| `B4.11` | G8, G9, G10 · R4, R6 | Admin phân công makeup, chụp, chỉnh khi tạo booking (seed Tuấn cho `GS-1024`); Staff chỉ mở chỉnh sau khi đã lưu ảnh và trả đủ 70%; Admin chỉ gắn `finalLink` khi đã trả đủ 70% và việc `edit` `done` (thiếu trả `409`). | TV3 + TV1 + TV2 | **TV1 đã xong khóa `edit` ở `QA8`** (`a8236fd`); chờ TV3 thêm phân công chỉnh & chặn gắn link (`QA10`), TV2 đồng bộ `ensureBookingJobs` (`QA9`). |
+| `B4.12` | G7, G10 · R4, R7, R9 | Đổi lịch thay nhắc chưa gửi, giữ lịch sử đã gửi và tạo nhắc mới theo mốc sớm nhất mới; mốc đã tới/qua hiện ngay trong tài khoản, e-mail gửi ở lượt chạy kế tiếp, mỗi nhắc tối đa 1 lần. | TV2 + TV3 | Đang chờ `QA9` (TV2). |
+| `B4.13` | G7, G11 · R4, R9 | Đổi số giờ nhắc chỉ áp dụng cho nhắc tạo sau hoặc tính lại khi đổi lịch; lỗi gửi vẫn hiện trong tài khoản với trạng thái `Gửi lỗi`. | TV2 + TV1 | TV1 đã ghi rõ ở `13-settings.md` & UI G11 (`a8236fd`); chờ TV2 bổ sung ca giả lập gửi lỗi ở `QA9`. |
+| `BS.1` | G7, G9, G10 · R8 | Hạn thanh toán **15 phút** cho cả cọc 30% và 70% (cổng thử và hệ thống dùng cùng hạn; sang PA#4 nếu sandbox đòi tối thiểu dài hơn thì dùng mức ngắn nhất cổng cho phép). | TV2 + TV3 | Đang chờ `QA9` & `QA10`. |
 
 ## 6. Libraries
 
