@@ -430,7 +430,7 @@ try {
   await see('Dùng giờ này');
   assert.deepEqual((await api('GET', firstApi, thao, null, 200)).booking, original);
   await click('Dùng giờ này');
-  await fill('date', '2026-11-01');
+  await fill('date', '2027-11-01');
   const beforeMove = requests.filter((request) => request === 'PATCH ' + firstApi).length;
   await run(() => {
     const submit = [...document.querySelectorAll('button')].find((el) => el.textContent.trim() === 'Áp dụng lịch mới');
@@ -440,7 +440,7 @@ try {
   await see('Đã áp dụng lịch mới.');
   assert.equal(requests.filter((request) => request === 'PATCH ' + firstApi).length, beforeMove + 1);
   const rescheduled = (await api('GET', firstApi, thao, null, 200)).booking;
-  assert.equal(rescheduled.date, '2026-11-01');
+  assert.equal(rescheduled.date, '2027-11-01');
   assert.equal(rescheduled.paymentStatus, 'deposit_paid');
   const jobPath = '/api/jobs/J-GS-1024-shoot';
   const { job } = await api('GET', jobPath, tuan, null, 200);
@@ -449,7 +449,7 @@ try {
   const reminders = await remindersForFirst();
   assert.deepEqual(reminders.find(({ id }) => id === sent.id), sent);
   assert.equal(reminders.find(({ emailStatus }) => emailStatus === 'queued').sendAt,
-    '2026-10-31T' + rescheduled.items[0].start + ':00+07:00');
+    '2027-10-31T' + rescheduled.items[0].start + ':00+07:00');
   await click('Hủy booking');
   await click('Xác nhận hủy');
   await see('Nhập lý do từ 5 đến 500 ký tự.');

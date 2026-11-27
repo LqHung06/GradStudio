@@ -507,15 +507,15 @@ test('HTTP: rescheduling and cancelling preserve reminder history on the real mo
     const sent = (await readReminders()).find((entry) => entry.bookingCode === code);
     assert.equal(sent.emailStatus, 'sent');
 
-    const schedule = input('2026-10-27');
+    const schedule = input('2027-10-27');
     const rescheduled = await send('PATCH', bookingPath, schedule, 'u-thao');
     assert.equal(rescheduled.booking.date, schedule.date);
     assert.equal(rescheduled.booking.paymentStatus, 'deposit_paid');
     const reminders = await readReminders();
     assert.deepEqual(reminders.find(({ id }) => id === sent.id), sent);
     const queued = reminders.find((entry) => entry.bookingCode === code && entry.emailStatus === 'queued');
-    assert.equal(queued.sendAt, '2026-10-26T13:00:00+07:00');
-    assert.match(queued.text, /13:00.*27\/10\/2026.*Mai/);
+    assert.equal(queued.sendAt, '2027-10-26T13:00:00+07:00');
+    assert.match(queued.text, /13:00.*27\/10\/2027.*Mai/);
 
     await send('PATCH', bookingPath, schedule, 'u-thao');
     await send('PATCH', bookingPath, input('2026-02-30'), 'u-thao', 400);
