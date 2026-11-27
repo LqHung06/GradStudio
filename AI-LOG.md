@@ -1066,3 +1066,28 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Bốn bộ hồi quy TV1/TV2/TV3/QA9 đạt **46/46**, 0 FAIL, 0 skip/TODO. Contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Kiểm cú pháp 27 mô-đun và parse 14 seed JSON, `npm ci` + `npm run build`, conflict markers và `git diff --check` đều đạt.
   - Harness Chrome trên production build thoát mã 0. Admin thấy booking chuyển Đã đặt lịch từ phản hồi PATCH, không tải lại và không có request thanh toán mới. Luồng đổi lịch thường, hủy và Customer Nhận ảnh đều qua.
 - **Commits:** `1252315` brief; `8fd2b4e`, `9f8e690` contract; `39848f6` route; `1dc8675` hồi quy HTTP; `884d59f` harness Chrome; `3d857fb` FRONTEND. Nhật ký được commit riêng sau cùng.
+
+
+### [TV1] 37. QA11 — Cập nhật CI Gate 3 và nghiệm thu bản build `client/dist/` (27/11/2026)
+
+- **Tool:** Antigravity (Google Deepmind), Node.js v20.20.2, Vite 7 production build (`client/dist/`), Google Chrome headless (CDP).
+- **Request:** `brief.md` mục 37 — Chặng 2 QA11 phần TV1 trên nhánh `chore/qa11-ci-gate3-and-verification` tách từ `origin/main` (`c6e51b6`).
+- **Changed:**
+  - `.github/workflows/ci.yml`: bổ sung `tools/tv2-qa9.test.mjs` vào Gate 3 (`node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs`).
+  - `brief.md`, `AI-LOG.md`: ghi mục 37 cùng bằng chứng chạy thật của 5 Gate và nghiệm thu bản build `client/dist/`. Không sửa logic nghiệp vụ/UI của TV2/TV3 và không thêm dependency vào `client/package.json`.
+- **Rejected / lỗi phát hiện:**
+  - Không phát hiện lỗi nghiệp vụ, lỗi phân quyền hay endpoint ngoài contract trong mã nguồn `c6e51b6`.
+  - Ghi nhận môi trường chạy: máy Linux chạy Node v20.20.2 nên script CDP cần cờ `--experimental-websocket` để bật global `WebSocket` (trên Node 22 có sẵn).
+- **Checked:**
+  - **Gate 1 (cấu trúc, cú pháp, seed JSON):** đủ `docs/api`, `mock/server.mjs`, `client`, `FRONTEND.md`, `AGENTS.md`; `node --check` toàn bộ `mock/**/*.mjs` & `tools/*.mjs` **PASS**; parse **14/14** file seed JSON **PASS**.
+  - **Gate 2 (`contract-check` trên mock tươi cổng `3011`):** **112/112** examples trong 14 file `docs/api/`, **0 FAIL**.
+  - **Gate 3 (`node --test` cả 4 bộ hồi quy `tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`):** **46/46 PASS**, 0 FAIL, 0 skipped, 0 todo (`20.9s`).
+  - **Gate 4 (`cd client && npm run build`):** **PASS**, `95 modules transformed`, sinh `client/dist/` (`index.html`, CSS `118.69 kB`, JS `390.55 kB`).
+  - **Gate 5 (`git diff --check` & quét conflict markers):** **CLEAN**, 0 lỗi, 0 conflict markers.
+  - **Nghiệm thu bản production build (`client/dist/` + SPA fallback + `/api` proxy → `mock/server.mjs`, Chrome headless):**
+    - **[A] RBAC (chưa đăng nhập + 4 vai trò):** khách chưa đăng nhập bị chuyển về `/sign-in` ở `/my-bookings`, `/admin/conversations`, `/staff/jobs`, `/superadmin/admins`; truy cập route chéo vai trò ở cả 4 tài khoản (`linh`, `mai`, `thao`, `superadmin`) đều bị chặn bằng `ForbiddenPage` ("Không có quyền truy cập").
+    - **[B] G11 Superadmin:** `/superadmin/admins` hiển thị `thao@gradstudio.test`; `/superadmin/settings` hiển thị đủ 2 khung **Ngày thường (T2–T6)** và **Cuối tuần (T7–CN)**, lưu thành công `08:30` → reload giữ nguyên → khôi phục `08:00`.
+    - **[C] Trọn luồng `GS-1024` qua 4 vai trò + khóa `B4.8` + G10:** `09:00` ngày `24/10/2026` báo trùng Mai → đề xuất `13:00–14:00` (Mai) & `14:00–16:00` (Tuấn, `r-b`) → nút *Tạo booking* khóa trước khi khách đồng ý → `linh` bấm *Đồng ý giờ này* → tạo `GS-1024` (`1.800.000đ`, cọc `540.000đ`, còn lại `1.260.000đ`, `editorId: u-tuan`) → `linh` cọc 30% qua test gateway (`booked`, `deposit_paid`, hiện nhắc lịch trên `/notifications`) → `tuan` thấy `J-GS-1024-edit` khóa đúng `B4.8`, đánh dấu `J-GS-1024-shoot` *Hoàn thành* và upload preview PNG → `linh` lưu chọn ảnh & trả 70% (`paid_in_full`) → `tuan` thấy `J-GS-1024-shoot` khóa đúng `B4.8`, đánh dấu `J-GS-1024-edit` *Hoàn thành* → `thao` mở `/admin/bookings` & gắn link cuối → `linh` bấm *Nhận ảnh* → `GS-1024` chuyển `completed`.
+    - **[D] Đối soát log mock & Console:** **197/197** request `/api` phát sinh từ bản build đều khớp `docs/api/` (**0** endpoint lạ), **0** `console.error`, **0** `pageerror`, **0** phản hồi `5xx`.
+  - **Phần QA11 thuộc vai trò thành viên khác (chưa chạy trong phiên TV1 này):** W3C Nu HTML Validator & kiểm tra responsive `360/768/1280px` toàn app (TV2 — Kiệt); kiểm tra 4 chế độ `normal/slow/error/empty` & nút *Thử lại* toàn app (TV3 — Nhựt).
+- **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra trước khi tách commit.
