@@ -1,19 +1,8 @@
 import { isId } from './resources.mjs';
-import { checkClash } from '../lib/clash.mjs';
-import { allProposals, validateCatalog, invalid, dependency, nowIso } from './conversations.mjs';
+import { checkClash, openingHoursErrors } from '../lib/clash.mjs';
+import { finalLinkBlockedReason, rescheduleBlockedReason } from '../lib/admin-booking-rules.mjs';
+import { allProposals, latestProposal, validateCatalog, invalid, dependency, nowIso } from './conversations.mjs';
 
-// Runtime bookkeeping stays outside the shared Booking/Proposal response shapes.
-const appliedByDb = new WeakMap();
-export function wasApplied(db, code, proposalId) {
-  const records = appliedByDb.get(db);
-  if (!records) return false;
-  return code ? records.has(`${code}:${proposalId}`)
-    : [...records].some((entry) => entry.endsWith(`:${proposalId}`));
-}
-export function recordApplied(db, code, proposalId) {
-  if (!appliedByDb.has(db)) appliedByDb.set(db, new Set());
-  appliedByDb.get(db).add(`${code}:${proposalId}`);
-}
 export const findBooking = (ctx) => ctx.db.bookings.find((booking) => booking.code === ctx.params.code);
 export const bookingMissing = (ctx) => ctx.fail(404, 'NOT_FOUND', 'Không tìm thấy booking');
 
@@ -24,18 +13,27 @@ export default [
     if (!isId(body.conversationId)) fields.conversationId = 'Vui lòng chọn hội thoại';
     if (!isId(body.proposalId)) fields.proposalId = 'Vui lòng chọn đề xuất';
     validateCatalog(db, body, fields);
+    const editor = db.resources.staff.find(({ id, skill }) => id === body.editorId && skill === 'photo');
+    if (!editor) fields.editorId = 'Vui lòng chọn nhân viên chỉnh ảnh.';
     if (Object.keys(fields).length) return invalid(ctx, fields);
     const conversation = db.conversations.find((entry) => entry.id === body.conversationId);
     if (!conversation) return ctx.fail(404, 'NOT_FOUND', 'Không tìm thấy hội thoại');
+    if (conversation.bookingCode || db.bookings.some(({ conversationId }) => conversationId === conversation.id)
+      || conversation.status === 'done') {
+      return ctx.fail(409, 'CONFLICT', 'Hội thoại này đã có booking hoặc đã hoàn thành. Cần yêu cầu đặt lịch mới.');
+    }
     const proposal = allProposals(db).find((entry) => entry.id === body.proposalId);
     if (!proposal) return ctx.fail(404, 'NOT_FOUND', 'Không tìm thấy đề xuất');
     if (!conversation.messages.some((message) => message.proposal?.id === proposal.id)) {
       return ctx.fail(409, 'CONFLICT', 'Đề xuất không thuộc hội thoại này');
     }
+    if (proposal.status === 'superseded') return ctx.fail(409, 'CONFLICT', 'Đề xuất đã bị thay thế. Vui lòng xem đề xuất mới nhất.');
     if (proposal.status !== 'accepted') return ctx.fail(409, 'CONFLICT', 'Khách chưa đồng ý giờ đề xuất này');
-    const linked = db.bookings.find((entry) => entry.code === conversation.bookingCode);
-    if (conversation.bookingCode && linked?.status !== 'cancelled') return ctx.fail(409, 'CONFLICT', 'Hội thoại đã có booking chưa hủy');
-    if (wasApplied(db, null, proposal.id)) return ctx.fail(409, 'CONFLICT', 'Đề xuất đã dùng hoặc thuộc lịch trước khi hủy');
+    if (latestProposal(conversation) !== proposal || conversation.acceptedProposalId !== proposal.id) {
+      return ctx.fail(409, 'CONFLICT', 'Cần đề xuất mới nhất được khách đồng ý để tạo booking.');
+    }
+    const hours = openingHoursErrors(db, proposal.date, proposal.items);
+    if (Object.keys(hours).length) return invalid(ctx, hours);
     if (!db.packages || !db.extras || !db.services) return dependency(ctx, 'Chưa có dữ liệu packages/extras/services của TV2');
     const pkg = db.packages.find((entry) => entry.id === body.packageId);
     const service = db.services.find((entry) => entry.id === pkg.serviceId);
@@ -73,7 +71,8 @@ export default [
     };
     db.bookings.push(booking);
     conversation.bookingCode = booking.code;
-    recordApplied(db, booking.code, proposal.id);
+    db.bookingEditors ??= {};
+    db.bookingEditors[booking.code] = { id: editor.id, name: editor.name };
     return { status: 201, body: { booking } };
   } },
   { method: 'GET', path: '/api/bookings', roles: ['customer', 'admin'], handler: (ctx) => {
@@ -89,6 +88,11 @@ export default [
       || (ctx.user.role === 'staff' && !(ctx.db.jobs || []).some((job) => job.bookingCode === booking.code && job.staff.id === ctx.user.id))) {
       return bookingMissing(ctx);
     }
-    return { status: 200, body: { booking } };
+    const adminActions = ctx.user.role === 'admin' ? {
+      rescheduleBlockedReason: rescheduleBlockedReason(ctx.db, booking),
+      finalLinkBlockedReason: finalLinkBlockedReason(ctx.db, booking),
+      editor: ctx.db.bookingEditors?.[booking.code] ?? null,
+    } : null;
+    return { status: 200, body: { booking, ...(adminActions && { adminActions }) } };
   } },
 ];
