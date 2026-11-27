@@ -274,7 +274,7 @@ test('B4.4: opening hours differ by day, accept adjacent slots, recheck accepted
   assert.deepEqual(db, accepted);
 });
 
-test('B4.2–3/BS.1: Admin honors supplied expiry for both payment kinds without mutating them', () => {
+test('B4.2–3/BS.1 handler with injected deadlines: Admin reads expiry without mutating payments', () => {
   for (const kind of ['deposit', 'remaining']) {
     const db = fresh();
     const code = kind === 'deposit' ? 'GS-1023' : 'GS-1021';
@@ -386,15 +386,108 @@ async function request(server, method, path, body, user = 'u-linh') {
   return { status: response.status, body: await response.json(), elapsed: Date.now() - before };
 }
 
-test('HTTP: rescheduling and cancelling preserve reminder history on the real mock', async () => {
-  const server = await startMock('normal');
-  const code = 'GS-1023';
-  const bookingPath = '/api/bookings/' + code;
-  const send = async (method, path, body, user, expected = 200) => {
+function expectHttp(server) {
+  return async (method, path, body, user, expected = 200) => {
     const result = await request(server, method, path, body, user);
     assert.equal(result.status, expected, method + ' ' + path + ': ' + JSON.stringify(result.body));
     return result.body;
   };
+}
+
+async function createLinhBooking(send, schedule, editorId, beforeCreate = async () => {}) {
+  const { proposal } = await send('POST', '/api/conversations/c-linh/proposals', schedule, 'u-thao', 201);
+  await send('PATCH', '/api/conversations/c-linh/proposals/' + proposal.id, { decision: 'accepted' }, 'u-linh');
+  const body = { conversationId: 'c-linh', proposalId: proposal.id, shootType: 'Tốt nghiệp cá nhân',
+    packageId: 'pkg-tn-premium', extraIds: ['ex-makeup'], editorId };
+  await beforeCreate(body);
+  return (await send('POST', '/api/bookings', body, 'u-thao', 201)).booking;
+}
+
+test('HTTP B4.4: Superadmin settings govern all four Admin scheduling routes; deposits only recheck resources', async (t) => {
+  const server = await startMock('normal');
+  t.after(() => server.stop());
+  const send = expectHttp(server);
+  const { settings: initial } = await send('GET', '/api/settings', null, 'u-superadmin');
+  const setHours = (weekday, weekend) => send('PUT', '/api/settings', {
+    ...initial, openingHours: { weekday, weekend },
+  }, 'u-superadmin');
+  const weekday = { open: '10:00', close: '18:00' };
+  const weekend = { open: '08:00', close: '16:00' };
+  await setHours(weekday, weekend);
+  const invalidWeekday = { date: '2026-10-26', items: [{ ...input().items[1], start: '09:00', end: '10:00' }] };
+  for (const [method, route] of [
+    ['POST', '/api/availability/check'],
+    ['POST', '/api/conversations/c-linh/proposals'],
+    ['PATCH', '/api/bookings/GS-1023'],
+  ]) {
+    const { error } = await send(method, route, invalidWeekday, 'u-thao', 400);
+    assert.match(error.fields['items.0.start'], /10:00–18:00/);
+  }
+
+  const saturday = input('2026-10-24');
+  const adjacent = { date: saturday.date, items: [
+    { ...saturday.items[1], start: '13:00', end: '14:00' }, saturday.items[1],
+  ] };
+  assert.equal((await send('POST', '/api/availability/check', adjacent, 'u-thao')).available, true);
+  const booking = await createLinhBooking(send, saturday, 'u-tuan', async (body) => {
+    await setHours(weekday, { ...weekend, close: '15:00' });
+    const { error } = await send('POST', '/api/bookings', body, 'u-thao', 400);
+    assert.match(error.fields['items.1.end'], /08:00–15:00/);
+    await setHours(weekday, weekend);
+  });
+  assert.equal(booking.code, 'GS-1024');
+  assert.equal(booking.date, saturday.date);
+  const path = '/api/bookings/' + booking.code;
+  await setHours(weekday, { ...weekend, close: '15:00' });
+  assert.deepEqual((await send('GET', path, null, 'u-linh')).booking, booking);
+  const deposit = await send('POST', path + '/payments', { kind: 'deposit' }, 'u-linh', 201);
+  await send('POST', '/api/test-gateway/' + deposit.payment.id, { result: 'success' }, 'u-linh');
+  assert.deepEqual((await send('GET', path, null, 'u-linh')).booking,
+    { ...booking, status: 'booked', paymentStatus: 'deposit_paid' });
+  const editPath = '/api/jobs/J-' + booking.code + '-edit';
+  assert.equal((await send('GET', editPath, null, 'u-tuan')).job.staff.id, 'u-tuan');
+  await send('PATCH', editPath, { status: 'done' }, 'u-mai', 404);
+});
+
+test('HTTP B4.1: a real paid deposit clash leaves the booking unreserved and rejects another clashing time', async (t) => {
+  const server = await startMock('normal');
+  t.after(() => server.stop());
+  const send = expectHttp(server);
+  const schedule = input('2026-10-24');
+  const hanPath = '/api/bookings/GS-1023';
+  await send('PATCH', hanPath, schedule, 'u-thao');
+  const { code } = await createLinhBooking(send, schedule, 'u-ha');
+  const path = '/api/bookings/' + code;
+  const han = await send('POST', hanPath + '/payments', { kind: 'deposit' }, 'u-han', 201);
+  await send('POST', '/api/test-gateway/' + han.payment.id, { result: 'success' }, 'u-han');
+  const linh = await send('POST', path + '/payments', { kind: 'deposit' }, 'u-linh', 201);
+  await send('POST', '/api/test-gateway/' + linh.payment.id, { result: 'success' }, 'u-linh');
+
+  const paymentPath = '/api/payments/' + linh.payment.id;
+  const paid = await send('GET', paymentPath, null, 'u-linh');
+  assert.equal(paid.payment.status, 'succeeded');
+  assert.equal(paid.booking.status, 'awaiting_deposit');
+  assert.equal(paid.booking.paymentStatus, 'deposit_paid');
+  assert.ok(paid.payment.reservationFailure.clashes.length);
+  const before = await send('GET', path, null, 'u-thao');
+  assert.equal(before.adminActions.editor.id, 'u-ha');
+  assert.equal(before.booking.deposit, paid.payment.amount);
+  assert.equal((await send('PATCH', path, schedule, 'u-thao', 409)).error.code, 'CLASH');
+  await send('PATCH', path, input('2026-02-30'), 'u-thao', 400);
+  assert.deepEqual(await send('GET', path, null, 'u-thao'), before);
+  assert.deepEqual(await send('GET', paymentPath, null, 'u-linh'), paid);
+  assert.ok(!(await send('GET', '/api/reminders', null, 'u-linh')).reminders.some((reminder) => reminder.bookingCode === code));
+  for (const [kind, staff] of [['makeup', 'u-mai'], ['shoot', 'u-tuan'], ['edit', 'u-tuan'], ['edit', 'u-ha']]) {
+    await send('GET', '/api/jobs/J-' + code + '-' + kind, null, staff, 404);
+  }
+  await send('POST', path + '/payments', { kind: 'deposit' }, 'u-linh', 409);
+});
+
+test('HTTP: rescheduling and cancelling preserve reminder history on the real mock', async () => {
+  const server = await startMock('normal');
+  const code = 'GS-1023';
+  const bookingPath = '/api/bookings/' + code;
+  const send = expectHttp(server);
   const readReminders = async () => (await send('GET', '/api/reminders', null, 'u-han')).reminders;
   try {
     const before = await readReminders();
