@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+import { confirmBookingReservation } from '../lib/booking-confirmation.mjs';
 import { checkClash } from '../lib/clash.mjs';
 import { recalculateBookingReminders, stopBookingReminders } from '../lib/reminders.mjs';
 import { activePaymentLock, finalLinkBlockedReason, rescheduleBlockedReason } from '../lib/admin-booking-rules.mjs';
@@ -11,8 +13,45 @@ function paymentConflict(ctx, booking) {
   return ctx.fail(409, 'CONFLICT', lock.reason, {}, lock.retryAt ? { retryAt: lock.retryAt } : null);
 }
 
+function clashConflict(ctx, { clashes, suggestions }) {
+  return ctx.fail(409, 'CLASH', clashes[0]?.reason ?? 'Lịch mới bị trùng.', {}, { clashes, suggestions });
+}
+
+async function recoverPaidBooking(ctx, booking, schedule) {
+  const { db } = ctx;
+  const original = structuredClone(booking);
+  const settings = db.settings;
+  const jobCount = db.jobs?.length ?? 0;
+  const reminderCount = db.reminders?.length ?? 0;
+  const draft = { ...db, jobs: structuredClone(db.jobs ?? []), reminders: structuredClone(db.reminders ?? []) };
+  const candidate = { ...original, ...schedule };
+  const confirmation = await confirmBookingReservation(draft, candidate);
+  if (!confirmation.ok) {
+    if (confirmation.reason === 'CLASH') {
+      return clashConflict(ctx, { clashes: confirmation.clashes, suggestions: [] });
+    }
+    return ctx.fail(409, 'CONFLICT', 'Không thể xác nhận lịch mới cho booking này.');
+  }
+
+  // The helper awaits its resource check. Publish only if its draft is still current.
+  const locked = paymentConflict(ctx, booking);
+  if (locked) return locked;
+  const available = checkClash(db, schedule.date, schedule.items, { ignoreBooking: booking.code });
+  if (!available.available) return clashConflict(ctx, available);
+  if (db.settings !== settings || !isDeepStrictEqual(booking, original)
+    || !isDeepStrictEqual(db.jobs ?? [], draft.jobs.slice(0, jobCount))
+    || !isDeepStrictEqual(db.reminders ?? [], draft.reminders.slice(0, reminderCount))) {
+    return ctx.fail(409, 'CONFLICT', 'Dữ liệu lịch vừa thay đổi. Vui lòng tải lại và thử lại.');
+  }
+
+  Object.assign(booking, schedule, { status: candidate.status });
+  db.jobs = draft.jobs;
+  db.reminders = draft.reminders;
+  return { status: 200, body: { booking } };
+}
+
 export default [
-  { method: 'PATCH', path: '/api/bookings/:code', roles: ['admin'], handler: (ctx) => {
+  { method: 'PATCH', path: '/api/bookings/:code', roles: ['admin'], handler: async (ctx) => {
     const booking = findBooking(ctx);
     if (!booking) return bookingMissing(ctx);
     const blocked = rescheduleBlockedReason(ctx.db, booking);
@@ -22,21 +61,21 @@ export default [
     const fields = validateSchedule(ctx.db, ctx.body);
     if (Object.keys(fields).length) return invalid(ctx, fields);
     const items = toScheduleItems(ctx.db, ctx.body.items);
-    const result = checkClash(ctx.db, ctx.body.date, items, { ignoreBooking: booking.code });
-    if (!result.available) return ctx.fail(409, 'CLASH', result.clashes[0].reason, {}, { clashes: result.clashes, suggestions: result.suggestions });
-    if (booking.status === 'awaiting_deposit' && booking.paymentStatus === 'deposit_paid') {
-      return ctx.fail(409, 'CONFLICT', 'Chưa thể xác nhận lịch mới cho khoản cọc đã nhận.');
-    }
+    const schedule = { date: ctx.body.date, items };
+    const result = checkClash(ctx.db, schedule.date, items, { ignoreBooking: booking.code });
+    if (!result.available) return clashConflict(ctx, result);
 
     const related = (ctx.db.jobs || []).filter((job) => job.bookingCode === booking.code);
+    const recovering = booking.status === 'awaiting_deposit' && booking.paymentStatus === 'deposit_paid';
     // Build every replacement before mutating anything. Jobs with an absent
     // schedule kind cannot be remapped under the current shared specification.
     const updates = [];
     const kinds = (list) => [...new Set(list.map((item) => item.kind))].sort().join(',');
-    if (related.length && (kinds(booking.items) !== kinds(items)
-      || items.some((item) => items.filter((other) => other.kind === item.kind).length !== 1))) {
+    const duplicateKinds = new Set(items.map(({ kind }) => kind)).size !== items.length;
+    if ((related.length && kinds(booking.items) !== kinds(items)) || ((related.length || recovering) && duplicateKinds)) {
       return ctx.fail(409, 'CONFLICT', 'Chưa có quy tắc ánh xạ việc khi thêm, bớt hoặc lặp loại ca; cần TV1 thống nhất');
     }
+    if (recovering) return recoverPaidBooking(ctx, booking, schedule);
     for (const job of related) {
       if (job.kind === 'edit') continue;
       const matching = items.filter((entry) => entry.kind === job.kind);
@@ -46,7 +85,6 @@ export default [
         date: ctx.body.date, start: item.start, end: item.end, room: structuredClone(item.room), staff: structuredClone(item.staff),
       } });
     }
-    const schedule = { date: ctx.body.date, items };
     const reminderDraft = booking.status === 'booked' ? {
       settings: ctx.db.settings,
       reminders: structuredClone(ctx.db.reminders),
