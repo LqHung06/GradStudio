@@ -13,6 +13,11 @@ import {
 import { useFetch } from '../../hooks/useFetch.js';
 import '../../styles/customer-pages.css';
 
+function formatDateTimeVi(iso) {
+  const m = typeof iso === 'string' && /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/.exec(iso);
+  return m ? `${m[4]} ngày ${m[3]}/${m[2]}/${m[1]}` : iso || '';
+}
+
 export function PaymentResultPage() {
   const { paymentId } = useParams();
   const navigate = useNavigate();
@@ -65,7 +70,14 @@ export function PaymentResultPage() {
     booking?.status === 'awaiting_deposit';
 
   const isRemainingSuccess =
-    payment?.status === 'succeeded' && payment?.kind === 'remaining';
+    payment?.status === 'succeeded' &&
+    payment?.kind === 'remaining' &&
+    booking?.status !== 'cancelled';
+
+  const isRemainingSuccessCancelled =
+    payment?.status === 'succeeded' &&
+    payment?.kind === 'remaining' &&
+    booking?.status === 'cancelled';
 
   const isFailed = payment?.status === 'failed';
   const isPending = payment?.status === 'pending';
@@ -145,6 +157,12 @@ export function PaymentResultPage() {
                       <StatusBadge map={PAYMENT_STATUS} status={booking.paymentStatus} />
                     </dd>
                   </div>
+                  {payment.expiresAt && (
+                    <div className="package-summary-item">
+                      <dt>Hết hạn giao dịch</dt>
+                      <dd>{formatDateTimeVi(payment.expiresAt)}</dd>
+                    </div>
+                  )}
                 </dl>
 
                 {isDepositSuccessBooked && (
@@ -189,7 +207,7 @@ export function PaymentResultPage() {
                 {isDepositSuccessCancelled && (
                   <div className="payment-muted-box" role="status">
                     <p>
-                      Khoản cọc (<Money amount={payment.amount} />) đã được ghi nhận thành công trước đó. Booking {booking.code} hiện đã bị hủy — vui lòng mở cuộc trò chuyện hoặc xem lịch chụp thay thế.
+                      Khoản cọc (<Money amount={payment.amount} />) đã được ghi nhận để đối soát. Booking {booking.code} hiện đang ở trạng thái Đã hủy — vui lòng mở cuộc trò chuyện nếu cần đặt một lịch tư vấn mới.
                     </p>
                     <div className="catalog-card-actions">
                       <Link className="button button-coral" to="/chat">
@@ -254,6 +272,25 @@ export function PaymentResultPage() {
                         to={`/my-bookings/${encodeURIComponent(booking.code)}`}
                       >
                         Xem lịch chụp
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {isRemainingSuccessCancelled && (
+                  <div className="payment-muted-box" role="status">
+                    <p>
+                      Khoản thanh toán 70% còn lại (<Money amount={payment.amount} />) đã được ghi nhận để đối soát. Booking {booking.code} hiện đang ở trạng thái Đã hủy — vui lòng mở cuộc trò chuyện hoặc xem lịch sử booking.
+                    </p>
+                    <div className="catalog-card-actions">
+                      <Link className="button button-coral" to="/chat">
+                        Mở cuộc trò chuyện
+                      </Link>
+                      <Link
+                        className="button button-outline"
+                        to={`/my-bookings/${encodeURIComponent(booking.code)}`}
+                      >
+                        Xem lịch sử booking
                       </Link>
                     </div>
                   </div>
