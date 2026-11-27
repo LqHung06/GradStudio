@@ -55,20 +55,20 @@ function allowSeededReschedule(db) {
   return getBooking(db, 'GS-1022');
 }
 
-test('R03: direct date/items, no customer action; unpaid gets no jobs/reminders', () => {
+test('R03: direct date/items, no customer action; unpaid gets no jobs/reminders', async () => {
   const db=fresh(), before=structuredClone(db), b=getBooking(db,'GS-1023');
-  const result=patch(db,b.code,input());
+  const result=await patch(db,b.code,input());
   assert.equal(result.status,200);
   const expected={...before.bookings.find(x=>x.code===b.code),date:input().date,items:b.items};
   assert.deepEqual(b,expected);
   assert.deepEqual(db.jobs,before.jobs); assert.deepEqual(db.reminders,before.reminders); assert.deepEqual(db.payments,before.payments);
 });
-test('R03/B4.11: reschedule ignores itself and retains the assigned editor', () => {
+test('R03/B4.11: reschedule ignores itself and retains the assigned editor', async () => {
   const db=fresh(), b=allowSeededReschedule(db), before=structuredClone(b);
   const oldJobs=structuredClone(db.jobs.filter(j=>j.bookingCode===b.code));
-  assert.equal(patch(db,b.code,scheduleInput(b)).status,200);
+  assert.equal((await patch(db,b.code,scheduleInput(b))).status,200);
   const body={date:'2026-10-26',items:[{kind:'shoot',start:'09:00',end:'10:30',staffId:'u-ha',roomId:'r-a'}]};
-  assert.equal(patch(db,b.code,body).status,200);
+  assert.equal((await patch(db,b.code,body)).status,200);
   assert.deepEqual({...b,date:before.date,items:before.items},before);
   for (const old of oldJobs) {
     const current = db.jobs.find(({ id }) => id === old.id);
@@ -77,25 +77,25 @@ test('R03/B4.11: reschedule ignores itself and retains the assigned editor', () 
       room: { id: 'r-a', name: 'Phòng A' }, staff: { id: 'u-ha', name: 'Hà' } });
   }
 });
-test('R03: clash returns complete details and preserves the entire db', () => {
+test('R03: clash returns complete details and preserves the entire db', async () => {
   const db=fresh(), body=input('2026-10-24');
   db.reminders.push({id:'atomic-reminder',bookingCode:'GS-1023',emailStatus:'queued',sendAt:'2026-10-23T09:00:00+07:00'});
   db.payments.push({id:'atomic-payment',bookingCode:'GS-1023',status:'failed',amount:540000});
   const before=structuredClone(db);
   body.items[0].start='09:00';body.items[0].end='10:00';
   body.items[1].start='10:00';body.items[1].end='12:00';
-  const result=patch(db,'GS-1023',body);assert.equal(result.status,409);assert.equal(result.body.error.code,'CLASH');
+  const result=await patch(db,'GS-1023',body);assert.equal(result.status,409);assert.equal(result.body.error.code,'CLASH');
   assert.ok(result.body.error.details.clashes[0].reason);assert.ok(result.body.error.details.suggestions.length);
   assert.deepEqual(db,before);
 });
-test('R03: invalid date/resource/range and old proposal-only body do not mutate db', () => {
+test('R03: invalid date/resource/range and old proposal-only body do not mutate db', async () => {
   const db=fresh();for(const body of [{proposalId:'p-1'},input('2026-02-30'),{...input(),items:[{...input().items[0],staffId:'missing'}]},{...input(),items:[{...input().items[0],end:'12:00'}]}]){
-    const before=structuredClone(db);assert.equal(patch(db,'GS-1023',body).status,400);assert.deepEqual(db,before);}
+    const before=structuredClone(db);assert.equal((await patch(db,'GS-1023',body)).status,400);assert.deepEqual(db,before);}
 });
-test('R03: unsupported existing job mapping reports 409 atomically, never first-slot or 500', () => {
+test('R03: unsupported existing job mapping reports 409 atomically, never first-slot or 500', async () => {
   const db=fresh(), before=structuredClone(db);const body=input();body.items.push({...body.items[1],start:'16:00',end:'17:00'});
-  assert.equal(patch(db,'GS-1021',body).status,409);assert.deepEqual(db,before);
-  assert.equal(patch(db,'GS-1021',{date:body.date,items:[body.items[1]]}).status,409);assert.deepEqual(db,before);
+  assert.equal((await patch(db,'GS-1021',body)).status,409);assert.deepEqual(db,before);
+  assert.equal((await patch(db,'GS-1021',{date:body.date,items:[body.items[1]]})).status,409);assert.deepEqual(db,before);
 });
 test('R05: cancel booked GS-1021 retains jobs/payments/money/history and frees resources', () => {
   const db=fresh(), b=getBooking(db,'GS-1021'), old=structuredClone(b);
@@ -107,9 +107,9 @@ test('R05: cancel booked GS-1021 retains jobs/payments/money/history and frees r
   for (const item of old.items) assert.equal(checkClash(db,old.date,[item]).available,true);
   const after=structuredClone(db);assert.equal(cancel(db,b.code).status,409);assert.deepEqual(db,after);
 });
-test('R05: completed/cancelled changes refused and customer cannot cancel or reschedule', () => {
+test('R05: completed/cancelled changes refused and customer cannot cancel or reschedule', async () => {
   const db=fresh(),before=structuredClone(db);assert.equal(cancel(db,'GS-1020').status,409);
-  assert.equal(patch(db,'GS-1020',input()).status,409);
+  assert.equal((await patch(db,'GS-1020',input())).status,409);
   for(const [method,path] of [['POST','/api/bookings/:code/cancel'],['PATCH','/api/bookings/:code']])
     assert.equal(call(db,method,path,{...input(),reason:'Khách đổi lịch'},{code:'GS-1023'},'u-han').status,403);
   assert.deepEqual(db,before);
@@ -210,12 +210,12 @@ test('R3 price: package only, extras add no money, client amounts ignored; one-V
 });
 
 const reminderFixture = b => ({id:'test-reminder',bookingCode:b.code,sendAt:'2026-10-19T09:00:00+07:00',channels:['email','account'],emailStatus:'queued',text:'Lịch cũ'});
-test('R04: queued reminder follows new earliest time/staff/room', () => {
+test('R04: queued reminder follows new earliest time/staff/room', async () => {
   const db=fresh(),b=allowSeededReschedule(db);db.reminders.push(reminderFixture(b));
-  assert.equal(patch(db,b.code,{date:'2026-10-26',items:[{kind:'shoot',start:'09:00',end:'10:30',staffId:'u-ha',roomId:'r-a'}]}).status,200);
+  assert.equal((await patch(db,b.code,{date:'2026-10-26',items:[{kind:'shoot',start:'09:00',end:'10:30',staffId:'u-ha',roomId:'r-a'}]})).status,200);
   assert.ok(db.reminders.some(r=>r.sendAt==='2026-10-25T09:00:00+07:00'&&r.text.includes('Hà')&&r.text.includes('Phòng A')));
 });
-test('R04: lead hours and earliest item update queued, preserve sent and stay idempotent', () => {
+test('R04: lead hours and earliest item update queued, preserve sent and stay idempotent', async () => {
   const db = fresh();
   const booking = getBooking(db, 'GS-1021');
   const queued = reminderFixture(booking);
@@ -226,7 +226,7 @@ test('R04: lead hours and earliest item update queued, preserve sent and stay id
   schedule.items.reverse();
   const history = structuredClone(sent);
   for (let attempt = 0; attempt < 2; attempt++) {
-    assert.equal(patch(db, booking.code, schedule).status, 200);
+    assert.equal((await patch(db, booking.code, schedule)).status, 200);
     assert.deepEqual(db.reminders, [
       { ...queued, sendAt: '2026-10-26T07:00:00+07:00',
         text: 'Nhắc lịch: makeup 13:00 ngày 26/10/2026 với Mai tại GradStudio' },
@@ -235,22 +235,41 @@ test('R04: lead hours and earliest item update queued, preserve sent and stay id
   }
 });
 
-test('B4.1: clash or unavailable confirmation leaves a paid-but-unreserved booking untouched', () => {
+test('B4.1: clash, unsupported jobs or an exception in confirmation leave the paid booking untouched', async () => {
   const db = fresh();
   const booking = getBooking(db, 'GS-1023');
   booking.paymentStatus = 'deposit_paid';
   const before = structuredClone(db);
   const clash = input('2026-10-24');
   Object.assign(clash.items[0], { start: '09:00', end: '10:00' });
-  assert.equal(patch(db, booking.code, clash).body.error.code, 'CLASH');
+  assert.equal((await patch(db, booking.code, clash)).body.error.code, 'CLASH');
   assert.deepEqual(db, before);
-  const result = patch(db, booking.code, input());
-  assert.equal(result.status, 409);
-  assert.match(result.body.error.message, /Chưa thể xác nhận/);
+  const duplicate = input();
+  duplicate.items.push({ ...duplicate.items[1], start: '16:00', end: '18:00' });
+  assert.equal((await patch(db, booking.code, duplicate)).body.error.code, 'CONFLICT');
+  assert.deepEqual(db, before);
+
+  const validLead = db.settings.reminderHoursBefore;
+  db.settings.reminderHoursBefore = Symbol('invalid reminder configuration');
+  await assert.rejects(patch(db, booking.code, input()), TypeError);
+  db.settings.reminderHoursBefore = validLead;
   assert.deepEqual(db, before);
 });
 
-test('B4.4: opening hours differ by day, accept adjacent slots, recheck accepted slot on create', () => {
+test('B4.1: concurrent recovery drafts publish one reservation and keep payment history', async () => {
+  const db = fresh();
+  const booking = getBooking(db, 'GS-1023');
+  booking.paymentStatus = 'deposit_paid';
+  const payments = structuredClone(db.payments);
+  const results = await Promise.all([patch(db, booking.code, input()), patch(db, booking.code, input())]);
+  assert.deepEqual(results.map(({ status }) => status).sort(), [200, 409]);
+  assert.equal(booking.status, 'booked');
+  assert.equal(db.jobs.filter((job) => job.bookingCode === booking.code).length, 3);
+  assert.equal(db.reminders.filter((reminder) => reminder.bookingCode === booking.code).length, 1);
+  assert.deepEqual(db.payments, payments);
+});
+
+test('B4.4: opening hours differ by day, accept adjacent slots, recheck accepted slot on create', async () => {
   const db = fresh();
   db.settings.openingHours = { weekday: { open: '10:00', close: '17:00' }, weekend: { open: '08:00', close: '16:00' } };
   const check = (body) => call(db, 'POST', '/api/availability/check', body);
@@ -264,7 +283,7 @@ test('B4.4: opening hours differ by day, accept adjacent slots, recheck accepted
   assert.equal(check({ ...weekday, date: '2026-10-25' }).body.available, true);
   const before = structuredClone(db);
   assert.equal(call(db, 'POST', '/api/conversations/:id/proposals', weekday, { id: 'c-linh' }).status, 400);
-  assert.equal(patch(db, 'GS-1023', weekday).status, 400);
+  assert.equal((await patch(db, 'GS-1023', weekday)).status, 400);
   assert.deepEqual(db, before);
   const proposal = propose(db, 'c-linh', weekend);
   assert.equal(accept(db, proposal).status, 200);
@@ -274,7 +293,7 @@ test('B4.4: opening hours differ by day, accept adjacent slots, recheck accepted
   assert.deepEqual(db, accepted);
 });
 
-test('B4.2–3/BS.1 handler with injected deadlines: Admin reads expiry without mutating payments', () => {
+test('B4.2–3/BS.1 handler with injected deadlines: Admin reads expiry without mutating payments', async () => {
   for (const kind of ['deposit', 'remaining']) {
     const db = fresh();
     const code = kind === 'deposit' ? 'GS-1023' : 'GS-1021';
@@ -286,26 +305,26 @@ test('B4.2–3/BS.1 handler with injected deadlines: Admin reads expiry without 
     assert.equal(activePaymentLock(db, code, cutoff), null);
     assert.equal(activePaymentLock(db, code, cutoff + 1), null);
     const before = structuredClone(db);
-    for (const result of [patch(db, code, input()), cancel(db, code)]) {
+    for (const result of [await patch(db, code, input()), cancel(db, code)]) {
       assert.equal(result.status, 409);
       assert.equal(result.body.error.details.retryAt, payment.expiresAt);
     }
     assert.deepEqual(db, before);
     payment.expiresAt = '2026-01-01T00:00:00Z';
-    assert.equal(patch(db, code, input()).status, 200);
+    assert.equal((await patch(db, code, input())).status, 200);
     assert.equal(cancel(db, code).status, 200);
     assert.equal(payment.status, 'pending');
   }
 });
 
-test('B4.7: shoot active/done and full payment independently block rescheduling', () => {
+test('B4.7: shoot active/done and full payment independently block rescheduling', async () => {
   for (const [jobStatus, paymentStatus] of [['in_progress', 'deposit_paid'], ['done', 'deposit_paid'], ['todo', 'paid_in_full']]) {
     const db = fresh();
     const booking = allowSeededReschedule(db);
     db.jobs.find(({ id }) => id === 'J-GS-1022-shoot').status = jobStatus;
     booking.paymentStatus = paymentStatus;
     const before = structuredClone(db);
-    assert.equal(patch(db, booking.code, input()).status, 409);
+    assert.equal((await patch(db, booking.code, input())).status, 409);
     assert.deepEqual(db, before);
   }
 });
@@ -449,7 +468,7 @@ test('HTTP B4.4: Superadmin settings govern all four Admin scheduling routes; de
   await send('PATCH', editPath, { status: 'done' }, 'u-mai', 404);
 });
 
-test('HTTP B4.1: a real paid deposit clash leaves the booking unreserved and rejects another clashing time', async (t) => {
+test('HTTP B4.1: recover a real paid deposit clash on the same booking and provision once', async (t) => {
   const server = await startMock('normal');
   t.after(() => server.stop());
   const send = expectHttp(server);
@@ -458,9 +477,15 @@ test('HTTP B4.1: a real paid deposit clash leaves the booking unreserved and rej
   await send('PATCH', hanPath, schedule, 'u-thao');
   const { code } = await createLinhBooking(send, schedule, 'u-ha');
   const path = '/api/bookings/' + code;
+  const recovery = input('2027-10-26');
+  recovery.items[1].roomId = 'r-a';
+  const { settings } = await send('GET', '/api/settings', null, 'u-superadmin');
+  await send('PUT', '/api/settings', { ...settings, reminderHoursBefore: 36 }, 'u-superadmin');
   const han = await send('POST', hanPath + '/payments', { kind: 'deposit' }, 'u-han', 201);
   await send('POST', '/api/test-gateway/' + han.payment.id, { result: 'success' }, 'u-han');
   const linh = await send('POST', path + '/payments', { kind: 'deposit' }, 'u-linh', 201);
+  const pending = await send('PATCH', path, recovery, 'u-thao', 409);
+  assert.equal(pending.error.details.retryAt, new Date(linh.payment.expiresAt).toISOString());
   await send('POST', '/api/test-gateway/' + linh.payment.id, { result: 'success' }, 'u-linh');
 
   const paymentPath = '/api/payments/' + linh.payment.id;
@@ -472,15 +497,50 @@ test('HTTP B4.1: a real paid deposit clash leaves the booking unreserved and rej
   const before = await send('GET', path, null, 'u-thao');
   assert.equal(before.adminActions.editor.id, 'u-ha');
   assert.equal(before.booking.deposit, paid.payment.amount);
-  assert.equal((await send('PATCH', path, schedule, 'u-thao', 409)).error.code, 'CLASH');
+  const { error: clash } = await send('PATCH', path, schedule, 'u-thao', 409);
+  assert.equal(clash.code, 'CLASH');
+  assert.equal(clash.message, clash.details.clashes[0].reason);
   await send('PATCH', path, input('2026-02-30'), 'u-thao', 400);
+  const closed = input(recovery.date);
+  closed.items[0].start = '07:00';
+  assert.ok((await send('PATCH', path, closed, 'u-thao', 400)).error.fields['items.0.start']);
+  await send('PATCH', path, recovery, 'u-linh', 403);
   assert.deepEqual(await send('GET', path, null, 'u-thao'), before);
   assert.deepEqual(await send('GET', paymentPath, null, 'u-linh'), paid);
   assert.ok(!(await send('GET', '/api/reminders', null, 'u-linh')).reminders.some((reminder) => reminder.bookingCode === code));
   for (const [kind, staff] of [['makeup', 'u-mai'], ['shoot', 'u-tuan'], ['edit', 'u-tuan'], ['edit', 'u-ha']]) {
     await send('GET', '/api/jobs/J-' + code + '-' + kind, null, staff, 404);
   }
+
+  const { booking } = await send('PATCH', path, recovery, 'u-thao');
+  assert.deepEqual(booking, { ...before.booking, date: recovery.date, status: 'booked',
+    items: [before.booking.items[0], { ...before.booking.items[1], room: { id: 'r-a', name: 'Phòng A' } }] });
+  assert.deepEqual(await send('GET', paymentPath, null, 'u-linh'),
+    { ...paid, booking: { ...paid.booking, status: 'booked' } });
+  const readJobs = async () => (await Promise.all(['u-mai', 'u-tuan', 'u-ha']
+    .map((staff) => send('GET', '/api/jobs', null, staff)))).flatMap(({ jobs }) => jobs)
+    .filter((job) => job.bookingCode === code);
+  const readReminders = async () => (await send('GET', '/api/reminders', null, 'u-linh')).reminders
+    .filter((reminder) => reminder.bookingCode === code);
+  const jobs = await readJobs();
+  assert.deepEqual(jobs.map(({ id, date, start, end, staff, room }) => [id, date, start, end, staff.id, room?.id ?? null]), [
+    [`J-${code}-makeup`, recovery.date, '13:00', '14:00', 'u-mai', null],
+    [`J-${code}-shoot`, recovery.date, '14:00', '16:00', 'u-tuan', 'r-a'],
+    [`J-${code}-edit`, null, null, null, 'u-ha', null],
+  ]);
+  await send('GET', '/api/jobs/J-' + code + '-edit', null, 'u-tuan', 404);
+  const reminders = await readReminders();
+  assert.equal(reminders.length, 1);
+  assert.equal(reminders[0].sendAt, '2027-10-25T01:00:00+07:00');
+  assert.equal(reminders[0].emailStatus, 'queued');
+  assert.deepEqual(await send('PATCH', path, recovery, 'u-thao'), { booking });
+  assert.deepEqual(await readJobs(), jobs);
+  assert.deepEqual(await readReminders(), reminders);
+  assert.equal((await send('GET', '/api/conversations/c-linh', null, 'u-linh')).conversation.bookingCode, code);
+  assert.deepEqual((await send('GET', '/api/bookings', null, 'u-linh')).bookings, [booking]);
   await send('POST', path + '/payments', { kind: 'deposit' }, 'u-linh', 409);
+  assert.deepEqual(await send('GET', paymentPath, null, 'u-linh'),
+    { ...paid, booking: { ...paid.booking, status: 'booked' } });
 });
 
 test('HTTP: rescheduling and cancelling preserve reminder history on the real mock', async () => {
