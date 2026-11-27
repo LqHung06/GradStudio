@@ -225,7 +225,8 @@ Content-Type: application/json
     "status": "pending",
     "failureReason": null,
     "reservationFailure": null,
-    "createdAt": "…"
+    "createdAt": "…",
+    "expiresAt": "…"
   },
   "redirectUrl": "/test-gateway/PAY-3"
 }
@@ -266,7 +267,8 @@ Content-Type: application/json
     "status": "succeeded",
     "failureReason": null,
     "reservationFailure": null,
-    "createdAt": "…"
+    "createdAt": "…",
+    "expiresAt": "…"
   },
   "booking": {
     "code": "GS-1024",
@@ -325,3 +327,4 @@ Content-Type: application/json
 
 - 2026-11-20: initial version: booking photos, 30-photo selection limit, remaining 70% payment chain. (TV2)
 - 2026-11-23: aligned `PAY-3` with `reservationFailure` field, added unknown photo ID (`400`) and post-70%-payment selection lock (`409`) examples (PO #9). (TV2)
+- 2026-11-27: QA9 added `expiresAt` to `PAY-3` Payment examples (`B4.2`) and clarified `1..selectionLimit` empty selection (`400`) and locked selection rules (`B4.9`, `B4.10`). (TV2)
