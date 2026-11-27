@@ -23,6 +23,12 @@ Every error is `{"error": {"code": string, "message": string, "fields": object, 
 
 Integration status (27/11): the Admin guard reads the transaction's `expiresAt` timestamp. Legacy pending transactions without an expiration remain locked and return a reason with null details. The affected booking remains unchanged if shared confirmation is unavailable for a deposit already paid.
 
+### Payment service handoff
+
+- TV2 supplies a persisted ISO 8601 `Payment.expiresAt` for both deposit and remaining payments, calculated by the same clock and deadline as the gateway. An active transaction satisfies `now < expiresAt`. At the deadline, the payment service owns expiration, terminal status, retry eligibility and late callback handling. G10 reads the active lock and the returned deadline. It does not expire or create payments.
+- TV2 and TV3 share the confirmation operation used by deposit success and by G10 recovery. Its inputs are the booking, the already-recorded deposit and the checked schedule. It prepares updates on a draft or commits them in one transaction. On success it sets the same booking to booked and provisions the missing jobs and reminder once. It reads the editor reference described in file 05 and preserves the original successful payment, amounts and booking code. On failure it leaves booking, jobs, reminders and payments as before.
+- Acceptance tests must create both payment kinds through the API, check the locking boundary with a test clock, and exercise recovery after a real deposit callback reports a resource clash. In the recovery case compare the booking code, payment history and job/reminder counts before and after a repeated request.
+
 `normal` delays about 150 ms; `slow` delays 2 s; `error` returns the README 500 shape; `empty` makes every list, including nested lists, `[]`. Empty list reads return 200, not 404. No future-date validation applies.
 
 ## PATCH /api/bookings/:code
@@ -505,6 +511,8 @@ Content-Type: application/json
 
 
 ## Changes
+
+- 2026-11-27: QA10 integration review after QA8. Describe the pending payment and confirmation handoffs and distinguish their API acceptance scenarios from the current interim guards.
 
 - 2026-11-27: QA10. B2.2 keeps one booking per conversation. B4.1 supersedes the earlier B1.8 recovery path. B4.2–4/B4.7 and BS.1 specify payment and schedule guards. B4.11 requires full payment and a completed edit job before final-link delivery.
 

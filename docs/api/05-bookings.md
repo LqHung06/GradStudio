@@ -50,7 +50,7 @@ Creating awaiting_deposit does **not** reserve any staff or room. Only successfu
 - **201 Created:** `{booking: Booking}`. The latest accepted proposal supplies date/items, after revalidating current opening hours. The server stores the selected editor separately from the shoot assignment and from the shared Booking shape. Sets conversation.bookingCode, awaiting_deposit and unpaid. The first success is GS-1024, with Tuấn selected as editor. One thread can create only one booking. Cancellation retains that link and history.
 - **Errors:** inherited 401/403/500; 400 VALIDATION for invalid input including `editorId`, or applicable `items.N.start/end` when configured hours no longer cover the accepted slots; 404 NOT_FOUND for missing conversation/proposal; 409 CONFLICT if the thread already has any booking, the proposal belongs to another thread, or it is no longer the latest accepted proposal. Creating a booking does not reserve its time.
 
-Mock handoff for confirmation: `db.bookingEditors[booking.code]` is the assigned editor `{id, name}` for the edit job. Older seeded bookings may not have this entry.
+Mock handoff for confirmation: `db.bookingEditors[booking.code]` holds the selected editor `{id, name}`. Confirmation and recovery use this reference for `J-<code>-edit`. Changing the shoot staff leaves this assignment intact. For new bookings, confirmation must not substitute the photographer when an editor is assigned. Older seeded bookings may not have an entry. The current payment route still uses the photographer, so end-to-end editor assignment is pending the TV2 confirmation handoff.
 
 ### Examples
 
@@ -385,6 +385,8 @@ Content-Type: application/json
 ```
 
 ## Changes
+
+- 2026-11-27: Clarify the B4.11 editor data handoff and preservation of the editor when shoot staff changes. The shared Booking response shape stays the same.
 
 - 2026-11-27: QA10, B2.2/B3.3/B4.4–5/B4.7/B4.11. One booking per thread, latest accepted proposal, configured hours, explicit editor and Admin eligibility.
 

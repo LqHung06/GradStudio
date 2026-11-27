@@ -412,7 +412,7 @@ try {
   await pay(firstApi, 'deposit');
   await click('Xem chi tiết GS-1024');
   await see('Áp dụng lịch mới');
-  await see('Người chỉnh ảnh: Tuấn');
+  await see('Người chỉnh ảnh đã chọn: Tuấn');
   await see('Chờ khách thanh toán đủ trước khi lưu link.');
   await send('Page.reload');
   await see('Áp dụng lịch mới');

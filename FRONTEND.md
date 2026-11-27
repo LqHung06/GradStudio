@@ -92,11 +92,16 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 |---|---|---|
 | Khóa/mở khóa Admin | Thêm `PATCH /api/admins/:id` (`{"active": boolean}`) cho Superadmin; tài khoản bị khóa bị từ chối đăng nhập (`403 FORBIDDEN`) và bị từ chối token cũ (`401 UNAUTHENTICATED`). Không mở sửa thông tin hay xóa Admin. | `README.md`, `01-auth.md`, `12-admins.md`, `server.mjs`, G11 |
 | Việc của Staff sau khi hủy booking | Giữ nguyên lịch sử việc (`GET` vẫn trả, không thêm `job.status = "cancelled"`), hiển thị booking Đã hủy và chặn Staff cập nhật việc / đăng preview (`409 CONFLICT`). | `08-jobs.md`, `10-admin-bookings.md`, G8 |
-| Hội thoại & booking thay thế sau hủy | Khi booking bị hủy, hội thoại giữ trạng thái `Đã chốt lịch` (`scheduled`) và hiển thị riêng booking Đã hủy. Cho phép chốt giờ mới và tạo mã booking thay thế trong cùng hội thoại; giữ nguyên lịch sử và tiền đã thu của booking cũ. | `03-conversations.md`, `05-bookings.md`, `10-admin-bookings.md`, G4, G6, G7, G10 |
 | 4a / 4b Upload ảnh preview | Chỉ nhận JPEG/PNG (`image/jpeg`, `image/png`), mỗi request 1 file, tối đa đúng **5 MiB = 5.242.880 byte** phần nội dung file (cùng ngưỡng ở contract, form `file.size` và server). PA#4 kiểm tra thêm chữ ký file theo S5. | `08-jobs.md`, `mock/routes/jobs.mjs`, G8 |
 | 4c / 4d Nhắc lịch & cài đặt | Trạng thái e-mail `queued` / `sent` / `failed` (PA#4: `sent` khi SMTP chấp nhận). Nhắc qua cả e-mail và tài khoản; số giờ nhắc trước là số nguyên 1–168, mặc định 24, tính từ mốc sớm nhất; nhắc chờ gửi được tính lại khi đổi lịch và dừng gửi khi hủy. | `07-reminders.md`, `13-settings.md`, G7, G11 |
 | 4e Đại diện lớp (kỷ yếu) | Một tài khoản đại diện lớp sở hữu booking kỷ yếu và dùng trọn luồng Customer; không thêm chia tiền hay nhiều tài khoản đồng quản lý. | Toàn bộ luồng Customer & kiểm tra chủ sở hữu |
 | Quy ước kỹ thuật mục 2.7 | Làm tròn cọc `Math.round(price * 0.3)` (VND nguyên); Payment cọc trùng dùng `succeeded` + `deposit_paid` + `reservationFailure`; điều kiện trả 70% yêu cầu mọi job `shoot` của booking đã `done`; ID hội thoại mới sinh dạng `c-1`, `c-2`… | `README.md`, `03`, `06`, `08`, `10` |
+
+### 5.3 Quy tắc TV3 theo QA của PO
+
+- B2.2 và B4.6. Mỗi hội thoại gắn tối đa một booking. Sau hủy, giữ Đã chốt lịch, mã booking, lịch sử và tiền đã thu. Khách gửi yêu cầu riêng để đặt lại. API trả ID hội thoại đích để màn Customer mở đúng chỗ.
+- B3.3 và B4.5. Đề xuất mới thay đề xuất đang chờ hoặc đã đồng ý. Chỉ đề xuất mới nhất có thể được phản hồi và dùng để tạo booking sau khi được khách đồng ý.
+- B4.4, B4.7 và B4.11. Admin dùng giờ mở cửa theo ngày thường/cuối tuần khi kiểm, đề xuất, tạo và đổi lịch. Việc chụp đã bắt đầu hoặc booking đã trả đủ thì khóa đổi lịch. Chỉ giao link khi booking đã trả đủ và việc chỉnh đã hoàn thành. Khách hoàn tất qua Nhận ảnh.
 
 ## 6. Libraries
 
@@ -117,8 +122,7 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 ### TV3 — giới hạn tích hợp còn lại
 
-Mock tính lại nhắc lịch khi đổi và dừng nhắc chờ gửi khi hủy (R04/R05). Bản sửa của TV2 (`84a9c34`) cấp ID theo hậu tố số lớn nhất hiện có. G10 đọc trạng thái đã nhận cọc và chưa giữ được chỗ từ Booking. Chi tiết `reservationFailure` nằm trong Payment, còn GET `/api/bookings/:code` thiếu trường này và mã giao dịch. Quy tắc ánh xạ jobs khi nhiều ca cùng loại hoặc thêm/bớt loại ca chờ TV1. Mock hiện trả 409 cho trường hợp không ánh xạ một-một. R06 chặn Staff sửa việc/upload sau hủy, đồng thời giữ quyền đọc lịch sử.
-
-### TV3 — phạm vi R14 trong brief mục 25–26
-
-G4/G5/G6 và G10 có các route ở bảng trên. Admin đổi lịch trực tiếp bằng `date/items`, hủy có lý do và xác nhận, hoặc lưu link ảnh cho booking đã đặt lịch. Khách xác nhận Nhận ảnh trong gallery sau khi đủ điều kiện. Khi tạo booking thay thế, API kiểm tra đề xuất có trước thời điểm hủy hay đã được dùng. Contract hiện thiếu trường cho phép giao diện phân biệt các trường hợp đó nếu khách trả lời một đề xuất cũ sau khi hủy.
+- B4.1. Khi cọc đã thu nhưng chưa giữ được chỗ, đổi sang giờ trống trên cùng mã vẫn trả 409. Cần TV2 bàn giao thao tác xác nhận dùng chung để giữ cọc và sinh việc, nhắc lịch đúng một lần.
+- B4.2–3 và BS.1. G10 chặn giao dịch đang chờ và đọc `retryAt` nếu API có dữ liệu hết hạn. Payment thật trong mock chưa cấp `expiresAt`. Vòng đời 15 phút của cả cọc và khoản 70% còn chờ TV2.
+- B4.11. Admin lưu người chỉnh riêng qua `editorId` trong `db.bookingEditors`. Luồng sinh việc thanh toán hiện vẫn lấy người chụp cho job chỉnh. TV2 cần dùng người được phân công khi xác nhận.
+- TV2 cần nối ID đích vào màn Customer khi gửi từ trang dịch vụ hoặc khi yêu cầu được chuyển hội thoại. Các ca đổi lịch thêm, bớt hoặc lặp loại ca vẫn cần quy tắc ánh xạ jobs từ TV1.
