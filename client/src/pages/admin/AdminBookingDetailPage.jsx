@@ -129,7 +129,7 @@ function BookingDetail({ code }) {
             {booking.status === 'awaiting_deposit' && booking.paymentStatus === 'deposit_paid' && (
               <p>Studio đã nhận cọc nhưng chưa giữ được chỗ. Khoản cọc vẫn gắn với booking này.</p>
             )}
-            {actions?.editor && <p>Người chỉnh ảnh: {actions.editor.name}</p>}
+            {actions?.editor && <p>Người chỉnh ảnh đã chọn: {actions.editor.name}</p>}
             <h3>Dịch vụ thêm</h3>
             {booking.extras.length
               ? <ul>{booking.extras.map(({ id, name }) => <li key={id}>{name}</li>)}</ul>
