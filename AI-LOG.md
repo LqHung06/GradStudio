@@ -994,3 +994,19 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - `/staff/jobs/J-GS-1022-edit` (`tuan`): form & nút lưu bị khóa (`disabled: true`), `aria-describedby="job-status-lock-reason"` trỏ đúng thông báo *"Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%."*
     - `pageErrors: []`; mock log toàn bộ request `/api/*` trả `200` (0 lỗi API 404; chỉ có 1 lỗi 404 mặc định của trình duyệt cho `/favicon.ico`). Đã dọn sạch mọi tiến trình nền.
 - **Commits:** TV1 tự kiểm tra diff và tách commit theo thứ tự contract → mock → UI → test → AI-LOG.
+
+
+### [TV1] 33. Chuẩn bị bản nháp PA#3 `SELF_ASSESSMENT_REPORT.md` và cập nhật mục 5 `FRONTEND.md` (đợt QA 27/11) — 27/11/2026
+
+- **Tool:** Antigravity Assistant, Git (`git log`, `git shortlog`, `git diff`).
+- **Request:** `brief.md` mục 33. Trên nhánh `docs/qa12-pa3-report-draft` tách từ `main` (`a8236fd`), soạn sẵn bản nháp `SELF_ASSESSMENT_REPORT.md` PA#3 (đủ 9 tiêu chí rubric, ghi nhãn `[CHỜ CHỐT QA11]` cho điểm và mục chưa chạy) và cập nhật mục 5 `FRONTEND.md` theo loạt QA PO mới 27/11 (`B2`, `B3`, `B4`, `BS.1`).
+- **Changed:**
+  - `SELF_ASSESSMENT_REPORT.md`: thay bản PA#2 cũ bằng khung bản nháp PA#3 tại commit `a8236fd` với đủ 9 tiêu chí (100 điểm), đối chiếu bằng chứng thật từ `git log` (18 route nghiệp vụ, 221 commit PA#3, 7 commit `AGENTS.md`, 32 mục `brief.md`/`AI-LOG.md`, 113/113 contract examples, 40/40 endpoints, 33/33 test) và mục 2 *What We Did Not Manage / Known Limitations* trung thực.
+  - `FRONTEND.md`: giữ nguyên mục 5.1, ghi chú rõ `B2.2` thay thế quy ước cũ 23/11 ở mục 5.2, bổ sung mục **5.3 — Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)** đầy đủ `B2.1–B2.5`, `B3.1–B3.3`, `B4.1–B4.13`, `BS.1` kèm trạng thái thực tế tại `a8236fd`; giữ nguyên mục 7 (*Not done*) của TV3.
+  - `brief.md` mục 33 và `AI-LOG.md` mục này.
+- **Rejected:** Không có sai phạm trong lượt này; không sửa `docs/api/`, `mock/`, `client/`, `tools/`, không bịa điểm tự chấm hay URL bài đăng PO.
+- **Checked:**
+  - Đối chiếu số liệu trực tiếp từ `git shortlog -sn 8e5c4f5~1..HEAD`, `git log --merges --oneline`, `git log -- AGENTS.md`, `grep -rn "path:" client/src/routes/`.
+  - `git diff -- docs/api mock client tools`: trống hoàn toàn.
+  - `git diff --check`: 0 lỗi; 0 conflict markers (`git grep`).
+- **Commits:** TV1 tự kiểm tra diff và commit sau (hoặc giữ trên nhánh nháp để điền số liệu cuối sau `QA11` ngày 29/11).
