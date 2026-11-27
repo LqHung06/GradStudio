@@ -43,11 +43,13 @@ function ConversationWorkspace({ path, conversation, detail }) {
   const busy = detail.loading || mutating || Boolean(detail.error);
   const bookings = (history.data?.bookings ?? []).filter(({ conversationId }) => conversationId === conversation.id);
   const linked = bookings.find(({ code }) => code === conversation.bookingCode);
-  const canCreate = history.data
-    && (!conversation.bookingCode || linked?.status === 'cancelled');
+  const canCreate = Boolean(history.data && !conversation.bookingCode && !bookings.length
+    && conversation.status !== 'done');
+  const resources = useFetch(canCreate ? '/api/resources' : null);
   const request = conversation.messages.findLast((message) => message.request)?.request;
-  const proposal = conversation.messages.find(({ proposal }) => proposal?.id === conversation.acceptedProposalId)?.proposal;
-  const accepted = proposal?.status === 'accepted' && proposal.items.length ? proposal : null;
+  const proposal = conversation.messages.findLast((message) => message.proposal)?.proposal;
+  const accepted = proposal?.status === 'accepted' && proposal.id === conversation.acceptedProposalId
+    && proposal.items.length ? proposal : null;
 
   async function mutate(operation) {
     if (busy || mutation.current) throw new Error('Đang xử lý yêu cầu trong hội thoại. Vui lòng thử lại.');
@@ -74,8 +76,12 @@ function ConversationWorkspace({ path, conversation, detail }) {
 
   const sendProposal = (body) => mutate(async () => {
     const { message } = await apiFetch(path + '/proposals', { method: 'POST', body });
-    append(message);
-    // The proposal endpoint returns the message but omits the conversation summary.
+    detail.setData(({ conversation: current }) => ({
+      conversation: { ...current, status: 'consulting', acceptedProposalId: null,
+        messages: [...current.messages.map((entry) => ['pending', 'accepted'].includes(entry.proposal?.status)
+          ? { ...entry, proposal: { ...entry.proposal, status: 'superseded' } }
+          : entry), message] },
+    }));
     detail.reload();
   });
 
@@ -109,11 +115,11 @@ function ConversationWorkspace({ path, conversation, detail }) {
         </section>
         <div className="admin-columns-side">
           {linked?.status === 'cancelled' && (
-            <p>Booking {linked.code} đã hủy. Gửi đề xuất mới và chờ khách đồng ý để tạo booking thay thế.</p>
+            <p>Booking {linked.code} đã hủy. Khách cần gửi yêu cầu mới để đặt lại.</p>
           )}
-          {canCreate && <ProposalForm preferredDate={request?.preferredDate ?? ''} busy={busy} onPropose={sendProposal} />}
+          {canCreate && <ProposalForm preferredDate={request?.preferredDate ?? ''} resources={resources} busy={busy} onPropose={sendProposal} />}
           {canCreate && <BookingForm conversation={conversation} request={request} proposal={accepted}
-            busy={busy || history.loading || Boolean(history.error)} onCreate={createBooking} />}
+            resources={resources} busy={busy || history.loading || Boolean(history.error)} onCreate={createBooking} />}
           {conversation.bookingCode && !linked && history.data && !history.loading && !history.error &&
             <p role="alert">Chưa tìm thấy booking {conversation.bookingCode} trong danh sách trả về.</p>}
           <section className="admin-card">
@@ -123,6 +129,7 @@ function ConversationWorkspace({ path, conversation, detail }) {
               <ul className="admin-cards">
                 {bookings.map((booking) => <li className="admin-card" key={booking.code}>
                   <BookingSummary booking={booking} />
+                  <Link className="admin-link" to={'/admin/bookings/' + encodeURIComponent(booking.code)}>Chi tiết booking</Link>
                 </li>)}
               </ul>
               <Link className="admin-link" to="/admin/bookings">Xem danh sách booking</Link>
