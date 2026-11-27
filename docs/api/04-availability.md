@@ -168,7 +168,7 @@ Content-Type: application/json
 
 ## POST /api/availability/check
 
-Admin scheduling uses Superadmin's configured opening hours for weekdays (Monday–Friday) and weekends (Saturday–Sunday). Each item must start at or after opening and end at or before closing. Return 400 VALIDATION on the relevant `items.N.start` or `items.N.end` with the applicable hours in the message. Apply the same rule when sending a proposal, creating a booking or rescheduling. Suggest only times within the applicable hours for the suggested date. A preferred customer time and the deposit resource recheck are outside this rule. Past dates and contiguous half-open intervals are valid. The existing single configured interval applies uniformly while TV1's split configuration is pending.
+Admin scheduling uses Superadmin's configured opening hours for weekdays (Monday–Friday) and weekends (Saturday–Sunday). Each item must start at or after opening and end at or before closing. Return 400 VALIDATION on the relevant `items.N.start` or `items.N.end` with the applicable hours in the message. Apply the same rule when sending a proposal, creating a booking or rescheduling. Suggest only times within the applicable hours for the suggested date. A preferred customer time and the deposit resource recheck are outside this rule. Past dates and contiguous half-open intervals are valid. The shared settings helper still accepts a single configured interval for legacy data.
 
 - **Roles:** admin. **Path/query:** none.
 - **Body:**

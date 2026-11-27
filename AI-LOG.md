@@ -964,10 +964,42 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Commits:** `9653e86` brief; `6870535` BookingSummary; `8ed6c8f` AdminLists; `2d6b5f5` ProposalForm; `0efaf5e` RescheduleForm; `445c257` AdminBookingDetailPage; `25b0df8` route; `5fbe034` và `d4d9bc2` harness; `f08fed4` FRONTEND.md. Mục này được commit riêng sau khi hoàn tất kiểm tra.
 
 
-### [TV3] 32. QA10 hội thoại và booking Admin (27/11/2026)
+### [TV1] 32. QA8: Giờ mở cửa 2 khung (T2–T6 / T7–CN, B4.4) và quy tắc khóa việc Staff (B4.8, B4.11, B2.1) — 27/11/2026
+
+- **Tool:** Antigravity Assistant, Node.js 20 (`node:test`, `node --check`), Vite 7, Headless Chrome CDP.
+- **Request:** `brief.md` mục 32. Trên nhánh `feat/qa8-settings-and-job-locks` tách từ `main` (`effea64`), triển khai trọn phần `QA8` của TV1 theo kế hoạch cập nhật 27/11/2026 để bàn giao cho TV3 và TV2 sáng 28/11.
+- **Changed:**
+  - `docs/api/13-settings.md`: đổi `openingHours` sang 2 khung `weekday` (T2–T6) và `weekend` (T7–CN), cập nhật bảng field, validation, ví dụ `GET`/`PUT` (`200`, `400`, `403`) và mục `## Changes` (giữ seed T7 `24/10/2026` bao `09:00–16:00`).
+  - `docs/api/08-jobs.md`: cập nhật quy tắc `PATCH /api/jobs/:id` cho phép đổi/lùi trạng thái tự do khi chưa khóa, bổ sung 4 điều kiện khóa `409 CONFLICT` (`cancelled`, `makeup`/`shoot` sau `paid_in_full`/`completed`, `edit` trước khi lưu ảnh & `paid_in_full`, `edit` sau `finalLink`/`completed`), thêm ví dụ `409` trên `J-GS-1024-edit` và ghi `## Changes`.
+  - `mock/lib/opening-hours.mjs` (file mới): xuất `HHMM_RE`, `isValidHoursRange`, `isWeekendDate`, `getOpeningHoursForDate(settings, dateStr)` (có fallback legacy `{open, close}`).
+  - `mock/data/settings.json` & `mock/routes/settings.mjs`: seed và validate đủ 2 khung `weekday`/`weekend`.
+  - `mock/lib/clash.mjs`: chỉ cập nhật đoạn đọc `db.settings?.openingHours` sang `getOpeningHoursForDate(db.settings, candidateDate)` để `04-availability.md` và hồi quy TV3 không bị gãy.
+  - `mock/routes/jobs.mjs`: áp dụng 4 điều kiện khóa `409 CONFLICT` trong `PATCH /api/jobs/:id`, giữ nguyên `GET` lịch sử và `POST /api/bookings/:code/previews`.
+  - `client/src/pages/superadmin/SuperadminSettingsPage.jsx` & `client/src/styles/superadmin.css`: tách form cài đặt thành 2 `<fieldset>` (`Ngày thường (T2–T6)` và `Cuối tuần (T7–CN)`), map lỗi 400 từng field.
+  - `client/src/pages/staff/StaffJobDetailPage.jsx`: thêm `getJobStatusLockReason(job, booking)`, khóa form cập nhật trạng thái kèm lý do `#job-status-lock-reason` gắn `aria-describedby` vào nút **Lưu cập nhật**, bổ sung badge trạng thái thanh toán của booking.
+  - `tools/tv1-rules.test.mjs`: thêm 2 bộ kiểm thử mới cho `B4.4` và `B4.8`/`B4.11` (nâng tổng hồi quy lên 33 test).
+  - `brief.md` mục 32 và `AI-LOG.md` mục này.
+- **Rejected / lỗi phát hiện:**
+  - Khi sửa `docs/api/08-jobs.md`, lệnh `edit_file` đầu tiên khớp cả khối `404` dưới `GET /api/jobs/:id` lẫn `PATCH /api/jobs/:id`; phát hiện ngay từ thông báo `Made 2 replacements` và đã xóa bản trùng dưới `GET /api/jobs/:id` trước khi chạy `contract-check`.
+  - Không sửa file thuộc TV2 hay logic nghiệp vụ TV3 (ngoài đoạn đọc helper `getOpeningHoursForDate` trong `mock/lib/clash.mjs`), không thêm dependency.
+- **Checked:**
+  - **Gate 1 (Syntax & JSON):** `node --check` mọi `mock/**/*.mjs` & `tools/*.mjs` **PASS**; `Parsed 14 seed JSON file(s) successfully.`
+  - **Gate 2 (Contract Check):** mock khởi động mới + `node tools/contract-check.mjs --base http://127.0.0.1:3001` → **113/113 examples answered as written; 0 FAIL; 40/40 endpoints**.
+  - **Gate 3 (Regression Tests):** `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs` → **33/33 PASS, 0 FAIL, 0 TODO** (`10238.43ms`).
+  - **Gate 4 (Client Build):** `cd client && npm run build` → **PASS** (`95 modules transformed`, `3.12s`).
+  - **Gate 5 (Repo Hygiene):** 0 conflict markers, `git diff --check` **0 lỗi**.
+  - **Chrome Headless CDP trên production build (`vite preview --port 4173` + `mock/server.mjs`):**
+    - `/superadmin/settings` (`superadmin`): hiện đủ 2 `<legend>` (*Ngày thường (T2–T6)*, *Cuối tuần (T7–CN)*), lưu `07:30–20:30` / `08:30–21:00` / `48` giờ → `"Đã lưu cài đặt"`, F5 giữ nguyên dữ liệu; kiểm `scrollWidth > innerWidth` ở `360 / 768 / 1280px` đều `false`.
+    - `/staff/jobs/J-GS-1022-shoot` (`tuan`): form mở (`disabled: false`), lùi trạng thái `done → todo` thành công (`"Đã cập nhật công việc"`).
+    - `/staff/jobs/J-GS-1022-edit` (`tuan`): form & nút lưu bị khóa (`disabled: true`), `aria-describedby="job-status-lock-reason"` trỏ đúng thông báo *"Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%."*
+    - `pageErrors: []`; mock log toàn bộ request `/api/*` trả `200` (0 lỗi API 404; chỉ có 1 lỗi 404 mặc định của trình duyệt cho `/favicon.ico`). Đã dọn sạch mọi tiến trình nền.
+- **Commits:** TV1 tự kiểm tra diff và tách commit theo thứ tự contract → mock → UI → test → AI-LOG.
+
+
+### [TV3] 33. QA10 hội thoại và booking Admin (27/11/2026)
 
 - **Tool:** Codex, Humanizer, Node.js, Vite preview và Chrome DevTools Protocol.
-- **Request:** `brief.md` mục 32. Thực hiện phần TV3 của QA10 trên checkout `effea64`, theo bản cập nhật kế hoạch và câu trả lời PO ngày 27/11.
+- **Request:** `brief.md` mục 33. Thực hiện phần TV3 của QA10 trên checkout `effea64`, theo bản cập nhật kế hoạch và câu trả lời PO ngày 27/11.
 - **Changed:**
   - B2.2 giữ mã booking và lịch sử trong hội thoại sau hủy. B4.6 làm rõ B2.5/B3.2: từ trang dịch vụ ưu tiên hội thoại mở chưa có booking theo tin nhắn mới nhất. API trả `conversation.id` của nơi nhận tin. B3.3/B4.5 đánh dấu đề xuất cũ bị thay thế và chặn phản hồi hoặc tạo booking từ tab cũ.
   - B4.4 kiểm giờ cấu hình ở cả bốn bước Admin, cho phép ca liền giờ và giữ ngày 24/10/2026. B4.7 chặn đổi lịch khi việc chụp đã bắt đầu, đã xong hoặc khách đã trả đủ. G10 đọc thời hạn giao dịch khi có và trả mốc thử lại theo B4.2–3, BS.1.

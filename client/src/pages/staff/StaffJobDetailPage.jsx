@@ -11,6 +11,7 @@ import {
   getStatusLabel,
   JOB_KIND,
   JOB_STATUS,
+  PAYMENT_STATUS,
 } from '../../constants/status.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import { useForm } from '../../hooks/useForm.js';
@@ -44,6 +45,28 @@ function validatePreviewUpload(values) {
     errors.file = 'Ảnh tối đa 5 MiB';
   }
   return errors;
+}
+
+function getJobStatusLockReason(job, booking) {
+  if (!job || !booking) return '';
+  if (booking.status === 'cancelled') {
+    return `Form cập nhật đã khóa vì booking ${job.bookingCode} đang ở trạng thái Đã hủy.`;
+  }
+  if (job.kind === 'makeup' || job.kind === 'shoot') {
+    if (booking.paymentStatus === 'paid_in_full' || booking.status === 'completed') {
+      return 'Khách đã thanh toán đủ 70%, không thể cập nhật việc makeup/chụp ảnh.';
+    }
+    return '';
+  }
+  if (job.kind === 'edit') {
+    if (booking.finalLink || booking.status === 'completed') {
+      return 'Booking đã gắn link ảnh hoàn chỉnh, không thể cập nhật việc chỉnh ảnh.';
+    }
+    if (booking.paymentStatus !== 'paid_in_full' || !(booking.selection?.selectedCount > 0)) {
+      return 'Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%.';
+    }
+  }
+  return '';
 }
 
 export function StaffJobDetailPage() {
@@ -80,6 +103,8 @@ export function StaffJobDetailPage() {
 
   const booking = bookingData?.booking || null;
   const isCancelled = booking?.status === 'cancelled';
+  const statusLockReason = getJobStatusLockReason(job, booking);
+  const isStatusLocked = Boolean(statusLockReason);
   const photos = photosData?.photos || [];
 
   const [statusMessage, setStatusMessage] = useState('');
@@ -91,7 +116,7 @@ export function StaffJobDetailPage() {
     initial: INITIAL_STATUS_FORM,
     validate: validateJobStatus,
     onSubmit: async (values) => {
-      if (!job || isCancelled) return;
+      if (!job || isStatusLocked) return;
       setStatusMessage('');
       const result = await updateJob(job.id, {
         status: values.status,
@@ -204,6 +229,7 @@ export function StaffJobDetailPage() {
           <div className="staff-detail-badges">
             <StatusBadge map={JOB_STATUS} status={job.status} />
             {booking && <StatusBadge map={BOOKING_STATUS} status={booking.status} />}
+            {booking && <StatusBadge map={PAYMENT_STATUS} status={booking.paymentStatus} />}
           </div>
         </header>
 
@@ -290,7 +316,7 @@ export function StaffJobDetailPage() {
                     {...controlProps}
                     value={statusForm.values.status}
                     onChange={handleStatusChange}
-                    disabled={isCancelled || statusForm.submitting}
+                    disabled={isStatusLocked || statusForm.submitting}
                   >
                     <option value="todo">{JOB_STATUS.todo}</option>
                     <option value="in_progress">{JOB_STATUS.in_progress}</option>
@@ -310,13 +336,13 @@ export function StaffJobDetailPage() {
                 inputProps={{
                   maxLength: 500,
                   rows: 3,
-                  disabled: isCancelled || statusForm.submitting,
+                  disabled: isStatusLocked || statusForm.submitting,
                 }}
               />
 
-              {isCancelled && (
-                <p className="field-hint">
-                  Form cập nhật đã khóa vì booking {job.bookingCode} đang ở trạng thái Đã hủy.
+              {isStatusLocked && (
+                <p id="job-status-lock-reason" className="field-hint">
+                  {statusLockReason}
                 </p>
               )}
 
@@ -336,7 +362,8 @@ export function StaffJobDetailPage() {
                 <button
                   type="submit"
                   className="button button-dark"
-                  disabled={isCancelled || statusForm.submitting}
+                  disabled={isStatusLocked || statusForm.submitting}
+                  aria-describedby={isStatusLocked ? 'job-status-lock-reason' : undefined}
                 >
                   {statusForm.submitting ? 'Đang lưu…' : 'Lưu cập nhật'}
                 </button>

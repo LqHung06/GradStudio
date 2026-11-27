@@ -8,7 +8,9 @@ import { fileURLToPath } from 'node:url';
 import authRoutes from '../mock/routes/auth.mjs';
 import adminRoutes from '../mock/routes/admins.mjs';
 import jobRoutes from '../mock/routes/jobs.mjs';
+import settingsRoutes from '../mock/routes/settings.mjs';
 import adminBookingRoutes from '../mock/routes/admin-bookings.mjs';
+import { getOpeningHoursForDate, isWeekendDate } from '../mock/lib/opening-hours.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const seeds = new URL('../mock/data/', import.meta.url);
@@ -21,7 +23,7 @@ function freshDb() {
   );
 }
 
-const allRoutes = [...authRoutes, ...adminRoutes, ...jobRoutes, ...adminBookingRoutes];
+const allRoutes = [...authRoutes, ...adminRoutes, ...jobRoutes, ...settingsRoutes, ...adminBookingRoutes];
 const fail = (status, code, message, fields = {}, details = null) => ({
   status,
   body: { error: { code, message, fields, details } },
@@ -323,4 +325,166 @@ test('HTTP server enforcement: R01 locked existing token (401) + locked login (4
   } finally {
     await srv.stop();
   }
+});
+
+
+test('B4.4 (QA8): settings split weekday/weekend opening hours with strict validation and date helper', () => {
+  const db = freshDb();
+
+  const initial = call(db, 'GET', '/api/settings', { userId: 'u-superadmin' });
+  assert.equal(initial.status, 200);
+  assert.deepEqual(initial.body.settings.openingHours, {
+    weekday: { open: '08:00', close: '20:00' },
+    weekend: { open: '08:00', close: '20:00' },
+  });
+
+  // Saturday 2026-10-24 must be weekend and cover GS-1024 (09:00-16:00).
+  assert.equal(isWeekendDate('2026-10-23'), false);
+  assert.equal(isWeekendDate('2026-10-24'), true);
+  assert.equal(isWeekendDate('2026-10-25'), true);
+
+  const updated = call(db, 'PUT', '/api/settings', {
+    userId: 'u-superadmin',
+    body: {
+      openingHours: {
+        weekday: { open: '07:30', close: '20:30' },
+        weekend: { open: '08:00', close: '21:00' },
+      },
+      reminderHoursBefore: 48,
+    },
+  });
+  assert.equal(updated.status, 200);
+  assert.deepEqual(getOpeningHoursForDate(db.settings, '2026-10-23'), { open: '07:30', close: '20:30' });
+  assert.deepEqual(getOpeningHoursForDate(db.settings, '2026-10-24'), { open: '08:00', close: '21:00' });
+  assert.deepEqual(getOpeningHoursForDate(db.settings, '2026-10-25'), { open: '08:00', close: '21:00' });
+
+  // Legacy { open, close } fallback remains safe.
+  assert.deepEqual(
+    getOpeningHoursForDate({ openingHours: { open: '09:00', close: '18:00' } }, '2026-10-24'),
+    { open: '09:00', close: '18:00' },
+  );
+
+  // Invalid ranges must return 400 with exact field keys and not mutate db.
+  const before = structuredClone(db.settings);
+  const bad = call(db, 'PUT', '/api/settings', {
+    userId: 'u-superadmin',
+    body: {
+      openingHours: {
+        weekday: { open: '20:00', close: '08:00' },
+        weekend: { open: '18:00', close: '18:00' },
+      },
+      reminderHoursBefore: 0,
+    },
+  });
+  assert.equal(bad.status, 400);
+  assert.ok(bad.body.error.fields['openingHours.weekday.close']);
+  assert.ok(bad.body.error.fields['openingHours.weekend.close']);
+  assert.ok(bad.body.error.fields.reminderHoursBefore);
+  assert.deepEqual(db.settings, before);
+
+  const forbidden = call(db, 'PUT', '/api/settings', {
+    userId: 'u-thao',
+    body: {
+      openingHours: {
+        weekday: { open: '08:00', close: '20:00' },
+        weekend: { open: '08:00', close: '20:00' },
+      },
+      reminderHoursBefore: 24,
+    },
+  });
+  assert.equal(forbidden.status, 403);
+});
+
+test('B4.8 & B4.11 (QA8): Staff job status transitions and lock rules across deposit_paid, paid_in_full and finalLink', () => {
+  const db = freshDb();
+  const gs1022 = db.bookings.find((b) => b.code === 'GS-1022');
+  assert.equal(gs1022.paymentStatus, 'deposit_paid');
+  assert.equal(gs1022.selection.selectedCount, 0);
+
+  // 1. Before paid_in_full: shoot may step backward (done -> todo -> done).
+  const stepBack = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-shoot' },
+    body: { status: 'todo', note: 'Chụp bổ sung thêm góc' },
+  });
+  assert.equal(stepBack.status, 200);
+  assert.equal(stepBack.body.job.status, 'todo');
+
+  const stepForward = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-shoot' },
+    body: { status: 'done', note: '' },
+  });
+  assert.equal(stepForward.status, 200);
+  assert.equal(stepForward.body.job.status, 'done');
+
+  // 2. Edit is locked before photo selection + paid_in_full.
+  const editLockedNoSel = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'in_progress' },
+  });
+  assert.equal(editLockedNoSel.status, 409);
+
+  // Even after saving selection, edit stays locked until paid_in_full.
+  gs1022.selection.selectedCount = 12;
+  const editLockedUnpaid70 = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'in_progress' },
+  });
+  assert.equal(editLockedUnpaid70.status, 409);
+
+  // 3. After selection saved + paid_in_full: shoot/makeup locked (409), edit unlocked (including backward).
+  gs1022.paymentStatus = 'paid_in_full';
+  const shootLockedAfter70 = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-shoot' },
+    body: { status: 'in_progress' },
+  });
+  assert.equal(shootLockedAfter70.status, 409);
+  assert.equal(db.jobs.find((j) => j.id === 'J-GS-1022-shoot').status, 'done');
+
+  const gs1021 = db.bookings.find((b) => b.code === 'GS-1021');
+  gs1021.paymentStatus = 'paid_in_full';
+  const makeupLockedAfter70 = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-mai',
+    params: { id: 'J-GS-1021-makeup' },
+    body: { status: 'done' },
+  });
+  assert.equal(makeupLockedAfter70.status, 409);
+  assert.equal(db.jobs.find((j) => j.id === 'J-GS-1021-makeup').status, 'todo');
+
+  const editStart = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'done', note: 'Hoàn tất chỉnh 12 ảnh' },
+  });
+  assert.equal(editStart.status, 200);
+  assert.equal(editStart.body.job.status, 'done');
+
+  const editStepBack = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'in_progress' },
+  });
+  assert.equal(editStepBack.status, 200);
+  assert.equal(editStepBack.body.job.status, 'in_progress');
+
+  const editDoneAgain = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'done' },
+  });
+  assert.equal(editDoneAgain.status, 200);
+
+  // 4. Once finalLink is set, edit is locked (409) without mutating status.
+  gs1022.finalLink = 'https://drive.example.com/gs-1022';
+  const editLockedAfterLink = call(db, 'PATCH', '/api/jobs/:id', {
+    userId: 'u-tuan',
+    params: { id: 'J-GS-1022-edit' },
+    body: { status: 'in_progress' },
+  });
+  assert.equal(editLockedAfterLink.status, 409);
+  assert.equal(db.jobs.find((j) => j.id === 'J-GS-1022-edit').status, 'done');
 });

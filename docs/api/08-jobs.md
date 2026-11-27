@@ -12,14 +12,18 @@
 
 ## What a job is
 
-A job is one piece of work for one staff member on one booking: `makeup`, `shoot` or `edit`. When a deposit succeeds, a booking gets one job per `ScheduleItem` (make-up, shoot), plus one `edit` job for the photographer.
+A job is one piece of work for one staff member on one booking: `makeup`, `shoot` or `edit`. When a deposit succeeds (or an Admin recovers a clashed deposit onto a free slot), a booking gets one job per `ScheduleItem` (make-up, shoot), plus one `edit` job for the editor assigned by Admin when creating the booking (B4.11; defaults to the shoot staff if not explicitly specified in older fixtures).
 
 - `id` is always `J-<booking code>-<kind>`.
-- An `edit` job has no time or room (`date`, `start`, `end`, `room` are `null`). It is done after the customer chooses the photos.
+- An `edit` job has no time or room (`date`, `start`, `end`, `room` are `null`). It may only be updated after the customer has saved a photo selection (`selectedCount > 0`) and paid the remaining 70% (`paid_in_full`), and is locked once the Admin attaches `finalLink` (B4.8, B4.11).
 - `previewCount` is the number of photos the booking has (see `GET /api/bookings/:code/photos`). It is the same on every job of a booking.
 - A staff member sees only their own jobs.
-- Updating a job never changes the booking or conversation status. Marking all `shoot` jobs of a booking `done` is the milestone used by payments (`06-payments.md`) to allow the remaining 70% payment.
-- When a booking is `cancelled`, its jobs and their statuses stay in history (`GET /api/jobs` and `GET /api/jobs/:id` still return them; there is no `cancelled` job status), while `PATCH /api/jobs/:id` and `POST /api/bookings/:code/previews` are refused with `409 CONFLICT` without changing any data.
+- Updating a job never changes the booking or conversation status. Marking all `shoot` jobs of a booking `done` is the milestone used by payments (`06-payments.md`, B2.1) to allow the remaining 70% payment; stepping a `shoot` job backward before payment locks the 70% payment again.
+- While unlocked, a staff member may change their job status in any order, including stepping backward (e.g. `done` → `in_progress` or `todo`).
+- Locking rules (`409 CONFLICT` on `PATCH /api/jobs/:id` without mutating data; `GET` history always stays readable):
+  - Booking is `cancelled`: all jobs are read-only history; `PATCH /api/jobs/:id` and `POST /api/bookings/:code/previews` return `409 CONFLICT`.
+  - `makeup` / `shoot` jobs: locked once the booking is `paid_in_full` or `completed` (B4.8).
+  - `edit` jobs: locked until the customer has saved at least 1 selected photo (`booking.selection.selectedCount > 0`) **and** `booking.paymentStatus === "paid_in_full"`; locked again once `booking.finalLink` is set or the booking is `completed` (B4.8, B4.11).
 
 ## Starting data (`mock/data/jobs.json`)
 
@@ -229,9 +233,9 @@ Updates the status of one's own job, and optionally its note.
 | 401 | `UNAUTHENTICATED` | No token |
 | 403 | `FORBIDDEN` | The caller is not staff |
 | 404 | `NOT_FOUND` | No such job, or it belongs to another staff member |
-| 409 | `CONFLICT` | The job's booking is `cancelled` (history is read-only; message: `"Booking đã hủy, không thể cập nhật công việc"`). Job status and note remain unchanged. |
+| 409 | `CONFLICT` | Job is locked by booking state (job status and note remain unchanged): booking is `cancelled` (`"Booking đã hủy, không thể cập nhật công việc"`); `makeup`/`shoot` after `paid_in_full` or `completed` (`"Khách đã thanh toán đủ 70%, không thể cập nhật việc makeup/chụp ảnh"`); `edit` before photo selection is saved and `paid_in_full` (`"Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%"`); or `edit` after `finalLink` is attached / `completed` (`"Booking đã gắn link ảnh hoàn chỉnh, không thể cập nhật việc chỉnh ảnh"`). |
 
-Any status may follow any other; the mock checks only the values.
+While unlocked, any status may follow any other (including stepping backward); the mock checks only the values.
 
 ### Examples
 
@@ -287,6 +291,23 @@ HTTP/1.1 404 Not Found
 Content-Type: application/json
 
 {"error": {"code": "NOT_FOUND", "message": "Không tìm thấy việc này", "fields": {}, "details": null}}
+```
+
+Tuấn tries to start `J-GS-1024-edit` before Linh saves a photo selection and pays the remaining 70% (B4.11):
+
+```http
+PATCH /api/jobs/J-GS-1024-edit
+Authorization: Bearer {{token:tuan}}
+Content-Type: application/json
+
+{"status": "in_progress"}
+```
+
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{"error": {"code": "CONFLICT", "message": "Chỉ được cập nhật việc chỉnh ảnh sau khi khách đã lưu danh sách ảnh và thanh toán đủ 70%", "fields": {}, "details": null}}
 ```
 
 ---
@@ -423,3 +444,4 @@ Every change to this file, once front-end code uses it, gets a line here: the da
 
 - 2026-11-19: first version. (TV1)
 - 2026-11-23: align with PO #2/#3 and 23/11 plan (R02, R06, R11): refuse `PATCH /api/jobs/:id` and `POST /api/bookings/:code/previews` with `409 CONFLICT` when the booking is `cancelled` while keeping `GET` history; measure exact file part payload against 5 MiB (`5 242 880` bytes) instead of total `Content-Length`, update error text to `"Ảnh tối đa 5 MiB"`, and test exact `5242880B` / `5242881B` boundaries. (TV1)
+- 2026-11-27: align with PO B2.1, B4.8 and B4.11 (QA8): lock `makeup`/`shoot` updates (`409 CONFLICT`) once the booking is `paid_in_full` or `completed`; lock `edit` updates until the customer has saved at least 1 selected photo and paid 70% (`paid_in_full`), and lock `edit` again once `finalLink` is attached or `completed`; preserve free status transitions (including backward) while unlocked and add `409` example on `J-GS-1024-edit`. (TV1)

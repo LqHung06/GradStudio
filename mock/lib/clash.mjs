@@ -1,20 +1,13 @@
 // Shared by proposals, rescheduling and deposit payment (docs/api/04, 06, 10).
 // Accepts ScheduleItemInput as well as the enriched ScheduleItem on a Booking.
+import { getOpeningHoursForDate } from './opening-hours.mjs';
+
 const minutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 const timeAt = (value) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 const overlaps = (a, b) => a.start < b.end && b.start < a.end;
-const isTime = (value) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value ?? '');
-
-export function openingHoursFor(db, date) {
-  const configured = db.settings?.openingHours;
-  const day = new Date(date + 'T00:00:00Z').getUTCDay();
-  const period = day === 0 || day === 6 ? 'weekend' : 'weekday';
-  const hours = configured?.weekday || configured?.weekend ? configured[period] : configured;
-  return isTime(hours?.open) && isTime(hours?.close) && hours.open < hours.close ? hours : null;
-}
 
 export function openingHoursErrors(db, date, items) {
-  const hours = openingHoursFor(db, date);
+  const hours = getOpeningHoursForDate(db.settings, date);
   if (!hours) return { date: 'Chưa có cấu hình giờ mở cửa cho ngày đã chọn.' };
   const day = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', timeZone: 'UTC' })
     .format(new Date(date + 'T00:00:00Z'));
@@ -79,10 +72,10 @@ export function checkClash(db, date, items, { ignoreBooking } = {}) {
   if (!clashes.length) return { available: true, clashes: [], suggestions: [] };
 
   const suggestions = [];
-  const hours = openingHoursFor(db, date);
+  const hours = getOpeningHoursForDate(db.settings, date);
   const first = minutes(inputs[0].start);
   const add = (candidateDate, start) => {
-    const candidateHours = openingHoursFor(db, candidateDate);
+    const candidateHours = getOpeningHoursForDate(db.settings, candidateDate);
     if (!candidateHours) return false;
     const shift = start - first;
     if (inputs.some((item) => minutes(item.start) + shift < minutes(candidateHours.open)
@@ -105,7 +98,7 @@ export function checkClash(db, date, items, { ignoreBooking } = {}) {
   const next = new Date(`${date}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
   const nextDate = next.toISOString().slice(0, 10);
-  const nextHours = openingHoursFor(db, nextDate);
+  const nextHours = getOpeningHoursForDate(db.settings, nextDate);
   if (nextHours && !add(nextDate, 9 * 60)) add(nextDate, minutes(nextHours.open));
   return { available: false, clashes, suggestions };
 }
