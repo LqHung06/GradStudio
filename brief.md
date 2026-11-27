@@ -2809,3 +2809,140 @@ Báo cáo cuối gồm:
 
 Dừng ở diff để tôi review. Không commit hoặc push.
 ```
+
+
+## 34. [TV3 · 27/11/2026 · Codex] QA10 rà tích hợp sau QA8
+
+```text
+1. Đọc và xác minh lại
+
+Đọc:
+- Phần cập nhật 27/11 trong kế hoạch TV3 và lo-trinh-PA3.html.
+- GradStudio_PO_QA.md, ưu tiên câu trả lời mới hơn khi cùng điều chỉnh một quy tắc.
+- AGENTS.md, FRONTEND.md và các mục QA10 mới nhất trong brief.md/AI-LOG.md.
+- Contract 03/05/06/08/10.
+- mock/lib/admin-booking-rules.mjs.
+- mock/routes/admin-bookings.mjs, bookings.mjs và payments.mjs.
+- Các helper, dữ liệu và test liên quan.
+
+Kết quả kiểm tra tại checkout c5dead9:
+- Ba bộ hồi quy: 37/37 PASS.
+- Contract-check: 112/112 PASS, đủ 40 endpoint.
+- Build thành công khi xuất ra thư mục tạm.
+- Tuy nhiên, ca khôi phục booking đã nhận cọc vẫn trả 409;
+  payment mới chưa có expiresAt; sinh việc chỉnh chưa dùng
+  db.bookingEditors mà vẫn lấy người chụp.
+
+Kiểm tra lại trên source hiện tại, không coi kết quả này là
+bằng chứng cho một checkout đã thay đổi.
+
+2. Phạm vi và phối hợp
+
+Tôi cho phép sửa contract, mock, UI và test thuộc TV3.
+
+Với phần TV2, hãy xác định bàn giao đã có hay chưa:
+- Hạn giao dịch dùng chung cho cả cọc và 70%.
+- Bước xác nhận booking, sinh jobs/reminders đúng một lần.
+- Cách phần sinh việc đọc người chỉnh do Admin chọn.
+
+Nếu đã có bàn giao, tích hợp vào TV3.
+Nếu chưa có, mô tả chính xác hàm, dữ liệu, hành vi và ca
+nghiệm thu cần TV2 cung cấp; tiếp tục phần TV3 độc lập.
+
+Không tự sửa file TV1/TV2, sao chép logic thanh toán hoặc
+tạo helper giả để báo hoàn thành.
+
+Giữ working tree và lịch sử hiện có. Không reset, stash,
+đổi nhánh hoặc merge khi chưa cần cho công việc.
+
+3. B4.1: khôi phục trên cùng mã booking
+
+Hoàn thiện trường hợp:
+booking awaiting_deposit + paymentStatus deposit_paid,
+đã nhận tiền nhưng chưa giữ được chỗ.
+
+Theo contract và bước xác nhận TV2 bàn giao:
+- Admin đổi sang giờ hợp lệ trên chính mã booking đó.
+- Giữ gói, giá, khoản cọc và lịch sử thanh toán.
+- Kiểm giờ hiện tại và trùng người/phòng.
+- Xác nhận sang booked, sinh jobs/reminders đúng một lần.
+- Không tạo giao dịch cọc mới hoặc booking thay thế.
+- Request lặp không sinh trùng việc/nhắc hoặc ghi nhận tiền lại.
+- Giờ trùng, lỗi validation hoặc lỗi xác nhận giữ nguyên
+  booking, jobs, reminders và payments.
+
+Ca test “trả 409 vì chưa có confirmation” chỉ là kiểm tra
+giới hạn tạm thời. Khi đã tích hợp, bổ sung ca thành công
+đúng yêu cầu PO; không giữ kỳ vọng tạm làm tiêu chí hoàn tất.
+
+4. B4.2–3/BS.1: khóa theo hạn thanh toán thật
+
+Tích hợp hạn do TV2 cung cấp cho cả deposit và remaining:
+- Pending còn hạn: đổi/hủy trả 409 và thời điểm thử lại.
+- Kiểm trước, đúng và sau hạn bằng đồng hồ kiểm thử.
+- Sau hạn áp dụng đúng trạng thái và quy tắc TV2 bàn giao.
+- Admin hiển thị thời điểm từ API.
+- Không tự tạo một cách tính 15 phút riêng ở frontend
+  hoặc giả expiresAt trong test rồi coi luồng thật đã đạt.
+
+Phân biệt rõ phần kiểm tra bằng dữ liệu riêng với vòng đời
+payment thực sự được tạo qua API.
+
+5. B4.11: dùng đúng người chỉnh đã chọn
+
+TV3 hiện lưu người chỉnh vào db.bookingEditors.
+Phần sinh việc hiện vẫn lấy shootItem.staff cho job edit.
+
+Phối hợp để thống nhất:
+- Dữ liệu phân công đi từ POST booking tới bước xác nhận.
+- Chọn Hà chỉnh, Tuấn chụp thì job edit thuộc Hà.
+- Đổi lịch/người chụp không tự đổi người chỉnh.
+- Chỉ nhân sự được phân công có quyền thao tác job.
+- Luồng mẫu GS-1024 vẫn gán Tuấn chỉnh.
+- Giao link tiếp tục yêu cầu paid_in_full và edit done.
+
+Kiểm tra qua bước xác nhận thật, không chỉ đặt sẵn một job
+đúng người trong fixture rồi kết luận phân công đã hoạt động.
+
+6. Rà tích hợp sau QA8
+
+Cấu hình weekday/weekend của TV1 đã có trên checkout.
+Kiểm tra bằng dữ liệu cấu hình thực:
+- Kiểm lịch, đề xuất, tạo và đổi booking dùng đúng khung.
+- Cho phép ca liền giờ và ngày mẫu 24/10/2026.
+- Đổi cấu hình không tự sửa booking cũ.
+- Khi cọc chỉ kiểm lại người/phòng theo quy tắc mới.
+
+Giữ các quy tắc QA10 đã làm:
+- Một hội thoại tối đa một booking, kể cả sau hủy.
+- Đặt lại qua yêu cầu mới.
+- Đề xuất cũ bị thay thế không được phản hồi hoặc tạo booking.
+- Tab cũ không vượt được kiểm tra API.
+
+7. Kiểm tra và tài liệu
+
+Thêm kiểm tra cho các ca còn thiếu rồi chạy:
+- Ba bộ hồi quy hiện có.
+- Contract-check trên mock mới.
+- Build React.
+- Luồng Admin/liên vai trò trên trình duyệt nếu chạy được.
+
+Ghi riêng kết quả handler, HTTP và UI. Không dùng test xanh
+của giới hạn tạm thời để tuyên bố luồng nghiệp vụ đã hoàn tất.
+
+Cập nhật tài liệu TV3:
+- FRONTEND.md: bỏ mô tả booking thay thế trong hội thoại cũ,
+  cập nhật đúng điều kiện giao link và phần còn phụ thuộc.
+- Contract: sửa đặc tả trước implementation, thêm Changes.
+- brief.md: nối prompt này nguyên văn theo cấu trúc hiện có.
+- AI-LOG.md: thêm mục mới ghi kết quả sau tích hợp; giữ nguyên
+  nhật ký cũ, kể cả kết quả 34/35 của lượt trước.
+
+Báo cáo cuối bằng bảng:
+quy tắc QA10 → file xử lý → kiểm tra thực tế → trạng thái
+đạt/chưa đạt/phụ thuộc → phần cần TV1/TV2 bàn giao.
+
+Không đánh dấu QA10 hoàn tất khi B4.1, hạn giao dịch hoặc
+phân công chỉnh ảnh mới chỉ được kiểm bằng fixture.
+Dừng ở diff, không commit hoặc push.
+```
