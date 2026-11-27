@@ -400,28 +400,34 @@ try {
   console.log('PASS UI: Customer accepts in chat, Admin signs in again, refreshes and creates once; amounts from API');
 
   const { token: tuan } = await api('POST', '/api/auth/login', null, credentials('tuan'), 200);
-  async function pay(path, kind) {
-    const { redirectUrl } = await api('POST', path + '/payments', linh, { kind }, 201);
-    await api('POST', '/api' + redirectUrl, linh, { result: 'success' }, 200);
+  async function pay(path, kind, token = linh) {
+    const { redirectUrl } = await api('POST', path + '/payments', token, { kind }, 201);
+    await api('POST', '/api' + redirectUrl, token, { result: 'success' }, 200);
   }
   const upload = () => {
     const body = new FormData();
     body.append('file', new Blob([Uint8Array.of(0xff, 0xd8, 0xff, 0xd9)], { type: 'image/jpeg' }), 'preview.jpg');
     return body;
   };
+  const { token: han } = await api('POST', '/api/auth/login', null, credentials('han'), 200);
+  const awaiting = (await api('GET', firstApi, thao, null, 200)).booking;
+  const occupiedSchedule = { date: awaiting.date, items: awaiting.items.map(({ kind, start, end, staff, room }) => ({
+    kind, start, end, staffId: staff.id, roomId: room?.id ?? null,
+  })) };
+  await api('PATCH', '/api/bookings/GS-1023', thao, occupiedSchedule, 200);
+  await pay('/api/bookings/GS-1023', 'deposit', han);
   await pay(firstApi, 'deposit');
   await click('Xem chi tiết GS-1024');
   await see('Áp dụng lịch mới');
   await see('Người chỉnh ảnh đã chọn: Tuấn');
-  await see('Chờ khách thanh toán đủ trước khi lưu link.');
+  await see('Studio đã nhận cọc nhưng chưa giữ được chỗ.');
   await send('Page.reload');
   await see('Áp dụng lịch mới');
   await checkWidths(firstDetail);
   const original = (await api('GET', firstApi, thao, null, 200)).booking;
   const remindersForFirst = async () => (await api('GET', '/api/reminders', linh, null, 200)).reminders
     .filter(({ bookingCode }) => bookingCode === 'GS-1024');
-  const sent = (await remindersForFirst()).find(({ emailStatus }) => emailStatus === 'sent');
-  assert(sent);
+  assert.deepEqual(await remindersForFirst(), []);
   await checkFieldErrors(firstApi, 'Áp dụng lịch mới', { 'items.0.staffId': 'Kiểm tra 400: Nhân sự' }, 'PATCH');
   await fill('items.0.start', '09:00');
   await fill('items.0.end', '10:00');
@@ -430,6 +436,22 @@ try {
   await see('Dùng giờ này');
   assert.deepEqual((await api('GET', firstApi, thao, null, 200)).booking, original);
   await click('Dùng giờ này');
+  await fill('date', '2026-10-26');
+  const beforeRecovery = requests.length;
+  await click('Áp dụng lịch mới');
+  await see('Đã áp dụng lịch mới.');
+  await see('Đã đặt lịch');
+  assert(!(await run(() => document.querySelector('main').innerText.includes('chưa giữ được chỗ'))));
+  assert.deepEqual(requests.slice(beforeRecovery), ['PATCH ' + firstApi]);
+  const booked = (await api('GET', firstApi, thao, null, 200)).booking;
+  assert.equal(booked.code, original.code);
+  assert.equal(booked.status, 'booked');
+  assert.equal(booked.paymentStatus, 'deposit_paid');
+  const sent = (await remindersForFirst()).find(({ emailStatus }) => emailStatus === 'sent');
+  assert(sent);
+  console.log('PASS B4.1 UI: real deposit clash, same booking confirmed from PATCH, no reload or new payment');
+  await click('Làm mới booking');
+  await see('Chờ khách thanh toán đủ trước khi lưu link.');
   await fill('date', '2027-11-01');
   const beforeMove = requests.filter((request) => request === 'PATCH ' + firstApi).length;
   await run(() => {
@@ -437,7 +459,8 @@ try {
     submit.click();
     submit.click();
   });
-  await see('Đã áp dụng lịch mới.');
+  await waitFor(() => run(() => document.querySelector('main time[datetime="2027-11-01"]') !== null),
+    'booked schedule updated from PATCH');
   assert.equal(requests.filter((request) => request === 'PATCH ' + firstApi).length, beforeMove + 1);
   const rescheduled = (await api('GET', firstApi, thao, null, 200)).booking;
   assert.equal(rescheduled.date, '2027-11-01');
