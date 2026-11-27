@@ -1027,3 +1027,26 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - HTTP: contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Hai ca HTTP mới đạt với cấu hình và thanh toán do API tạo. Lượt HTTP riêng ghi nhận ba hạn chế tích hợp nêu trên.
   - UI: `npm run build` tạo `client/dist`. Harness Chrome trên production build thoát 0. Đã chạy Admin và Nhận ảnh phía Customer, bốn mock mode và ba chiều rộng. Ca giao ảnh dùng Tuấn ở cả hai vai trò chụp và chỉnh. Chưa nghiệm thu UI với hạn thanh toán thật hoặc editor khác photographer.
 - **Commits:** `d89176a` brief; `26cbe15`, `26c39dc` contract; `96edde1` FRONTEND; `f85abc9` UI Admin; `962830d` harness Chrome; `778f2ec` hồi quy HTTP. Nhật ký được commit riêng sau cùng.
+
+
+### [TV2] 35. QA9: Xác nhận lịch dùng chung (`B4.1`, `B4.11`), vòng đời thanh toán 15 phút (`B4.2`, `B4.3`, `BS.1`), nhắc lịch chờ gửi (`B4.12`, `B4.13`) và luồng Customer (`B4.5`, `B4.6`, `B4.9`, `B4.10`) — 27/11/2026
+
+- **Tool:** Antigravity Assistant, Node.js (`node:test`, `node --check`), Vite 7, Headless Chrome CDP.
+- **Request:** `brief.md` mục 35. Kéo `main` (`21295e7`), tạo nhánh `feat/qa9-customer-payments` và triển khai trọn phần `QA9` của TV2 theo `ke-hoach/ke-hoach/TV2-khach-hang.md` và `lo-trinh-PA3.html`.
+- **Changed:**
+  - `docs/api/06-payments.md`, `07-reminders.md`, `09-gallery.md`: bổ sung `Payment.expiresAt` (+15 phút cho cả `deposit` và `remaining`), cơ chế hết hạn và ngoại lệ đối soát `gatewayCaptured: true` sau hủy (`B4.2`), helper xác nhận dùng chung `confirmBookingReservation` (`B4.1`, `B4.11`), và vòng đời nhắc lịch khởi tạo `queued` → tự gửi khi đến hạn (`B4.12`, `B4.13`).
+  - `mock/lib/booking-confirmation.mjs` (mới): `confirmBookingReservation(db, booking)` kiểm tra trùng lịch và tạo jobs/nhắc lịch nguyên tử tối đa một lần, gán `J-<code>-edit` theo `db.bookingEditors[code]` (chỉ fallback thợ chụp nếu thiếu).
+  - `mock/lib/payments.mjs` (mới), `mock/routes/payments.mjs`, `mock/lib/time.mjs`: thêm `isoFromMs`, tính `expiresAt` (+15 phút), chuyển `pending` quá hạn (`now >= expiresAt`) sang `failed` khi tạo mới/đọc/callback (`409` khi thử lại giao dịch cũ, mở tạo `PAY-2` mới), và xử lý `gatewayCaptured: true` sau hủy giữ `cancelled` + không sinh job/nhắc lịch.
+  - `mock/lib/reminders.mjs`, `mock/routes/reminders.mjs`: khởi tạo nhắc lịch ở trạng thái `queued`, thêm `dispatchDueReminders` chạy một lần cho nhắc đến hạn khi đọc `/api/reminders`, giữ `queued` với nhắc tương lai và bảo toàn lịch sử `sent`/`failed` khi đổi lịch/hủy/đổi `reminderHoursBefore`.
+  - `client/src/pages/customer/CustomerChatPage.jsx`, `TestGatewayPage.jsx`, `PaymentResultPage.jsx`, `BookingDetailPage.jsx`, `BookingGalleryPage.jsx`: ưu tiên hội thoại mở chưa có booking khi đi từ trang gói, điều hướng theo `res.conversation.id`, reload khi `409` đề xuất `superseded`, hiển thị `expiresAt` trên test gateway/kết quả, xử lý giao dịch 70% sau hủy không dẫn sang gallery, và reload trạng thái gallery khi `409`.
+  - `tools/tv2-qa9.test.mjs` (mới), `tools/tv2-reminders-id.test.mjs`, `tools/tv3-booking-rules.test.mjs`, `tools/tv3-admin-build-check.mjs`, `FRONTEND.md`: thêm bộ test unit + HTTP E2E QA9, chỉnh ngày đổi lịch tương lai sang `2027` để phân biệt đúng `queued` với `sent` đến hạn, và cập nhật bàn giao TV3 trong `FRONTEND.md`.
+- **Rejected / lỗi phát hiện:**
+  - Trên live HTTP mock mới, việc thêm `Payment.expiresAt` kích hoạt khóa giao dịch `B4.2–3` ở G10 (`POST .../cancel` trả `409` kèm `retryAt`), giúp xác minh tích hợp khóa thật giữa TV2–TV3; ngoại lệ `gatewayCaptured` sau khi quá hạn 15 phút được kiểm ở test đồng hồ `nowMs` (`tv2-qa9.test.mjs`).
+- **Checked:**
+  - Gate 1 (`node --check` mọi `mock/**/*.mjs` & `tools/*.mjs`, parse 14 JSON seed): **PASS**.
+  - Gate 2 (`node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock mới): **112/112 examples, 40/40 endpoints, 0 FAIL**.
+  - Gate 3 (`node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs`): **44/44 PASS, 0 FAIL, 0 skipped, 0 todo**.
+  - Gate 4 (`cd client && npm run build`): **PASS** (`95 modules`, `client/dist/`).
+  - Gate 5 (`git diff --check`): **PASS**.
+  - Production build Chrome check (`node tools/tv3-admin-build-check.mjs`): **PASS** (thoát 0, không lỗi JS/Console, đạt responsive 360/768/1280px và target ≥ 44px).
+- **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra diff trước khi tách commit.

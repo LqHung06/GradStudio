@@ -122,7 +122,7 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 ### TV3 — giới hạn tích hợp còn lại
 
-- B4.1. Khi cọc đã thu nhưng chưa giữ được chỗ, đổi sang giờ trống trên cùng mã vẫn trả 409. Cần TV2 bàn giao thao tác xác nhận dùng chung để giữ cọc và sinh việc, nhắc lịch đúng một lần.
-- B4.2–3 và BS.1. G10 chặn giao dịch đang chờ và đọc `retryAt` nếu API có dữ liệu hết hạn. Payment thật trong mock chưa cấp `expiresAt`. Vòng đời 15 phút của cả cọc và khoản 70% còn chờ TV2.
-- B4.11. Admin lưu người chỉnh riêng qua `editorId` trong `db.bookingEditors`. Luồng sinh việc thanh toán hiện vẫn lấy người chụp cho job chỉnh. TV2 cần dùng người được phân công khi xác nhận.
-- TV2 cần nối ID đích vào màn Customer khi gửi từ trang dịch vụ hoặc khi yêu cầu được chuyển hội thoại. Các ca đổi lịch thêm, bớt hoặc lặp loại ca vẫn cần quy tắc ánh xạ jobs từ TV1.
+- B4.1. TV2 đã bàn giao `confirmBookingReservation(db, booking)` trong `mock/lib/booking-confirmation.mjs` (đã áp dụng cho luồng cọc và sẵn sàng để TV3 nối vào `PATCH /api/bookings/:code` khi đổi lịch từ trạng thái đã thu cọc nhưng trùng giờ).
+- B4.2–3 và BS.1. TV2 đã hoàn thành vòng đời 15 phút (`expiresAt`) cho cả `deposit` và `remaining`, chặn hết hạn (`409`) + mở thử lại, và xử lý ngoại lệ `gatewayCaptured: true` sau hủy.
+- B4.11. `confirmBookingReservation` đã đọc `db.bookingEditors[code]` để gán đúng người chỉnh ảnh cho `J-<code>-edit` (fallback người chụp khi thiếu `bookingEditors`).
+- B4.6 / B2.1. `CustomerChatPage` đã ưu tiên hội thoại mở chưa có booking khi đi từ `/packages/:id`, theo `res.conversation.id` trả về từ API, và reload khi gặp `409` đề xuất `superseded`. Các ca đổi lịch thêm, bớt hoặc lặp loại ca vẫn cần quy tắc ánh xạ jobs từ TV1.
