@@ -48,7 +48,7 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | Path | Role | Steps | Endpoints | Ghi chú |
 |---|---|---|---|---|
 | `/` | public | G1 | GET `/api/services`, `/api/packages`, `/api/extras`, `/api/portfolio`, `/api/reviews` | |
-| `/packages/pkg-tn-premium` | public | G1 | GET `/api/packages/:id` | |
+| `/packages/pkg-tn-premium` | public | G1 | GET `/api/packages/:id`, GET `/api/extras` | |
 | `/sign-in` | public | G2 | POST `/api/auth/login` | |
 | `/chat` | customer | G3, G6 | GET `/api/conversations`, GET `/api/conversations/:id`, POST `/api/conversations`, POST `/api/conversations/:id/messages`, PATCH `/api/conversations/:id/proposals/:proposalId`, GET `/api/services`, `/api/packages`, `/api/extras` | |
 | `/my-bookings` | customer | G7 | GET `/api/bookings` | |
@@ -62,7 +62,7 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/admin/bookings` | admin (`thao`) | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
 | `/admin/bookings/GS-1023` | admin (`thao`) | G10 | GET `/api/bookings/:code`, GET `/api/resources`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link` | Booking mẫu của Hân có sẵn. Thử đổi hoặc hủy lịch tại đây. Gắn link sau khi đã trả đủ và việc chỉnh ảnh hoàn thành. |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
-| `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
+| `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, GET `/api/bookings/:code`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
 | `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins`, PATCH `/api/admins/:id` | |
 | `/superadmin/settings` | superadmin | G11 | GET `/api/settings`, PUT `/api/settings` | |
 | path bất kỳ khác | | | | Màn "Không tìm thấy trang" |
