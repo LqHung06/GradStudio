@@ -1155,3 +1155,52 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Hồi quy 46/46, contract-check trên mock mới 112/112 ví dụ và 40/40 endpoint. Cú pháp 28 module, parse 14 JSON seed, conflict markers và `git diff --check` đều đạt.
   - Chưa chạy W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh. Giới hạn đổi lịch trong Not done vẫn áp dụng.
 - **Commits:** Dừng ở diff chưa stage trên checkout `e0e966e`.
+
+
+### [TV2] 41. Dọn phần TV2 trước nộp PA#3 và kiểm tra chéo (28/11/2026)
+
+- **Tool:** Antigravity Assistant, Git, Node.js (`node:test`, `node --check`), Vite 7, Headless Chrome CDP.
+- **Request:** [brief.md](brief.md), mục 41. Bám sát danh sách rà soát trước nộp để hoàn tất phần thuộc TV2 trên nhánh `fix/tv2-submission-readiness` tách từ `main` (`62c2d63`), kèm cấu hình author Git repo-local thống nhất (`Đặng Hoàng Tuấn Kiệt <24120354@student.hcmus.edu.vn>`).
+- **Changed:**
+  - `FRONTEND.md`: bổ sung các route phía khách dùng dữ liệu seed của `han` (`/my-bookings`, `/my-bookings/GS-1023` mở ngay khi vừa khởi động mock) và ghi rõ tham số `PAY-n` trên `/test-gateway/...`, `/payments/.../result`, trạng thái ban đầu của `/notifications`.
+  - `client/src/pages/customer/TestGatewayPage.jsx`: bỏ chữ `(PA#3)` và `dùng cho PA#3` khỏi giao diện cổng thanh toán, giữ nhãn tiếng Việt + tiếng Anh (`Cổng thanh toán thử nghiệm`, `test payment`) rõ ràng.
+  - Xóa 3 file PA#2 cũ không còn được route nào import (`client/src/pages/HomePage.jsx`, `client/src/pages/BookingPage.jsx`, `client/src/data/fixtures.js`).
+  - Bổ sung truy vết `## Changes` cho các commit `mock/` trước đó của TV2: `docs/api/07-reminders.md` (ngày `25/11` cho `84a9c34`), `docs/api/02-catalog.md` (ngày `22/11` cho `79728f9`, `6937490`) và `docs/api/06-payments.md` (ngày `22/11` cho `6937490`).
+  - Đặt `git config user.name` / `user.email` cấp repo thành `Đặng Hoàng Tuấn Kiệt <24120354@student.hcmus.edu.vn>` (không rewrite lịch sử commit đã merge).
+- **Rejected / lỗi phát hiện:**
+  - `https://validator.w3.org/nu/` trả phản hồi Cloudflare anti-bot challenge (`403` / `Enable JavaScript and cookies to continue`) khi gọi tự động qua CLI HTTP; dừng theo quy tắc không vượt anti-bot, thay bằng kiểm tra DOM ngữ nghĩa qua Headless Chrome và xuất sẵn 16 file HTML render thực tế (`<!DOCTYPE html>`) để dán kiểm trực tiếp trên trình duyệt nếu cần.
+  - `.extras-fieldset label.checkbox-option` trên `/chat` vốn đã có `min-height: 44px` trong CSS (thực đo trên Chrome ở 360/768/1280px là `81.59–105.59 px` và `57.59 px`, `label.control` gắn đúng input 20×20px) nên giữ nguyên CSS.
+  - Các đầu việc thuộc TV1 (`SELF_ASSESSMENT_REPORT.md`, bỏ `Trạng thái: đang làm`, điền `Not done`, link PO, dòng `fixtures.js` trong `AGENTS.md`, và mục PA#2 lịch sử trong `PROTOTYPE.md` / `AI-LOG.md` dòng 198) giữ nguyên để bàn giao TV1 xử lý theo phân quyền.
+- **Checked:**
+  - Gate 1 (`node --check` `mock/**/*.mjs` & `tools/*.mjs`, parse 14 seed JSON): **PASS**.
+  - Gate 2 (`node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock mới): **112/112 examples, 40/40 endpoints, 0 FAIL**.
+  - Gate 3 (`node --test` cả 4 bộ `tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`): **46/46 PASS, 0 FAIL, 0 skipped, 0 todo**.
+  - Gate 4 (`cd client && npm run build` sau khi xóa 3 file PA#2 cũ và sửa `TestGatewayPage.jsx`): **PASS (`95 modules transformed`)**.
+  - Kiểm tra responsive & HTML ngữ nghĩa trên production build (`vite preview` + Chrome CDP, 16 route thuộc cả 4 vai trò × `360/768/1280px` = **48 lượt kiểm**): **48/48 PASS** (`0` tràn ngang, mọi `main a, main button` ≥ 44px ở 360px, đủ 4 landmark, đúng 1 `<h1>`, không nhảy cấp heading, `0` `href="#"`, `0` ảnh thiếu `alt`, `0` input thiếu label, `0` lỗi Console/JS).
+  - `node tools/tv3-admin-build-check.mjs`: **PASS** (exit 0).
+  - *Ghi chú lần chạy `node tools/qa11-app-check.mjs`:* dừng lỗi ở ca `slow /chat` (`Thiếu Chat với GradStudio / Mình muốn đặt lịch chụp tốt nghiệp`) trong lúc chạy tự động kế tiếp sau script khác do quá trình timeout chờ mạng chậm; luồng `/chat` trong `tv3-admin-build-check.mjs` vẫn pass.
+- **Commits:** Dừng ở thay đổi chưa commit trên nhánh `fix/tv2-submission-readiness`.
+
+
+### [TV2] 41. Dọn phần TV2 trước nộp PA#3 và kiểm tra chéo (28/11/2026)
+
+- **Tool:** Antigravity Assistant, Node.js, Vite 7 (`vite preview`), Headless Chrome CDP.
+- **Request:** `brief.md` mục 41. Trên nhánh `fix/tv2-submission-readiness` tách từ `main` (`62c2d63`), rà và xử lý phần thuộc TV2 trong danh sách review trước khi nộp, đồng thời kiểm tra chéo responsive và HTML ngữ nghĩa.
+- **Changed:**
+  - `FRONTEND.md`: bổ sung dòng route cho tài khoản `han` (`/my-bookings/GS-1023` dùng booking seed có sẵn `awaiting_deposit`), làm rõ `/test-gateway/PAY-1`, `/payments/PAY-1/result` lấy `PAY-n` theo API ở G7 và ghi chú `/notifications`.
+  - `client/src/pages/customer/TestGatewayPage.jsx`: bỏ chữ `PA#3` khỏi hai dòng mô tả trên màn cổng thanh toán, giữ nguyên nhãn `"Cổng thanh toán thử nghiệm"` / `"test payment"`.
+  - `docs/api/02-catalog.md`, `06-payments.md`, `07-reminders.md`: bổ sung truy vết `## Changes` cho các commit `mock/` trước đó gồm `79728f9`, `6937490` (22/11) và `84a9c34` (25/11 sửa cấp ID nhắc lịch).
+  - Xóa 3 file PA#2 cũ không còn được import ở bất kỳ route nào (`client/src/pages/HomePage.jsx`, `client/src/pages/BookingPage.jsx`, `client/src/data/fixtures.js`). Đặt lại `git config` cục bộ trong repo sang `Đặng Hoàng Tuấn Kiệt <24120354@student.hcmus.edu.vn>`.
+- **Rejected / lỗi phát hiện:**
+  - Khi gửi DOM lên `https://validator.w3.org/nu/` bằng `curl.exe`, dịch vụ chặn bởi thử thách Cloudflare anti-bot (`"Just a moment..."` / `challenges.cloudflare.com`), nên không tự động vượt qua; đã kiểm tra cấu trúc HTML ngữ nghĩa qua Chrome DOM và xuất 16 file `<!DOCTYPE html>` để nhóm dán/tải kiểm chứng trên trình duyệt nếu cần.
+  - Hai mục thuộc TV1/nhóm (`SELF_ASSESSMENT_REPORT.md`, bỏ `"đang làm"` / chốt `Not done` / điền link PO trong `FRONTEND.md`, dọn dòng `fixtures.js` trong `AGENTS.md`) và các file lịch sử PA#2 gốc (`PROTOTYPE.md`, `AI-LOG.md` dòng 198) giữ nguyên theo phân quyền.
+- **Checked:**
+  - Gate 1 (`node --check` mọi `.mjs` trong `mock/`, `tools/` và parse 14 seed JSON): **PASS**.
+  - Gate 2 (`node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock khởi động mới): **112/112 examples, 40/40 endpoints, 0 FAIL**.
+  - Gate 3 (`node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs`): **46/46 PASS, 0 FAIL, 0 skipped, 0 todo**.
+  - Gate 4 (`cd client && npm run build`): **PASS** (`95 modules transformed`).
+  - Chrome production build responsive + semantic check (16 route trải đều 4 vai trò × 3 độ rộng `360 / 768 / 1280px` = **48/48 checks PASS**): `0` tràn ngang, mọi `button`/`a` ở 360px đạt ≥ 44px, đủ 4 landmark `<header>/<nav>/<main>/<footer>`, đúng 1 `<h1>`, thứ tự heading đúng, `0` `href="#"`, `0` ảnh thiếu `alt`, `0` ô nhập thiếu nhãn, `/test-gateway/PAY-1` không còn `"PA#3"`, `0` lỗi JS/Console.
+  - `node tools/qa11-app-check.mjs`: **124/124 PASS, 0 FAIL, 0 NOT RUN** (kiểm lại độc lập trên cổng sạch qua đủ 4 chế độ mock + nút *Thử lại*).
+  - `node tools/tv3-admin-build-check.mjs`: **PASS** (thoát `0`; kiểm lại độc lập trên cổng sạch, bao gồm xuyên vai trò, B4.1 cọc trùng → đổi lịch khôi phục, đo `.extras-fieldset label.checkbox-option` ở `/chat` đạt `105.59px` & `81.59px` tại 360px và `57.59px` tại 768/1280px, `0` lỗi JS/Console).
+  - W3C Nu HTML Validator: **chưa hoàn tất qua CLI** do Cloudflare anti-bot challenge (giữ nguyên chưa đánh dấu đạt; đã xuất sẵn 16 file HTML render thật để kiểm trực tiếp trên trình duyệt).
+- **Commits:** Dừng trước bước `git commit` để thành viên kiểm tra diff.
