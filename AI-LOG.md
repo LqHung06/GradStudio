@@ -1142,3 +1142,16 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - `node --check` qua 28 module, parse 14 JSON seed. Contract-check trên mock mới cổng 3011 đạt 112/112 ví dụ, 40/40 endpoint. Bốn bộ hồi quy TV1/TV2/QA9/TV3 đạt 46/46. `npm ci` và `npm run build` tạo `client/dist` với 95 module. Conflict markers và `git diff --check` sạch.
   - Đã dọn tiến trình kiểm thử do lượt này khởi động. Chưa chạy W3C Nu, responsive toàn app, một ma trận F5 riêng hoặc toàn bộ chuỗi chọn ảnh, trả 70% và nhận ảnh xuyên vai trò.
 - **Commits:** Lượt này dừng ở diff. Sau fetch, `origin/main` ở `37d2878` đã chứa PR #38 và có cùng nội dung với HEAD `1655427`.
+
+### [TV3] 40. Kiểm lại favicon và Routes QA11 (28/11/2026)
+
+- **Tool:** Codex, Git, PowerShell, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** [brief.md](brief.md), mục 40. Sửa favicon, bổ sung hai endpoint trong bảng Routes và kiểm lại trước G6.
+- **Changed:** Thêm favicon SVG và khai báo trong `client/index.html`. Bổ sung `GET /api/bookings/:code` ở chi tiết việc Staff và `GET /api/extras` ở chi tiết gói. Ghi kết quả mới vào [ma trận QA11](docs/qa11-tv3.md), giữ nguyên bằng chứng 123/124 và harness.
+- **Rejected / lỗi phát hiện:** Lỗi icon 404 của lượt trước không tái hiện. `GET /api/bookings/GS-1024` trước G6 vẫn trả 404 theo contract và UI hiện thông báo booking chưa được tạo.
+- **Checked:**
+  - `npm.cmd run build` tạo lại `client/dist` với 95 module. Chrome profile mới đăng nhập `linh` bằng form trên mock normal, mở trực tiếp `/my-bookings/GS-1024`; icon trả `200 image/svg+xml`, không có lỗi trình duyệt.
+  - Chạy nguyên harness trên build mới đạt **124/124**. Normal 28/28, slow 22/22, error 48/48, empty 26/26. Trace xác nhận chi tiết Staff gọi GET booking và chi tiết gói gọi GET extras, cả hai trả 200.
+  - Hồi quy 46/46, contract-check trên mock mới 112/112 ví dụ và 40/40 endpoint. Cú pháp 28 module, parse 14 JSON seed, conflict markers và `git diff --check` đều đạt.
+  - Chưa chạy W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh. Giới hạn đổi lịch trong Not done vẫn áp dụng.
+- **Commits:** Dừng ở diff chưa stage trên checkout `e0e966e`.
