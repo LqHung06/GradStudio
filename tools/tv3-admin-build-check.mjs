@@ -21,7 +21,7 @@ const errors = [];
 const allowed = [
   /^(GET|POST) \/api\/auth\/(login|logout|me)$/,
   /^GET \/api\/(conversations(\/[^/]+)?|bookings|resources|schedule|services|packages|extras)$/,
-  /^POST \/api\/(conversations\/[^/]+\/(messages|proposals)|availability\/check|bookings)$/,
+  /^POST \/api\/(conversations(\/[^/]+\/(messages|proposals))?|availability\/check|bookings)$/,
   /^PATCH \/api\/conversations\/[^/]+\/proposals\/[^/]+$/,
   /^POST \/api\/bookings\/GS-\d+\/cancel$/,
   /^(GET|PATCH) \/api\/bookings\/GS-\d+$/,
@@ -29,7 +29,7 @@ const allowed = [
   /^POST \/api\/bookings\/GS-\d+\/(payments|previews|receive)$/,
   /^GET \/api\/(jobs|reminders|bookings\/GS-\d+\/photos)$/,
   /^POST \/api\/test-gateway\/PAY-\d+$/,
-  /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-shoot$/,
+  /^(GET|PATCH) \/api\/jobs\/J-GS-\d+-(shoot|edit)$/,
 ];
 
 function start(command, args, options = {}) {
@@ -251,17 +251,22 @@ try {
   await login('thao');
   await see('Không tìm thấy booking GS-1024');
   assert.equal(await run(() => location.pathname), firstDetail);
-  await click('Về danh sách booking');
-  await see('Xem chi tiết GS-1021');
-  await navigate(detail);
-  await see('Kiểm tra và đề xuất giờ');
-  assert.equal(await run(() => location.pathname), detail);
-  await send('Page.reload');
-  await see('Kiểm tra và đề xuất giờ');
-  await navigate(list);
-  await see('Trần Minh Khoa');
-  await send('Page.reload');
-  await see('Trần Minh Khoa');
+  for (const [path, content] of [
+    [bookingList, 'Xem chi tiết GS-1023'],
+    [bookingList + '/GS-1023', 'Lê Ngọc Hân'],
+    [detail, 'Kiểm tra và đề xuất giờ'],
+    [list, 'Trần Minh Khoa'],
+  ]) {
+    await navigate(path);
+    await see(content);
+    assert.equal(await run(() => location.pathname), path);
+    const beforeReload = await run(() => performance.timeOrigin);
+    await send('Page.reload');
+    await waitFor(() => run((previous) => performance.timeOrigin !== previous, beforeReload), 'reload ' + path);
+    await see(content);
+    assert.equal(await run(() => location.pathname), path);
+    console.log('PASS direct/F5 as thao:', path);
+  }
   const filter = await run(() => [...document.querySelectorAll('button')].find(
     (button) => button.textContent.startsWith('Chưa trả lời'),
   ).textContent.trim());
@@ -281,6 +286,8 @@ try {
   const waitForForms = () => waitFor(() => run(() => Boolean(document.getElementById('date'))
     && !document.querySelector('.async-loading')), 'detail requests settle');
   await waitForForms();
+  await measureExtras('.admin-extras label', true);
+  await checkWidths(detail);
   assert.equal(await buttonDisabled(), true);
   await fill('text', 'Tin nhắn kiểm tra Admin');
   await checkFieldErrors('/api/conversations/c-linh/messages', 'Gửi', { text: 'Kiểm tra 400: Tin nhắn' });
@@ -342,20 +349,45 @@ try {
   const proposalId = conversation.messages.at(-1).proposal.id;
   await switchRole('/chat', 'linh');
   await see('Chat với GradStudio');
+  await measureExtras('.extras-fieldset label.checkbox-option', false);
   await click('Đồng ý giờ này');
   await see('Khách đã đồng ý');
   await switchRole(detail, 'thao');
   await see('Khách đã đồng ý');
   await click('Làm mới hội thoại');
   await waitFor(async () => (await buttonDisabled()) === false, 'create enabled after acceptance');
+  const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
+  await fill('date', '2026-10-24');
+  await fill('items', '2');
+  await fill('items.0.kind', 'makeup');
+  await fill('items.0.start', '13:00');
+  await fill('items.0.end', '14:00');
+  await fill('items.0.staffId', 'u-mai');
+  await fill('items.1.start', '14:00');
+  await fill('items.1.end', '16:00');
+  await fill('items.1.staffId', 'u-tuan');
+  await fill('items.1.roomId', 'r-b');
+  await click('Đề xuất giờ này cho khách');
+  await see('Đã bị thay thế');
+  assert.equal(await buttonDisabled(), true);
+  await api('PATCH', '/api/conversations/c-linh/proposals/' + proposalId, linh, { decision: 'accepted' }, 409);
+  await api('POST', '/api/bookings', thao, {
+    conversationId: 'c-linh', proposalId, shootType: 'Tốt nghiệp cá nhân',
+    packageId: 'pkg-tn-premium', extraIds: [], editorId: 'u-tuan',
+  }, 409);
+  const latest = (await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.messages.at(-1).proposal;
+  await api('PATCH', '/api/conversations/c-linh/proposals/' + latest.id, linh, { decision: 'accepted' }, 200);
+  await click('Làm mới hội thoại');
+  await waitFor(async () => (await buttonDisabled()) === false, 'latest accepted proposal enables booking');
   await fill('shootType', 'Tốt nghiệp cá nhân');
   await fill('packageId', 'pkg-tn-premium');
+  await fill('editorId', 'u-tuan');
   await see('540.000đ');
   await waitForForms();
   await run(() => document.querySelector('#extraIds input[type=checkbox]').click());
   await checkFieldErrors('/api/bookings', 'Tạo booking', {
     shootType: 'Kiểm tra 400: Loại chụp', packageId: 'Kiểm tra 400: Gói chụp',
-    extraIds: 'Kiểm tra 400: Dịch vụ thêm',
+    editorId: 'Kiểm tra 400: Người chỉnh ảnh', extraIds: 'Kiểm tra 400: Dịch vụ thêm',
   });
   console.log('PASS UI: simulated API 400 messages, aria-describedby, focus and preserved form values');
   const beforeBooking = requests.filter((request) => request === 'POST /api/bookings').length;
@@ -375,28 +407,35 @@ try {
   await see('GS-1024');
   console.log('PASS UI: Customer accepts in chat, Admin signs in again, refreshes and creates once; amounts from API');
 
-  const { token: thao } = await api('POST', '/api/auth/login', null, credentials('thao'), 200);
   const { token: tuan } = await api('POST', '/api/auth/login', null, credentials('tuan'), 200);
-  async function pay(path, kind) {
-    const { redirectUrl } = await api('POST', path + '/payments', linh, { kind }, 201);
-    await api('POST', '/api' + redirectUrl, linh, { result: 'success' }, 200);
+  async function pay(path, kind, token = linh) {
+    const { redirectUrl } = await api('POST', path + '/payments', token, { kind }, 201);
+    await api('POST', '/api' + redirectUrl, token, { result: 'success' }, 200);
   }
   const upload = () => {
     const body = new FormData();
     body.append('file', new Blob([Uint8Array.of(0xff, 0xd8, 0xff, 0xd9)], { type: 'image/jpeg' }), 'preview.jpg');
     return body;
   };
+  const { token: han } = await api('POST', '/api/auth/login', null, credentials('han'), 200);
+  const awaiting = (await api('GET', firstApi, thao, null, 200)).booking;
+  const occupiedSchedule = { date: awaiting.date, items: awaiting.items.map(({ kind, start, end, staff, room }) => ({
+    kind, start, end, staffId: staff.id, roomId: room?.id ?? null,
+  })) };
+  await api('PATCH', '/api/bookings/GS-1023', thao, occupiedSchedule, 200);
+  await pay('/api/bookings/GS-1023', 'deposit', han);
   await pay(firstApi, 'deposit');
   await click('Xem chi tiết GS-1024');
   await see('Áp dụng lịch mới');
+  await see('Người chỉnh ảnh đã chọn: Tuấn');
+  await see('Studio đã nhận cọc nhưng chưa giữ được chỗ.');
   await send('Page.reload');
   await see('Áp dụng lịch mới');
   await checkWidths(firstDetail);
   const original = (await api('GET', firstApi, thao, null, 200)).booking;
   const remindersForFirst = async () => (await api('GET', '/api/reminders', linh, null, 200)).reminders
     .filter(({ bookingCode }) => bookingCode === 'GS-1024');
-  const sent = (await remindersForFirst()).find(({ emailStatus }) => emailStatus === 'sent');
-  assert(sent);
+  assert.deepEqual(await remindersForFirst(), []);
   await checkFieldErrors(firstApi, 'Áp dụng lịch mới', { 'items.0.staffId': 'Kiểm tra 400: Nhân sự' }, 'PATCH');
   await fill('items.0.start', '09:00');
   await fill('items.0.end', '10:00');
@@ -405,17 +444,34 @@ try {
   await see('Dùng giờ này');
   assert.deepEqual((await api('GET', firstApi, thao, null, 200)).booking, original);
   await click('Dùng giờ này');
-  await fill('date', '2026-11-01');
+  await fill('date', '2026-10-26');
+  const beforeRecovery = requests.length;
+  await click('Áp dụng lịch mới');
+  await see('Đã áp dụng lịch mới.');
+  await see('Đã đặt lịch');
+  assert(!(await run(() => document.querySelector('main').innerText.includes('chưa giữ được chỗ'))));
+  assert.deepEqual(requests.slice(beforeRecovery), ['PATCH ' + firstApi]);
+  const booked = (await api('GET', firstApi, thao, null, 200)).booking;
+  assert.equal(booked.code, original.code);
+  assert.equal(booked.status, 'booked');
+  assert.equal(booked.paymentStatus, 'deposit_paid');
+  const sent = (await remindersForFirst()).find(({ emailStatus }) => emailStatus === 'sent');
+  assert(sent);
+  console.log('PASS B4.1 UI: real deposit clash, same booking confirmed from PATCH, no reload or new payment');
+  await click('Làm mới booking');
+  await see('Chờ khách thanh toán đủ trước khi lưu link.');
+  await fill('date', '2027-11-01');
   const beforeMove = requests.filter((request) => request === 'PATCH ' + firstApi).length;
   await run(() => {
     const submit = [...document.querySelectorAll('button')].find((el) => el.textContent.trim() === 'Áp dụng lịch mới');
     submit.click();
     submit.click();
   });
-  await see('Đã áp dụng lịch mới.');
+  await waitFor(() => run(() => document.querySelector('main time[datetime="2027-11-01"]') !== null),
+    'booked schedule updated from PATCH');
   assert.equal(requests.filter((request) => request === 'PATCH ' + firstApi).length, beforeMove + 1);
   const rescheduled = (await api('GET', firstApi, thao, null, 200)).booking;
-  assert.equal(rescheduled.date, '2026-11-01');
+  assert.equal(rescheduled.date, '2027-11-01');
   assert.equal(rescheduled.paymentStatus, 'deposit_paid');
   const jobPath = '/api/jobs/J-GS-1024-shoot';
   const { job } = await api('GET', jobPath, tuan, null, 200);
@@ -424,13 +480,13 @@ try {
   const reminders = await remindersForFirst();
   assert.deepEqual(reminders.find(({ id }) => id === sent.id), sent);
   assert.equal(reminders.find(({ emailStatus }) => emailStatus === 'queued').sendAt,
-    '2026-10-31T' + rescheduled.items[0].start + ':00+07:00');
+    '2027-10-31T' + rescheduled.items[0].start + ':00+07:00');
   await click('Hủy booking');
   await click('Xác nhận hủy');
   await see('Nhập lý do từ 5 đến 500 ký tự.');
   await click('Không hủy');
   await click('Hủy booking');
-  await fill('reason', 'Kiểm tra booking thay thế');
+  await fill('reason', 'Khách xin hủy để gửi yêu cầu khác');
   await checkFieldErrors(firstApi + '/cancel', 'Xác nhận hủy', { reason: 'Kiểm tra 400: Lý do' });
   await click('Xác nhận hủy');
   await see('Đã hủy booking.');
@@ -447,11 +503,18 @@ try {
   console.log('PASS G10: missing/direct/F5, reschedule 400/409 and success, jobs/reminders, cancel and Staff locks');
   await api('POST', '/api/bookings', thao, {
     conversationId: 'c-linh', proposalId, shootType: 'Tốt nghiệp cá nhân',
-    packageId: 'pkg-tn-premium', extraIds: [],
+    packageId: 'pkg-tn-premium', extraIds: [], editorId: 'u-tuan',
   }, 409);
   await navigate(detail);
-  await see('booking thay thế.');
-  assert.equal(await buttonDisabled(), true);
+  await see('Khách cần gửi yêu cầu mới để đặt lại.');
+  assert.equal(await buttonDisabled(), undefined);
+  const { conversation: newThread } = await api('POST', '/api/conversations', linh, {
+    text: 'Mình muốn đặt lịch mới',
+    request: { shootType: 'Tốt nghiệp cá nhân', packageId: 'pkg-tn-premium',
+      preferredDate: '2026-10-25', preferredTime: '14:00', extraIds: [] },
+  }, 201);
+  assert.notEqual(newThread.id, 'c-linh');
+  await navigate('/admin/conversations/' + newThread.id);
   await fill('date', '2026-10-25');
   await fill('items.0.start', '14:00');
   await fill('items.0.end', '16:00');
@@ -459,17 +522,18 @@ try {
   await fill('items.0.roomId', 'r-b');
   await click('Đề xuất giờ này cho khách');
   await see('Chờ khách trả lời');
-  const replacement = await api('GET', '/api/conversations/c-linh', linh, null, 200);
-  await api('PATCH', '/api/conversations/c-linh/proposals/' + replacement.conversation.messages.at(-1).proposal.id,
+  const nextThreadPath = '/api/conversations/' + newThread.id;
+  const next = await api('GET', nextThreadPath, linh, null, 200);
+  await api('PATCH', nextThreadPath + '/proposals/' + next.conversation.messages.at(-1).proposal.id,
     linh, { decision: 'accepted' }, 200);
   await click('Làm mới hội thoại');
   await waitFor(async () => (await buttonDisabled()) === false, 'replacement enabled');
   await fill('shootType', 'Tốt nghiệp cá nhân');
   await fill('packageId', 'pkg-tn-premium');
+  await fill('editorId', 'u-tuan');
   await click('Tạo booking');
   await see('GS-1025');
-  await see('GS-1024');
-  await see('Đã hủy');
+  assert.equal((await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.bookingCode, 'GS-1024');
   await click('Xem danh sách booking');
   await see('Xem chi tiết GS-1025');
   await click('Đã hủy');
@@ -477,7 +541,7 @@ try {
   assert.equal(await run(() => document.querySelector('main').innerText.includes('Xem chi tiết GS-1025')), false);
   await click('Tất cả');
   await see('Xem chi tiết GS-1025');
-  console.log('PASS G10: cancellation history, replacement and list filter');
+  console.log('PASS QA10: cancellation history, separate booking request and list filter');
 
   const replacementApi = '/api/bookings/GS-1025';
   const replacementDetail = bookingList + '/GS-1025';
@@ -488,6 +552,12 @@ try {
   await pay(replacementApi, 'remaining');
   await click('Xem chi tiết GS-1025');
   await see('Đã thanh toán đủ');
+  await see('Booking đã thanh toán đủ.');
+  await see('Chờ việc chỉnh ảnh hoàn thành trước khi lưu link.');
+  assert.equal(await run(() => Boolean(document.getElementById('url'))), false);
+  await api('PATCH', '/api/jobs/J-GS-1025-edit', tuan, { status: 'done' }, 200);
+  await click('Làm mới booking');
+  await see('Lưu link ảnh');
   await fill('url', 'http://example.com/photos');
   await click('Lưu link ảnh');
   await see('Nhập link HTTPS hợp lệ');
@@ -504,26 +574,75 @@ try {
   await click('Nhận ảnh');
   await see('Hoàn thành');
   assert.equal((await api('GET', replacementApi, linh, null, 200)).booking.status, 'completed');
-  assert.equal((await api('GET', '/api/conversations/c-linh', linh, null, 200)).conversation.status, 'done');
+  assert.equal((await api('GET', nextThreadPath, linh, null, 200)).conversation.status, 'done');
   await navigate(replacementDetail);
   await see('Không có quyền truy cập');
   await switchRole(replacementDetail, 'thao');
 
+  async function measureExtras(selector, tapText) {
+    await waitFor(() => run((query) => Boolean(document.querySelector(query)), selector), selector);
+    for (const width of [360, 768, 1280]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+      const measurements = await run((query) => [...document.querySelectorAll(query)].map((label) => {
+        const input = label.querySelector('input[type="checkbox"]');
+        const size = (el) => {
+          const { width, height } = el.getBoundingClientRect();
+          return [Number(width.toFixed(2)), Number(height.toFixed(2))];
+        };
+        return { name: label.innerText.trim(), label: size(label), input: size(input), associated: label.control === input };
+      }), selector);
+      assert(measurements.length);
+      assert(measurements.every(({ associated }) => associated));
+      if (tapText) {
+        assert(measurements.every(({ label }) => label[1] >= 44));
+        for (const [index, { name }] of measurements.entries()) {
+          const target = await run((query, index) => {
+            const label = document.querySelectorAll(query)[index];
+            const input = label.control;
+            label.scrollIntoView({ block: 'center', behavior: 'instant' });
+            const text = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+            const range = document.createRange();
+            range.selectNodeContents(text);
+            const rect = range.getClientRects()[0];
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            return { x, y, checked: input.checked, hitsLabel: document.elementFromPoint(x, y) === label };
+          }, selector, index);
+          assert(target.hitsLabel, name + ' at ' + width);
+          for (const checked of [!target.checked, target.checked]) {
+            await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: target.x, y: target.y, button: 'left', clickCount: 1 });
+            await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: target.x, y: target.y, button: 'left', clickCount: 1 });
+            await waitFor(() => run((query, index, expected) => document.querySelectorAll(query)[index].control.checked === expected,
+              selector, index, checked), 'label text toggles ' + name);
+          }
+        }
+      }
+      console.log('MEASURE', selector, width, JSON.stringify(measurements));
+    }
+  }
+
   async function checkWidths(path) {
     for (const width of [360, 768, 1280]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
-      const metrics = await run(() => ({
-        width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-        small: [...document.querySelectorAll('main a, main button')]
-          .filter((el) => el.getBoundingClientRect().height < 44).map((el) => el.textContent.trim()),
-      }));
+      const metrics = await run(() => {
+        const targets = [...document.querySelectorAll('main a, main button')];
+        const height = (el) => el.getBoundingClientRect().height;
+        return {
+          width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+          minMain: Math.min(...targets.map(height)),
+          small: targets.filter((el) => height(el) < 44).map((el) => el.textContent.trim()),
+          smallHeader: [...document.querySelectorAll('header a, header button')]
+            .filter((el) => height(el) < 44).map((el) => [el.textContent.trim().replace(/\s+/g, ' '), height(el)]),
+        };
+      });
       assert(metrics.scrollWidth <= width, path + ' ' + JSON.stringify(metrics));
       assert.deepEqual(metrics.small, [], path + ' ' + width);
+      if (path === detail) console.log('MEASURE controls', path, width, JSON.stringify(metrics));
     }
   }
   for (const path of [list, detail, '/admin/bookings']) {
     await navigate(path);
-    await see(path === list ? 'Trần Minh Khoa' : 'GS-1025');
+    await see(path === list ? 'Trần Minh Khoa' : path === detail ? 'GS-1024' : 'GS-1025');
     await checkWidths(path);
   }
   await navigate('/admin/conversations/c-absent');

@@ -166,6 +166,9 @@ function BookingGalleryContent({ code }) {
       navigate(res.redirectUrl);
     } catch (err) {
       setPayError(err?.message || 'Không thể tạo giao dịch thanh toán 70%, vui lòng thử lại.');
+      if (err?.status === 409) {
+        bookingReq.reload();
+      }
     } finally {
       payingRef.current = false;
       setPaying(false);
@@ -194,6 +197,8 @@ function BookingGalleryContent({ code }) {
 
   const savedCount = savedIds.length || booking?.selection?.selectedCount || 0;
 
+  const apiRemainingBlockedReason = bookingReq.data?.customerActions?.remainingBlockedReason || '';
+
   let payRemainingReason = '';
   if (booking) {
     if (booking.status === 'cancelled') {
@@ -204,6 +209,8 @@ function BookingGalleryContent({ code }) {
     } else if (booking.status !== 'booked') {
       payRemainingReason =
         'Booking cần ở trạng thái Đã đặt lịch trước khi thanh toán phần còn lại.';
+    } else if (apiRemainingBlockedReason) {
+      payRemainingReason = apiRemainingBlockedReason;
     } else if (savedCount === 0) {
       payRemainingReason = 'Lưu lựa chọn ảnh trước khi thanh toán phần còn lại.';
     } else if (hasUnsavedChanges) {
@@ -289,7 +296,7 @@ function BookingGalleryContent({ code }) {
                         </strong>
                       </p>
                       <p>
-                        Bạn không cần đặt cọc lại — vui lòng nhắn studio trong chat để thống nhất xử lý hoặc tạo booking thay thế.
+                        Bạn không cần đặt cọc lại — studio sẽ dời lịch trực tiếp trên booking này sang khung giờ trống khác hoặc hỗ trợ tạo yêu cầu tư vấn mới qua chat.
                       </p>
                       <Link className="button button-coral" to="/chat">
                         Nhắn studio trong chat

@@ -212,7 +212,7 @@ export function BookingDetailPage() {
                         <strong>Đã nhận tiền cọc 30% (<Money amount={booking.deposit} />) nhưng khung giờ đã có người đặt.</strong>
                       </p>
                       <p>
-                        Booking vẫn ở trạng thái Chờ cọc 30% và chưa giữ được chỗ. Bạn không cần thanh toán cọc lại — vui lòng nhắn studio trong chat để thống nhất xử lý hoặc tạo lịch thay thế.
+                        Booking vẫn ở trạng thái Chờ cọc 30% và chưa giữ được chỗ. Bạn không cần thanh toán cọc lại — studio sẽ dời lịch trực tiếp trên booking này sang khung giờ trống khác hoặc hỗ trợ tạo yêu cầu tư vấn mới qua chat.
                       </p>
                       <Link className="button button-coral" to="/chat">
                         Nhắn studio trong chat
@@ -223,7 +223,7 @@ export function BookingDetailPage() {
                   {booking.status === 'cancelled' && (
                     <div className="payment-muted-box">
                       <p>
-                        <strong>Booking này đã bị hủy.</strong> Các khoản tiền đã thanh toán trước đó (nếu có) vẫn được ghi nhận trong lịch sử. Nếu studio đã tạo booking thay thế, bạn có thể xem trong mục Lịch chụp của tôi hoặc mở lại cuộc trò chuyện.
+                        <strong>Booking này đã bị hủy.</strong> Các khoản tiền đã thanh toán trước đó (nếu có) vẫn được ghi nhận trong lịch sử. Nếu muốn đặt lại, bạn có thể tạo yêu cầu tư vấn mới hoặc xem danh sách lịch chụp của mình.
                       </p>
                       <div className="catalog-card-actions">
                         <Link className="button button-outline" to="/chat">

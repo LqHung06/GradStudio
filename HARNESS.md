@@ -12,7 +12,7 @@ Tài liệu này mô tả hệ thống **Harness Engineering** của dự án Gr
 | **Contract-first spec** | `docs/api/README.md`, `01`–`13` | Hợp đồng API viết trước mock và UI; mọi thay đổi đều ghi vào mục `## Changes`. |
 | **Prompt log** | `brief.md` | Lưu nguyên văn prompt theo thứ tự thời gian trước khi triển khai từng bước. |
 | **Execution & Verification log** | `AI-LOG.md` | Ghi các file đã sửa, lỗi phát hiện/từ chối và bằng chứng kiểm tra thực tế sau mỗi task. |
-| **Verification scripts** | `tools/contract-check.mjs`, `tools/tv1-rules.test.mjs`, `tools/tv2-reminders-id.test.mjs`, `tools/tv3-booking-rules.test.mjs` | Kiểm tra tự động hợp đồng (40 endpoints) và các quy tắc nghiệp vụ cốt lõi (TV1, TV2, TV3) không cần phụ thuộc ngoài. |
+| **Verification scripts** | `tools/contract-check.mjs`, `tools/tv1-rules.test.mjs`, `tools/tv2-reminders-id.test.mjs`, `tools/tv2-qa9.test.mjs`, `tools/tv3-booking-rules.test.mjs` | Kiểm tra tự động hợp đồng (40 endpoints) và các quy tắc nghiệp vụ cốt lõi (TV1, TV2, TV3) không cần phụ thuộc ngoài. |
 | **Automated CI** | `.github/workflows/ci.yml` | Chạy tự động 5 Verification Gates trên mọi `push` và `pull_request` vào `main`. |
 
 ---
@@ -43,7 +43,7 @@ Toàn bộ 5 gate dưới đây chạy tự động trong `.github/workflows/ci.
 | :--- | :--- | :--- | :--- |
 | **Gate 1 — Syntax & Seed JSON** | Chặn lỗi cú pháp ES module mock/tools và file JSON seed hỏng | `for f in mock/server.mjs mock/lib/*.mjs mock/routes/*.mjs tools/*.mjs; do node --check "$f"; done` + `JSON.parse` mọi `mock/data/*.json` | Bất kỳ file `.mjs` lỗi cú pháp hoặc `.json` không parse được. |
 | **Gate 2 — API Contract Check** | Đảm bảo 100% endpoint/ví dụ trong `docs/api/` khớp câu trả lời thật của mock | Khởi động `node mock/server.mjs` mới + `node tools/contract-check.mjs --base http://127.0.0.1:3001` | Có ví dụ lệch status / thiếu field, hoặc bảng endpoint `README.md` chưa đủ ví dụ. |
-| **Gate 3 — Business Rules Tests** | Kiểm tra các quy tắc nghiệp vụ trọng yếu bằng `node:test` | `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs` | Bất kỳ assertion nghiệp vụ nào thất bại (`FAIL`). *(Ca `TODO` ghi rõ bàn giao còn chờ được giữ tách biệt, không ngụy tạo thành pass.)* |
+| **Gate 3 — Business Rules Tests** | Kiểm tra các quy tắc nghiệp vụ trọng yếu bằng `node:test` | `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs` | Bất kỳ assertion nghiệp vụ nào thất bại (`FAIL`). *(Ca `TODO` ghi rõ bàn giao còn chờ được giữ tách biệt, không ngụy tạo thành pass.)* |
 | **Gate 4 — Client Production Build** | Đảm bảo ứng dụng React/Vite đóng gói sạch từ `package-lock.json` | `cd client && npm ci && npm run build` | Lỗi import, cú pháp JSX hoặc đóng gói Vite thất bại. |
 | **Gate 5 — Repo Hygiene** | Chặn sót conflict markers sau khi merge chéo giữa các thành viên | `git grep -n -E '^(<<<<<<<|=======$|>>>>>>>)' -- client docs mock tools '*.md' '*.yml'` | Xuất hiện marker xung đột Git chưa xử lý ở bất kỳ file nào. |
 

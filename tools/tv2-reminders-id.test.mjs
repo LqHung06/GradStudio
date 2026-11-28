@@ -148,20 +148,21 @@ test('HTTP E2E: deleting an earlier queued reminder via cancel never collides on
     const han = (await api('/api/auth/login', 'POST', null, { email: 'han@gradstudio.test', password: 'han-demo' })).token;
     const linh = (await api('/api/auth/login', 'POST', null, { email: 'linh@gradstudio.test', password: 'linh-demo' })).token;
 
-    // 1. Han deposits GS-1023 -> rm-1 (sent)
+    // 1. Han deposits GS-1023 -> rm-1 starts queued, dispatches to sent when GET /api/reminders runs (past date)
     const pay1 = (await api('/api/bookings/GS-1023/payments', 'POST', han, { kind: 'deposit' })).payment;
     await api(`/api/test-gateway/${pay1.id}`, 'POST', han, { result: 'success' });
+    await api('/api/reminders', 'GET', han);
 
     // 2. Admin reschedules GS-1023 -> rm-2 (queued)
     await api('/api/bookings/GS-1023', 'PATCH', thao, {
-      date: '2026-10-27',
+      date: '2027-10-27',
       items: [
         { kind: 'makeup', start: '13:00', end: '14:00', staffId: 'u-mai', roomId: null },
         { kind: 'shoot', start: '14:00', end: '16:00', staffId: 'u-tuan', roomId: 'r-b' },
       ],
     });
 
-    // 3. Create & deposit GS-1024 for Linh -> rm-3 (sent)
+    // 3. Create & deposit GS-1024 for Linh -> rm-3 starts queued, dispatches to sent on GET /api/reminders
     const p1 = (await api('/api/conversations/c-linh/proposals', 'POST', thao, {
       date: '2026-10-24',
       items: [
@@ -174,19 +175,21 @@ test('HTTP E2E: deleting an earlier queued reminder via cancel never collides on
     const b1024 = (await api('/api/bookings', 'POST', thao, {
       conversationId: 'c-linh',
       proposalId: p1.id,
+      editorId: 'u-tuan',
       shootType: 'Tốt nghiệp cá nhân',
       packageId: 'pkg-tn-premium',
       extraIds: ['ex-makeup'],
     })).booking;
     const pay2 = (await api(`/api/bookings/${b1024.code}/payments`, 'POST', linh, { kind: 'deposit' })).payment;
     await api(`/api/test-gateway/${pay2.id}`, 'POST', linh, { result: 'success' });
+    await api('/api/reminders', 'GET', linh);
 
     // 4. Cancel GS-1023 -> deletes rm-2 (queued), keeps rm-1 (sent) and rm-3 (sent). Array length is now 2!
     await api('/api/bookings/GS-1023/cancel', 'POST', thao, { reason: 'Hủy để kiểm tra không trùng ID nhắc' });
 
-    // 5. Reschedule GS-1024 -> old length+1 bug would produce rm-3 (COLLISION with Linh's sent rm-3!). Must be rm-4!
+    // 5. Reschedule GS-1024 to future 2027-10-28 -> old length+1 bug would produce rm-3 (COLLISION with Linh's sent rm-3!). Must be rm-4 (queued)!
     await api(`/api/bookings/${b1024.code}`, 'PATCH', thao, {
-      date: '2026-10-28',
+      date: '2027-10-28',
       items: [
         { kind: 'makeup', start: '10:00', end: '11:00', staffId: 'u-mai', roomId: null },
         { kind: 'shoot', start: '11:00', end: '13:00', staffId: 'u-tuan', roomId: 'r-b' },
@@ -201,7 +204,7 @@ test('HTTP E2E: deleting an earlier queued reminder via cancel never collides on
       ['rm-3', 'sent'],
       ['rm-4', 'queued'],
     ]);
-    assert.equal(linhReminders[1].sendAt, '2026-10-27T10:00:00+07:00');
+    assert.equal(linhReminders[1].sendAt, '2027-10-27T10:00:00+07:00');
   } finally {
     server.kill();
   }

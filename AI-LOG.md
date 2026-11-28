@@ -195,7 +195,7 @@ Triển khai prototype GradStudio theo master prompt, `Proposal.md`, `design.md`
   - Căn giữa số `5` trong `.count-badge` bằng cách reset padding về 0, đặt `line-height: 1; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;`.
   - Căn giữa dọc tiêu đề `.sidebar-title` với `align-items: center;`.
 - **Rejected / lỗi phát hiện & khắc phục:** ban đầu số `5` bị lệch xuống dưới do `.count-badge` kế thừa thuộc tính `padding: .25rem .75rem` từ rule CSS chung ở dòng 940 của `styles.css`. Đã ghi đè padding về 0 và căn giữa flexbox chuẩn xác.
-- **Kiểm tra / bằng chứng:** chụp ảnh bằng chứng cận cảnh [verify-fix-item-1-grey.png](file:///home/hungj2020/.gemini/antigravity-cli/brain/9fbac3ad-da21-46fe-9e1d-b777a2f44b00/verify-fix-item-1-grey.png) và [verify-fix-count-5-centered.png](file:///home/hungj2020/.gemini/antigravity-cli/brain/9fbac3ad-da21-46fe-9e1d-b777a2f44b00/verify-fix-count-5-centered.png).
+- **Kiểm tra / bằng chứng:** chụp ảnh bằng chứng cận cảnh `verify-fix-item-1-grey.png` và `verify-fix-count-5-centered.png` (lưu cục bộ thời điểm PA#2).
 
 ### 20. Khắc phục chuẩn W3C Nu HTML Checker và hoàn thiện bộ tài liệu PA#2
 
@@ -996,17 +996,179 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
 - **Commits:** TV1 tự kiểm tra diff và tách commit theo thứ tự contract → mock → UI → test → AI-LOG.
 
 
-### [TV1] 33. Chuẩn bị bản nháp PA#3 `SELF_ASSESSMENT_REPORT.md` và cập nhật mục 5 `FRONTEND.md` (đợt QA 27/11) — 27/11/2026
+### [TV3] 33. QA10 hội thoại và booking Admin (27/11/2026)
 
-- **Tool:** Antigravity Assistant, Git (`git log`, `git shortlog`, `git diff`).
-- **Request:** `brief.md` mục 33. Trên nhánh `docs/qa12-pa3-report-draft` tách từ `main` (`a8236fd`), soạn sẵn bản nháp `SELF_ASSESSMENT_REPORT.md` PA#3 (đủ 9 tiêu chí rubric, ghi nhãn `[CHỜ CHỐT QA11]` cho điểm và mục chưa chạy) và cập nhật mục 5 `FRONTEND.md` theo loạt QA PO mới 27/11 (`B2`, `B3`, `B4`, `BS.1`).
+- **Tool:** Codex, Humanizer, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 33. Thực hiện phần TV3 của QA10 trên checkout `effea64`, theo bản cập nhật kế hoạch và câu trả lời PO ngày 27/11.
 - **Changed:**
-  - `SELF_ASSESSMENT_REPORT.md`: thay bản PA#2 cũ bằng khung bản nháp PA#3 tại commit `a8236fd` với đủ 9 tiêu chí (100 điểm), đối chiếu bằng chứng thật từ `git log` (18 route nghiệp vụ, 221 commit PA#3, 7 commit `AGENTS.md`, 32 mục `brief.md`/`AI-LOG.md`, 113/113 contract examples, 40/40 endpoints, 33/33 test) và mục 2 *What We Did Not Manage / Known Limitations* trung thực.
-  - `FRONTEND.md`: giữ nguyên mục 5.1, ghi chú rõ `B2.2` thay thế quy ước cũ 23/11 ở mục 5.2, bổ sung mục **5.3 — Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)** đầy đủ `B2.1–B2.5`, `B3.1–B3.3`, `B4.1–B4.13`, `BS.1` kèm trạng thái thực tế tại `a8236fd`; giữ nguyên mục 7 (*Not done*) của TV3.
-  - `brief.md` mục 33 và `AI-LOG.md` mục này.
-- **Rejected:** Không có sai phạm trong lượt này; không sửa `docs/api/`, `mock/`, `client/`, `tools/`, không bịa điểm tự chấm hay URL bài đăng PO.
+  - B2.2 giữ mã booking và lịch sử trong hội thoại sau hủy. B4.6 làm rõ B2.5/B3.2: từ trang dịch vụ ưu tiên hội thoại mở chưa có booking theo tin nhắn mới nhất. API trả `conversation.id` của nơi nhận tin. B3.3/B4.5 đánh dấu đề xuất cũ bị thay thế và chặn phản hồi hoặc tạo booking từ tab cũ.
+  - B4.4 kiểm giờ cấu hình ở cả bốn bước Admin, cho phép ca liền giờ và giữ ngày 24/10/2026. B4.7 chặn đổi lịch khi việc chụp đã bắt đầu, đã xong hoặc khách đã trả đủ. G10 đọc thời hạn giao dịch khi có và trả mốc thử lại theo B4.2–3, BS.1.
+  - B4.11 thêm lựa chọn người chỉnh ảnh và lưu phân công riêng. API và UI kiểm đủ tiền và việc chỉnh hoàn thành trước khi mở giao link. Khách vẫn hoàn tất booking bằng Nhận ảnh.
+- **Rejected / lỗi phát hiện:** B4.1 thay phương án cũ ở B1.8 bằng xác nhận trên cùng mã booking đã thu cọc. Chưa có thao tác xác nhận dùng chung từ TV2, nên ca giờ trống trả 409 và giữ nguyên dữ liệu. Checkout hiện có một khung giờ cấu hình chung. Ca chia ngày thường/cuối tuần và ca hết hạn dựa trên dữ liệu đưa vào test. Hồi quy TV2 tại `tools/tv2-reminders-id.test.mjs:174` tạo booking thiếu `editorId`, trả 400. File của TV2 giữ nguyên.
 - **Checked:**
-  - Đối chiếu số liệu trực tiếp từ `git shortlog -sn 8e5c4f5~1..HEAD`, `git log --merges --oneline`, `git log -- AGENTS.md`, `grep -rn "path:" client/src/routes/`.
-  - `git diff -- docs/api mock client tools`: trống hoàn toàn.
-  - `git diff --check`: 0 lỗi; 0 conflict markers (`git grep`).
-- **Commits:** TV1 tự kiểm tra diff và commit sau (hoặc giữ trên nhánh nháp để điền số liệu cuối sau `QA11` ngày 29/11).
+  - `node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock mới: **111/111 ví dụ, 40/40 endpoint, 0 FAIL**.
+  - `node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs`: **34/35 PASS, 1 FAIL, 0 skip/TODO**. Ca TV3 kiểm thời hạn, mở cửa hai khung và một số khóa nghiệp vụ bằng dữ liệu riêng. HTTP thật kiểm hội thoại đích, giao dịch pending cũ chặn đổi/hủy và luồng nhắc lịch.
+  - `npm run build` tạo `client/dist`. `node tools/tv3-admin-build-check.mjs` chạy Chrome ngoài sandbox, thoát mã 0. Admin thao tác đề xuất, tạo, đổi, hủy và giao link trên UI. Harness dùng HTTP để chuẩn bị yêu cầu mới, cọc, jobs, lựa chọn ảnh và phần thanh toán còn lại. Customer bấm Nhận ảnh trên UI. Đã kiểm bốn chế độ mock, ba chiều rộng, log JavaScript và API. Syntax 23 mô-đun, kiểm tra conflict markers và `git diff --check` đạt.
+  - Chưa kiểm được vòng đời 15 phút thật của cổng thanh toán, ca khôi phục cọc thành công và sinh jobs/nhắc đúng một lần, phân công người chỉnh khác thợ chụp đi qua bước xác nhận, hoặc điều hướng từ trang dịch vụ Customer.
+- **Commits:** `036851f` brief; `861b063`, `8390c06`, `6cc7117`, `5f9fad1` contract; `78f0598`, `d99184b`, `3ed7561`, `b4a5277`, `b225837`, `812d890` mock; `72981f7`, `e36c91b`, `2c34cbf`, `d4a10ac`, `590ff60` React; `4121632`, `ab89443` kiểm thử. Nhật ký được commit riêng sau cùng.
+
+
+### [TV3] 34. QA10 rà tích hợp sau QA8 (27/11/2026)
+
+- **Tool:** Codex, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 34. Xác minh lại phần TV3 trên `c5dead9` sau khi ghép QA8 và xác định các điểm cần TV2 bàn giao.
+- **Changed:**
+  - Cập nhật `FRONTEND.md` theo B2.2, B4.5–6 và B4.11. Contract 05/10 ghi dữ liệu người chỉnh, thời điểm hết hạn và điều kiện của bước xác nhận dùng chung. B4.1 thay phương án cũ B1.8 cho cọc đã thu nhưng trùng lịch. BS.1 chốt cùng hạn 15 phút cho hai khoản.
+  - Thêm hai ca HTTP dùng mock thật. Ca QA8 cập nhật cấu hình qua Superadmin rồi kiểm bốn thao tác lịch Admin, giờ liền nhau, ngày mẫu và cọc sau khi thu hẹp giờ mở cửa. Ca B4.1 tạo hai booking cùng lịch, cọc thật để gây trùng, rồi kiểm từ chối lịch trùng hoặc sai định dạng và giữ booking, tiền, jobs và nhắc lịch.
+  - Trang chi tiết Admin gọi tên người chỉnh là người đã chọn để phân biệt với job do thanh toán sinh.
+- **Rejected / lỗi phát hiện:** Ref mới từ origin vẫn chưa có bàn giao QA9. Lượt HTTP riêng xác nhận cả payment cọc và 70% mới đều thiếu `expiresAt`, Admin trả 409 với details null. Booking cọc trùng vẫn trả 409 khi đổi sang giờ trống, giữ nguyên khoản thu. Tạo booking chọn Hà chỉnh và Tuấn chụp, rồi xác nhận bằng gateway, cho ra job edit thuộc Tuấn và Hà đọc job trả 404. Giữ nguyên phần TV2.
+- **Checked:**
+  - Handler: bộ hồi quy ba thành viên đạt **39/39**, 0 FAIL, 0 skip/TODO. Ranh giới hết hạn và vài điều kiện giao link dùng dữ liệu test. Test giữ nguyên khi thiếu confirmation chỉ kiểm giới hạn tạm.
+  - HTTP: contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Hai ca HTTP mới đạt với cấu hình và thanh toán do API tạo. Lượt HTTP riêng ghi nhận ba hạn chế tích hợp nêu trên.
+  - UI: `npm run build` tạo `client/dist`. Harness Chrome trên production build thoát 0. Đã chạy Admin và Nhận ảnh phía Customer, bốn mock mode và ba chiều rộng. Ca giao ảnh dùng Tuấn ở cả hai vai trò chụp và chỉnh. Chưa nghiệm thu UI với hạn thanh toán thật hoặc editor khác photographer.
+- **Commits:** `d89176a` brief; `26cbe15`, `26c39dc` contract; `96edde1` FRONTEND; `f85abc9` UI Admin; `962830d` harness Chrome; `778f2ec` hồi quy HTTP. Nhật ký được commit riêng sau cùng.
+
+
+### [TV2] 35. QA9: Xác nhận lịch dùng chung (`B4.1`, `B4.11`), vòng đời thanh toán 15 phút (`B4.2`, `B4.3`, `BS.1`), nhắc lịch chờ gửi (`B4.12`, `B4.13`) và luồng Customer (`B4.5`, `B4.6`, `B4.9`, `B4.10`) — 27/11/2026
+
+- **Tool:** Antigravity Assistant, Node.js (`node:test`, `node --check`), Vite 7, Headless Chrome CDP.
+- **Request:** `brief.md` mục 35. Kéo `main` (`21295e7`), tạo nhánh `feat/qa9-customer-payments` và triển khai trọn phần `QA9` của TV2 theo `ke-hoach/ke-hoach/TV2-khach-hang.md` và `lo-trinh-PA3.html`.
+- **Changed:**
+  - `docs/api/06-payments.md`, `07-reminders.md`, `09-gallery.md`: bổ sung `Payment.expiresAt` (+15 phút cho cả `deposit` và `remaining`), cơ chế hết hạn và ngoại lệ đối soát `gatewayCaptured: true` sau hủy (`B4.2`), helper xác nhận dùng chung `confirmBookingReservation` (`B4.1`, `B4.11`), và vòng đời nhắc lịch khởi tạo `queued` → tự gửi khi đến hạn (`B4.12`, `B4.13`).
+  - `mock/lib/booking-confirmation.mjs` (mới): `confirmBookingReservation(db, booking)` kiểm tra trùng lịch và tạo jobs/nhắc lịch nguyên tử tối đa một lần, gán `J-<code>-edit` theo `db.bookingEditors[code]` (chỉ fallback thợ chụp nếu thiếu).
+  - `mock/lib/payments.mjs` (mới), `mock/routes/payments.mjs`, `mock/lib/time.mjs`: thêm `isoFromMs`, tính `expiresAt` (+15 phút), chuyển `pending` quá hạn (`now >= expiresAt`) sang `failed` khi tạo mới/đọc/callback (`409` khi thử lại giao dịch cũ, mở tạo `PAY-2` mới), tự đóng các `pending` cũ hơn cùng `(bookingCode, kind)` khi tạo mới hoặc ghi nhận `succeeded` để tránh `activePaymentLock` khóa oan G10, và xử lý `gatewayCaptured: true` sau hủy giữ `cancelled` + không sinh job/nhắc lịch.
+  - `mock/lib/reminders.mjs`, `mock/routes/reminders.mjs`: khởi tạo nhắc lịch ở trạng thái `queued`, thêm `dispatchDueReminders` chạy một lần cho nhắc đến hạn khi đọc `/api/reminders`, giữ `queued` với nhắc tương lai và bảo toàn lịch sử `sent`/`failed` khi đổi lịch/hủy/đổi `reminderHoursBefore`.
+  - `client/src/pages/customer/CustomerChatPage.jsx`, `TestGatewayPage.jsx`, `PaymentResultPage.jsx`, `BookingDetailPage.jsx`, `BookingGalleryPage.jsx`: ưu tiên hội thoại mở chưa có booking khi đi từ trang gói, điều hướng theo `res.conversation.id`, reload khi `409` đề xuất `superseded`, hiển thị `expiresAt` trên test gateway/kết quả, xử lý giao dịch 70% sau hủy không dẫn sang gallery, và reload trạng thái gallery khi `409`.
+  - `tools/tv2-qa9.test.mjs` (mới), `tools/tv2-reminders-id.test.mjs`, `tools/tv3-booking-rules.test.mjs`, `tools/tv3-admin-build-check.mjs`, `FRONTEND.md`: thêm bộ test unit + HTTP E2E QA9, chỉnh ngày đổi lịch tương lai sang `2027` để phân biệt đúng `queued` với `sent` đến hạn, và cập nhật bàn giao TV3 trong `FRONTEND.md`.
+- **Rejected / lỗi phát hiện:**
+  - Trên live HTTP mock mới, việc thêm `Payment.expiresAt` kích hoạt khóa giao dịch `B4.2–3` ở G10 (`POST .../cancel` trả `409` kèm `retryAt`), giúp xác minh tích hợp khóa thật giữa TV2–TV3; ngoại lệ `gatewayCaptured` sau khi quá hạn 15 phút được kiểm ở test đồng hồ `nowMs` (`tv2-qa9.test.mjs`).
+- **Checked:**
+  - Gate 1 (`node --check` mọi `mock/**/*.mjs` & `tools/*.mjs`, parse 14 JSON seed): **PASS**.
+  - Gate 2 (`node tools/contract-check.mjs --base http://127.0.0.1:3001` trên mock mới): **112/112 examples, 40/40 endpoints, 0 FAIL**.
+  - Gate 3 (`node --test` `tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`): **45/45 PASS, 0 FAIL, 0 skipped, 0 todo**.
+  - Gate 4 (`cd client && npm run build`): **PASS** (`95 modules`, `client/dist/`).
+  - Gate 5 (`git diff --check`): **PASS**.
+  - Production build Chrome check (`node tools/tv3-admin-build-check.mjs`): **PASS** (thoát 0, không lỗi JS/Console, đạt responsive 360/768/1280px và target ≥ 44px).
+- **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra diff trước khi tách commit.
+
+
+### [TV3] 36. QA10 khôi phục booking đã nhận cọc (27/11/2026)
+
+- **Tool:** Codex, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 36. Tích hợp B4.1 trên nhánh `fix/qa10-paid-deposit-recovery`, tách từ `origin/main` tại `3572675`.
+- **Changed:**
+  - `PATCH /api/bookings/:code` dùng helper xác nhận QA9 với ngày và ca mới trên bản nháp. Chỉ ghi booking, jobs và nhắc lịch sau khi helper thành công và kiểm lại dữ liệu đang dùng. Giữ mã, hội thoại, gói, giá, payment và người chỉnh đã chọn.
+  - Contract 05/10 và FRONTEND cập nhật trạng thái bàn giao. PA#3 trả 409 với đổi lịch cần thêm, bớt hoặc lặp loại ca khi có jobs, và với khôi phục cần nhiều job cùng loại.
+  - Thay kỳ vọng tạm bằng ca HTTP cọc qua gateway, trùng, rồi đổi lịch thành công. Harness Chrome thực hiện cùng luồng trong màn Admin.
+- **Rejected / lỗi phát hiện:** Handler test gây lỗi ở bước chuẩn bị nhắc lịch để kiểm rằng không có bản ghi nào bị thay đổi. Hai yêu cầu khôi phục đồng thời chỉ ghi một lần. Sau PATCH, UI đổi trạng thái booking ngay. Lý do khóa giao link vẫn lấy từ lần đọc chi tiết trước và cập nhật khi bấm Làm mới booking.
+- **Checked:**
+  - HTTP B4.1 trả 200 và booked trên cùng mã, giữ nguyên payment đã thành công, gán job chỉnh cho Hà khi Tuấn chụp và tạo một nhắc đúng mốc 36 giờ trước ca đầu. PATCH lặp giữ nguyên jobs/nhắc. Lịch trùng trả 409 CLASH kèm lý do. Lịch sai hoặc ngoài khung trả 400, thiếu quyền trả 403, payment còn hạn trả 409 kèm retryAt.
+  - Bốn bộ hồi quy TV1/TV2/TV3/QA9 đạt **46/46**, 0 FAIL, 0 skip/TODO. Contract-check trên mock mới đạt **112/112 ví dụ, 40/40 endpoint**. Kiểm cú pháp 27 mô-đun và parse 14 seed JSON, `npm ci` + `npm run build`, conflict markers và `git diff --check` đều đạt.
+  - Harness Chrome trên production build thoát mã 0. Admin thấy booking chuyển Đã đặt lịch từ phản hồi PATCH, không tải lại và không có request thanh toán mới. Luồng đổi lịch thường, hủy và Customer Nhận ảnh đều qua.
+- **Commits:** `1252315` brief; `8fd2b4e`, `9f8e690` contract; `39848f6` route; `1dc8675` hồi quy HTTP; `884d59f` harness Chrome; `3d857fb` FRONTEND. Nhật ký được commit riêng sau cùng.
+
+
+### [TV1] 37. QA11 — Cập nhật CI Gate 3 và nghiệm thu bản build `client/dist/` (27/11/2026)
+
+- **Tool:** Antigravity (Google Deepmind), Node.js v20.20.2, Vite 7 production build (`client/dist/`), Google Chrome headless (CDP).
+- **Request:** `brief.md` mục 37 — Chặng 2 QA11 phần TV1 trên nhánh `chore/qa11-ci-gate3-and-verification` tách từ `origin/main` (`c6e51b6`).
+- **Changed:**
+  - `.github/workflows/ci.yml`: bổ sung `tools/tv2-qa9.test.mjs` vào Gate 3 (`node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs`).
+  - `brief.md`, `AI-LOG.md`: ghi mục 37 cùng bằng chứng chạy thật của 5 Gate và nghiệm thu bản build `client/dist/`. Không sửa logic nghiệp vụ/UI của TV2/TV3 và không thêm dependency vào `client/package.json`.
+- **Rejected / lỗi phát hiện:**
+  - Không phát hiện lỗi nghiệp vụ, lỗi phân quyền hay endpoint ngoài contract trong mã nguồn `c6e51b6`.
+  - Ghi nhận môi trường chạy: máy Linux chạy Node v20.20.2 nên script CDP cần cờ `--experimental-websocket` để bật global `WebSocket` (trên Node 22 có sẵn).
+- **Checked:**
+  - **Gate 1 (cấu trúc, cú pháp, seed JSON):** đủ `docs/api`, `mock/server.mjs`, `client`, `FRONTEND.md`, `AGENTS.md`; `node --check` toàn bộ `mock/**/*.mjs` & `tools/*.mjs` **PASS**; parse **14/14** file seed JSON **PASS**.
+  - **Gate 2 (`contract-check` trên mock tươi cổng `3011`):** **112/112** examples trong 14 file `docs/api/`, **0 FAIL**.
+  - **Gate 3 (`node --test` cả 4 bộ hồi quy `tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`):** **46/46 PASS**, 0 FAIL, 0 skipped, 0 todo (`20.9s`).
+  - **Gate 4 (`cd client && npm run build`):** **PASS**, `95 modules transformed`, sinh `client/dist/` (`index.html`, CSS `118.69 kB`, JS `390.55 kB`).
+  - **Gate 5 (`git diff --check` & quét conflict markers):** **CLEAN**, 0 lỗi, 0 conflict markers.
+  - **Nghiệm thu bản production build (`client/dist/` + SPA fallback + `/api` proxy → `mock/server.mjs`, Chrome headless):**
+    - **[A] RBAC (chưa đăng nhập + 4 vai trò):** khách chưa đăng nhập bị chuyển về `/sign-in` ở `/my-bookings`, `/admin/conversations`, `/staff/jobs`, `/superadmin/admins`; truy cập route chéo vai trò ở cả 4 tài khoản (`linh`, `mai`, `thao`, `superadmin`) đều bị chặn bằng `ForbiddenPage` ("Không có quyền truy cập").
+    - **[B] G11 Superadmin:** `/superadmin/admins` hiển thị `thao@gradstudio.test`; `/superadmin/settings` hiển thị đủ 2 khung **Ngày thường (T2–T6)** và **Cuối tuần (T7–CN)**, lưu thành công `08:30` → reload giữ nguyên → khôi phục `08:00`.
+    - **[C] Trọn luồng `GS-1024` qua 4 vai trò + khóa `B4.8` + G10:** `09:00` ngày `24/10/2026` báo trùng Mai → đề xuất `13:00–14:00` (Mai) & `14:00–16:00` (Tuấn, `r-b`) → nút *Tạo booking* khóa trước khi khách đồng ý → `linh` bấm *Đồng ý giờ này* → tạo `GS-1024` (`1.800.000đ`, cọc `540.000đ`, còn lại `1.260.000đ`, `editorId: u-tuan`) → `linh` cọc 30% qua test gateway (`booked`, `deposit_paid`, hiện nhắc lịch trên `/notifications`) → `tuan` thấy `J-GS-1024-edit` khóa đúng `B4.8`, đánh dấu `J-GS-1024-shoot` *Hoàn thành* và upload preview PNG → `linh` lưu chọn ảnh & trả 70% (`paid_in_full`) → `tuan` thấy `J-GS-1024-shoot` khóa đúng `B4.8`, đánh dấu `J-GS-1024-edit` *Hoàn thành* → `thao` mở `/admin/bookings` & gắn link cuối → `linh` bấm *Nhận ảnh* → `GS-1024` chuyển `completed`.
+    - **[D] Đối soát log mock & Console:** **197/197** request `/api` phát sinh từ bản build đều khớp `docs/api/` (**0** endpoint lạ), **0** `console.error`, **0** `pageerror`, **0** phản hồi `5xx`.
+  - **Phần QA11 thuộc vai trò thành viên khác (chưa chạy trong phiên TV1 này):** W3C Nu HTML Validator & kiểm tra responsive `360/768/1280px` toàn app (TV2 — Kiệt); kiểm tra 4 chế độ `normal/slow/error/empty` & nút *Thử lại* toàn app (TV3 — Nhựt).
+- **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra trước khi tách commit.
+
+
+### [TV3] 38. Rà phần TV3 trước khi nộp PA#3 (28/11/2026)
+
+- **Tool:** Codex, Git, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 38. Nhánh `fix/tv3-submission-readiness` tách từ `origin/main` tại `0639fb2`, sau khi xác nhận có B4.1 (`39848f6`).
+- **Changed:**
+  - Bảng Routes Admin dùng tài khoản `thao`, mã seed `c-linh` và `GS-1023`. Ví dụ GS-1024 có thông tin after G6. Router và endpoint vẫn dùng tham số.
+  - Bổ sung truy vết trong Changes của contract 03/04 ngày 28/11. Thêm [giải thích mã QA](docs/qa-reference.md). Not done của TV3 hiện còn giới hạn ánh xạ job và 409 trong PA#3.
+  - Xóa `client/src/pages/StudioPage.jsx` và `client/src/components/FloatingChat.jsx`. Đã rà import tĩnh/động, entry HTML, router, cấu hình Vite, script và harness. Ghi chú, kiểm tra và ảnh PA#2 được giữ làm lịch sử.
+  - Mở rộng harness Admin để mở trực tiếp, reload, đo vùng bấm và bấm vào chữ của nhãn checkbox bằng sự kiện chuột CDP.
+- **Rejected / lỗi phát hiện:** Checkbox Admin 13 × 13 px nhưng toàn bộ nhãn hoạt động và cao 44 px ở ba độ rộng. Giữ CSS. `client/src/pages/HomePage.jsx` và `client/src/pages/BookingPage.jsx` cũ vẫn import `../data/fixtures.js`. Các file này cần dọn chung với TV2, còn trang G1 đang dùng là `client/src/pages/public/HomePage.jsx`.
+- **Checked:**
+  - `npm ci` và `npm run build` tạo `client/dist` (95 modules). Hồi quy bốn bộ TV1/TV2/QA9/TV3 **46/46 PASS**. Contract-check trên mock mới cổng 3011 **112/112, 40/40 endpoint**. Cú pháp 27 mô-đun, parse 14 JSON seed, conflict markers và `git diff --check` sạch.
+  - `node tools/tv3-admin-build-check.mjs` trên production build thoát 0. Mở trực tiếp và reload cả `/admin/conversations`, `/admin/conversations/c-linh`, `/admin/bookings` và `/admin/bookings/GS-1023` bằng `thao`. `GS-1024` trước G6 có thông báo thiếu dữ liệu. G4 gửi, lọc và lỗi giữ bản nháp. G5 kiểm trùng, gợi ý và đề xuất. G6 chờ khách đồng ý rồi tạo đúng một lần. G10 đã qua B4.1, đổi giờ, hủy, gắn link và khách Nhận ảnh. Harness chạy normal/slow/error/empty, có Thử lại không reload, không lỗi JS hay endpoint lạ.
+  - Kích thước tính theo CSS px, đo cả hai dịch vụ thêm. Admin `.admin-extras label` lần lượt **253 × 44**, **645 × 44**, **532.5 × 44** ở 360/768/1280. Input cùng kích thước **13 × 13**. `label.control` khớp input và bấm chữ đổi lựa chọn rồi khôi phục. Nút/link riêng trong main đạt tối thiểu 44 px. Header của c-linh không có phần tử đo được dưới 44 px.
+  - TV2 có thể tái hiện ở `/chat`, đăng nhập `linh`, chọn hội thoại Linh rồi xem Dịch vụ thêm. `.extras-fieldset label.checkbox-option input[type="checkbox"]` đo **20 × 20** ở cả ba độ rộng. Hai label ở 360 px đo **245 × 105.59** và **245 × 81.59**. Ở 768 px cả hai đo **621 × 57.59**, ở 1280 px đo **773 × 57.59**. `label.control` gắn đúng. Không dùng riêng kích thước input để chấm vùng bấm.
+  - Phạm vi bằng chứng cho Hưng: các route/luồng Admin ở trên, mã B4.1 `39848f6`, kết quả HTTP/Chrome của lượt này và harness tương ứng. Chưa chạy W3C Nu, hoặc kiểm đủ mọi route/mode ngoài phạm vi Admin. Có thể ghi giới hạn job theo loại ca và 409 vào mục What we did not manage.
+
+  | Commit mock | File | Hành vi | Contract và Changes |
+  |---|---|---|---|
+  | `ce4b4c8` | `mock/routes/admin-bookings.mjs` | Đổi lịch cập nhật nhắc, hủy bỏ queued và giữ sent. | 10 có dòng 24/11. Commit contract `36d9da5` đến sau mock và sau khi Admin routes được nối ở `1c08484`. |
+  | `b4a5277` | `mock/routes/conversations.mjs` | Chọn hội thoại đích, trả ID, chỉ đề xuất mới nhất được phản hồi. | 03 có QA10, trước đây thiếu truy vết cụ thể yêu cầu bị chuyển hội thoại và tab cũ. Đã bổ sung 28/11. |
+  | `b225837` | `mock/routes/bookings.mjs` | Một booking mỗi hội thoại, tạo bằng đề xuất mới nhất, bắt buộc editorId và trả lý do khóa Admin. | 05 có dòng QA10. |
+  | `78f0598`, `3ed7561` | `mock/lib/clash.mjs`, `mock/routes/resources.mjs` | Validate giờ mở cửa cho lịch mới và gợi ý ca hợp lệ. | 04 có dòng B4.4. |
+  | `34e8e14`, `700ebab` | `mock/lib/clash.mjs` | Gợi ý theo ngày dự kiến, tích hợp helper các khung giờ QA8. | 04 thiếu dòng riêng về QA8, bổ sung 28/11. |
+  | `d99184b`, `812d890` | `mock/lib/admin-booking-rules.mjs`, `mock/routes/admin-bookings.mjs` | Khóa giao dịch/việc chụp khi đổi, giữ lịch sử khi hủy, giao link cần trả đủ và edit done. | 05/10 có Changes QA10 và mô tả retryAt ở 10. |
+  | `ef4c106`, `39848f6` | `mock/lib/booking-confirmation.mjs`, `mock/lib/reminders.mjs`, `mock/routes/admin-bookings.mjs` | QA9 sinh job chỉnh và nhắc queued, G10 xác nhận cọc đã thu trên cùng mã. | 05/10 đã ghi B4.1. 06/07 đã ghi QA9. |
+  | `84a9c34` | `mock/lib/reminders.mjs` | Cấp ID từ max hậu tố và lọc start null/sai dạng. | 07 thiếu dòng riêng. Bàn giao TV2, không sửa contract 07. |
+
+  Bàn giao nội dung tài liệu:
+
+  - TV1 Hưng: `SELF_ASSESSMENT_REPORT.md` đang ghi PA#2, 7 tiêu chí và 97/100. Dùng 9 tiêu chí PA#3, lấy số liệu kiểm thật, cộng lại và đưa cùng tổng vào tên zip. Khi chốt, bỏ câu Đang làm ở Not done và hợp nhất bảng Routes. Cùng nhóm bổ sung link PO thật nếu có. Bản tổng hợp PO và kế hoạch nằm ngoài repo, chưa có link PO thật trong các mục đang ghi Chưa có link.
+  - TV2 Kiệt: Sau sign-in `han`, `/my-bookings` dùng GET `/api/bookings`, `/my-bookings/GS-1023` dùng GET `/api/bookings/:code` và POST `/api/bookings/:code/payments` với `kind=deposit`. Sau khi tạo payment ở G7, mở `/test-gateway/{paymentId}` theo `redirectUrl` từ API, rồi `/payments/{paymentId}/result` theo URL trả về khi mô phỏng thanh toán. Hai route dùng ID thật và không có dữ liệu giao dịch sẵn sau restart. Tài khoản `han` đã có trong Demo accounts. Rà hai chuỗi PA#3 trong `TestGatewayPage.jsx` (dòng 70/75), checkbox /chat đo ở trên, Changes 07 cho `84a9c34` và dọn hai trang PA#2 cũ cùng fixtures.
+  - Link lịch sử `file:///home/hungj2020/...` ở PROTOTYPE.md có đích thay thế đã xác minh: dòng 88 là `client/src/styles.css`; dòng 136 là `checks/ui-test-results.json`; dòng 141–143 là `checks/validator-{index,studio,booking}.txt`; dòng 146 là `screenshots/`. Hai ảnh `verify-fix-item-1-grey.png` và `verify-fix-count-5-centered.png` tại AI-LOG.md dòng 198 chưa tìm thấy đích cùng tên trong repo/thư mục tài liệu. Giữ các mục lịch sử.
+  - Git hiện hiển thị `Nhut <lecongminhnhut6533@gmail.com>`. Đề xuất dùng tên đầy đủ Lê Quốc Hưng, Đặng Hoàng Tuấn Kiệt, Lê Công Minh Nhựt với email đã thống nhất cho các commit mới.
+- **Commits:** `5f35e68` brief; `fc13cd8`, `fda9664` contract; `406d1fb` Routes; `f64651e`, `ac9bd6e` dọn mã PA#2; `61e8e70` harness; `a26c488` mã QA. Nhật ký được commit riêng sau cùng.
+
+### [TV3] 39. QA11 nghiệm thu toàn ứng dụng (28/11/2026)
+
+- **Tool:** Codex, Git, PowerShell, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** [brief.md](brief.md), mục 39. Kiểm bốn chế độ mock trên toàn app và bàn giao lỗi theo phạm vi.
+- **Changed:**
+  - Thêm `tools/qa11-app-check.mjs` và [ma trận QA11](docs/qa11-tv3.md). Harness dùng production build, bốn mock riêng, dữ liệu GS-1024 và giao dịch thật từ API. Retry giữ nguyên document, URL và phiên. Kiểm thêm các vùng lỗi riêng trong màn có nhiều nguồn và các danh sách lồng nhau ở mode empty.
+  - Rà Routes với router và trace HTTP. Đề nghị Kiệt bổ sung GET extras ở chi tiết gói, Hưng bổ sung GET booking ở chi tiết việc Staff. Các màn Admin qua ma trận và giữ giới hạn ánh xạ loại ca đã công bố ở Not done.
+- **Rejected / lỗi phát hiện:** Chrome profile mới nhận `404 /favicon.ico` ở ca mở sớm `/my-bookings/GS-1024` bằng `linh`. Trang hiển thị đúng thông báo chờ booking. Tài nguyên icon thuộc khung ứng dụng của TV1. Lượt đầu còn có lỗi kỳ vọng trong harness và phép đo `/chat` chạy trước khi vùng retry tiếp theo hiện ra. Đã sửa tiền đề và đợi các request phụ ổn định, sau đó chạy lại toàn ma trận.
+- **Checked:**
+  - `node tools/qa11-app-check.mjs` trên `client/dist`, base `1655427`. Normal 27/28, slow 22/22, error 48/48, empty 26/26. Tổng 123 PASS, 1 FAIL, 0 ca chưa chạy trong ma trận. `/chat` phục hồi danh sách và hội thoại, sau đó tải lại dịch vụ, gói và dịch vụ thêm qua nút của form, trong cùng document. Hai nút cho danh mục nhân sự dùng chung ở đề xuất giờ và form booking Admin được bấm ở hai ca cô lập.
+  - `node --check` qua 28 module, parse 14 JSON seed. Contract-check trên mock mới cổng 3011 đạt 112/112 ví dụ, 40/40 endpoint. Bốn bộ hồi quy TV1/TV2/QA9/TV3 đạt 46/46. `npm ci` và `npm run build` tạo `client/dist` với 95 module. Conflict markers và `git diff --check` sạch.
+  - Đã dọn tiến trình kiểm thử do lượt này khởi động. Chưa chạy W3C Nu, responsive toàn app, một ma trận F5 riêng hoặc toàn bộ chuỗi chọn ảnh, trả 70% và nhận ảnh xuyên vai trò.
+- **Commits:** Lượt này dừng ở diff. Sau fetch, `origin/main` ở `37d2878` đã chứa PR #38 và có cùng nội dung với HEAD `1655427`.
+
+### [TV3] 40. Kiểm lại favicon và Routes QA11 (28/11/2026)
+
+- **Tool:** Codex, Git, PowerShell, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** [brief.md](brief.md), mục 40. Sửa favicon, bổ sung hai endpoint trong bảng Routes và kiểm lại trước G6.
+- **Changed:** Thêm favicon SVG và khai báo trong `client/index.html`. Bổ sung `GET /api/bookings/:code` ở chi tiết việc Staff và `GET /api/extras` ở chi tiết gói. Ghi kết quả mới vào [ma trận QA11](docs/qa11-tv3.md), giữ nguyên bằng chứng 123/124 và harness.
+- **Rejected / lỗi phát hiện:** Lỗi icon 404 của lượt trước không tái hiện. `GET /api/bookings/GS-1024` trước G6 vẫn trả 404 theo contract và UI hiện thông báo booking chưa được tạo.
+- **Checked:**
+  - `npm.cmd run build` tạo lại `client/dist` với 95 module. Chrome profile mới đăng nhập `linh` bằng form trên mock normal, mở trực tiếp `/my-bookings/GS-1024`; icon trả `200 image/svg+xml`, không có lỗi trình duyệt.
+  - Chạy nguyên harness trên build mới đạt **124/124**. Normal 28/28, slow 22/22, error 48/48, empty 26/26. Trace xác nhận chi tiết Staff gọi GET booking và chi tiết gói gọi GET extras, cả hai trả 200.
+  - Hồi quy 46/46, contract-check trên mock mới 112/112 ví dụ và 40/40 endpoint. Cú pháp 28 module, parse 14 JSON seed, conflict markers và `git diff --check` đều đạt.
+  - Chưa chạy W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh. Giới hạn đổi lịch trong Not done vẫn áp dụng.
+- **Commits:** Dừng ở diff chưa stage trên checkout `e0e966e`.
+
+### [TV1] 41. Đồng bộ bản nháp `QA12` tại `62c2d63` và dọn đường dẫn cục bộ (28/11/2026)
+
+- **Tool:** Antigravity (Google Deepmind), Git (`git merge`, `git shortlog`, `git grep`, `git diff`).
+- **Request:** `brief.md` mục 41. Làm song song với TV2 trên nhánh cục bộ `docs/qa12-pa3-report-draft`: merge `origin/main` (`62c2d63`), dọn đường dẫn máy cục bộ `file:///home/hungj2020/...` trong `PROTOTYPE.md` & `AI-LOG.md`, và cập nhật sẵn 90% `SELF_ASSESSMENT_REPORT.md` bằng bằng chứng chạy thật của TV1 (PR #37) & TV3 (PR #38–#39), chừa đúng phần `[CHỜ TV2 — W3C Nu & responsive]` và `[CHỜ CHỐT ĐIỂM CUỐI]`.
+- **Changed:**
+  - `PROTOTYPE.md`: thay 6 đường dẫn `file:///home/hungj2020/...` (dòng 88, 136, 141–143, 146) sang đường dẫn tương đối trong repo (`client/src/styles.css`, `checks/ui-test-results.json`, `checks/validator-{index,studio,booking}.txt`, `screenshots/`).
+  - `AI-LOG.md`: bỏ 2 link `file:///home/hungj2020/.gemini/...` ở dòng 198 (giữ tên ảnh minh chứng văn bản thường) và ghi mục 41 này.
+  - `FRONTEND.md`: giải quyết xung đột merge từ `62c2d63`, giữ nguyên bảng *Routes* (có `GS-1023`), *Demo accounts* (có `han`), mục 5.4 (quy tắc TV3) và mục 7 (*Not done*); cập nhật trạng thái bảng tổng hợp đợt QA 27/11 (§5.3) theo `62c2d63`.
+  - `SELF_ASSESSMENT_REPORT.md`: cập nhật đầy đủ bằng chứng thật từ `62c2d63` cho 9 tiêu chí (TV1 Gate 1–5 `112/112` + `46/46` + `197/197` API log audit + RBAC + `GS-1024`; TV3 `124/124` 4 chế độ mock + tap-target CDP + favicon + `docs/qa-reference.md`; 294 commit PA#3, 8 commit `AGENTS.md`, 40 mục `brief.md`/`AI-LOG.md`) và mục 2 *What We Did Not Manage / Known Limitations*.
+- **Rejected:** Không chạm vào `docs/api/`, `mock/`, `client/`, `tools/` hay bảng *Routes* của `FRONTEND.md` để không xung đột với nhánh song song của TV2; không bịa tổng điểm hay URL bài đăng PO.
+- **Checked:**
+  - `git config user.name` (`Lê Quốc Hưng`) & `user.email` (`24120184@student.hcmus.edu.vn`).
+  - `git diff --stat origin/main -- docs/api mock client tools`: trống hoàn toàn.
+  - `git grep -n "file:///home/"`: 0 đường dẫn máy cục bộ còn sót trong link Markdown (chỉ còn mô tả lịch sử dạng code inline ở mục 38 của TV3).
+  - `git diff --check` và quét conflict markers: 0 lỗi, 0 conflict markers.
+- **Commits:** Giữ trên nhánh cục bộ `docs/qa12-pa3-report-draft` (chưa push/mở PR), chờ TV2 merge xong để chốt QA12.

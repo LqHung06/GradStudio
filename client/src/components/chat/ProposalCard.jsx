@@ -6,7 +6,8 @@ export function ProposalCard({ proposal, actions = null }) {
   return (
     <div className="gs-proposal">
       <p><strong>Ngày đề xuất: </strong><time dateTime={proposal.date}>{formatDate(proposal.date)}</time></p>
-      <p><strong>Trạng thái: </strong>{getStatusLabel(PROPOSAL_STATUS, proposal.status)}</p>
+      <p><strong>Trạng thái: </strong>{proposal.status === 'superseded'
+        ? 'Đã bị thay thế' : getStatusLabel(PROPOSAL_STATUS, proposal.status)}</p>
       {proposal.items.length ? (
         <ol className="gs-proposal__items">
           {proposal.items.map((item, index) => (

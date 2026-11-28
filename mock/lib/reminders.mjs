@@ -42,21 +42,42 @@ function nextReminderId(reminders) {
   return `rm-${maxId + 1}`;
 }
 
-export function ensureBookingReminder(db, booking) {
-  if (!Array.isArray(db.reminders)) db.reminders = [];
-  if (db.reminders.some((r) => r.bookingCode === booking.code)) return null;
+export function buildBookingReminderDraft(db, booking) {
+  if ((db.reminders || []).some((r) => r.bookingCode === booking.code)) return null;
   const payload = buildReminderPayload(db, booking);
   if (!payload) return null;
-  const reminder = {
+  return {
     id: nextReminderId(db.reminders),
     bookingCode: booking.code,
     sendAt: payload.sendAt,
     channels: payload.channels,
-    emailStatus: 'sent',
+    // B4.12: Newly provisioned reminders start queued and dispatch when due (sendAt <= now).
+    emailStatus: 'queued',
     text: payload.text,
   };
+}
+
+export function ensureBookingReminder(db, booking) {
+  if (!Array.isArray(db.reminders)) db.reminders = [];
+  const reminder = buildBookingReminderDraft(db, booking);
+  if (!reminder) return null;
   db.reminders.push(reminder);
   return reminder;
+}
+
+// B4.12: Dispatch due queued reminders at most once; leave future reminders queued and never re-send sent/failed.
+export function dispatchDueReminders(db, { nowMs = Date.now(), simulateFail = null } = {}) {
+  if (!Array.isArray(db.reminders)) return [];
+  const dispatched = [];
+  for (const reminder of db.reminders) {
+    if (reminder.emailStatus !== 'queued') continue;
+    const sendAtMs = Date.parse(reminder.sendAt);
+    if (!Number.isFinite(sendAtMs) || sendAtMs > nowMs) continue;
+    const failed = typeof simulateFail === 'function' ? Boolean(simulateFail(reminder)) : false;
+    reminder.emailStatus = failed ? 'failed' : 'sent';
+    dispatched.push(reminder);
+  }
+  return dispatched;
 }
 
 // R04: Recalculate queued reminders on reschedule; keep sent history and avoid duplicate sends.

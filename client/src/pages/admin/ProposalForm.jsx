@@ -92,8 +92,7 @@ export function AvailabilityResult({ result, onApply, busy }) {
   );
 }
 
-export function ProposalForm({ preferredDate, busy, onPropose }) {
-  const resources = useFetch('/api/resources');
+export function ProposalForm({ preferredDate, resources, busy, onPropose }) {
   const staff = resources.data?.staff ?? [];
   const rooms = resources.data?.rooms ?? [];
   const action = useRef('check');

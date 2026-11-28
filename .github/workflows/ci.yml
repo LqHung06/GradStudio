@@ -47,7 +47,7 @@ jobs:
           node tools/contract-check.mjs --base http://127.0.0.1:3001
 
       - name: Gate 3 - Business rules regression tests (node:test)
-        run: node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv3-booking-rules.test.mjs
+        run: node --test tools/tv1-rules.test.mjs tools/tv2-reminders-id.test.mjs tools/tv2-qa9.test.mjs tools/tv3-booking-rules.test.mjs
 
       - name: Gate 4 - Client dependency install and production build
         working-directory: client

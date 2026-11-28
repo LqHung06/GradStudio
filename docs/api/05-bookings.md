@@ -45,9 +45,12 @@ Creating awaiting_deposit does **not** reserve any staff or room. Only successfu
 | `shootType` | string | yes | Non-blank; proposed 1–120 characters |
 | `packageId` | string | yes | Existing package; proposed maximum 100 characters |
 | `extraIds` | string[] | yes | Proposed 0–20 distinct existing IDs; [] allowed |
+| `editorId` | string | yes | Existing staff ID with photo skill from GET /api/resources |
 
-- **201 Created:** `{booking: Booking}`. Uses the accepted proposal date/items, customer from conversation and package data from catalogue. Assigns next booking code (highest existing number + 1), sets conversation.bookingCode, status awaiting_deposit and paymentStatus unpaid. The first success is GS-1024. A replacement is allowed only after the current linked booking is cancelled, using a fresh proposal created after cancellation and accepted by the customer. Never reuse a proposal used for any previous booking, or a proposal from another conversation. The old booking keeps conversationId, amounts and payment history; the new booking starts awaiting_deposit/unpaid, with no transfer of old deposits. conversation.bookingCode points to the new code. GET list/detail retains all old bookings under the existing ownership rules.
-- **Errors:** inherited 401/403/500; 400 VALIDATION for missing/wrong body fields, unknown package/extra IDs; 404 NOT_FOUND for missing conversation/proposal; 409 CONFLICT when proposal is not accepted, belongs to another conversation, proposal was used for an earlier booking or predates its cancellation, or the current linked booking is not cancelled. No mandatory slot reservation/check is introduced here; resource checks are enforced at proposal creation and deposit success.
+- **201 Created:** `{booking: Booking}`. The latest accepted proposal supplies date/items, after revalidating current opening hours. The server stores the selected editor separately from the shoot assignment and from the shared Booking shape. Sets conversation.bookingCode, awaiting_deposit and unpaid. The first success is GS-1024, with Tuấn selected as editor. One thread can create only one booking. Cancellation retains that link and history.
+- **Errors:** inherited 401/403/500; 400 VALIDATION for invalid input including `editorId`, or applicable `items.N.start/end` when configured hours no longer cover the accepted slots; 404 NOT_FOUND for missing conversation/proposal; 409 CONFLICT if the thread already has any booking, the proposal belongs to another thread, or it is no longer the latest accepted proposal. Creating a booking does not reserve its time.
+
+Mock handoff for confirmation: `db.bookingEditors[booking.code]` holds the selected editor `{id, name}`. Confirmation and recovery use this reference for `J-<code>-edit`. Changing the shoot staff leaves this assignment intact. For new bookings, confirmation must not substitute the photographer when an editor is assigned. Older seeded bookings without an entry fall back to the photographer.
 
 ### Examples
 
@@ -61,6 +64,7 @@ Content-Type: application/json
 {
   "conversationId": "c-linh",
   "proposalId": "p-1",
+  "editorId": "u-tuan",
   "shootType": "Tốt nghiệp cá nhân",
   "packageId": "pkg-tn-premium",
   "extraIds": [
@@ -91,6 +95,7 @@ Content-Type: application/json
 {
   "conversationId": "c-linh",
   "proposalId": "p-2",
+  "editorId": "u-tuan",
   "shootType": "Tốt nghiệp cá nhân",
   "packageId": "pkg-tn-premium",
   "extraIds": [
@@ -279,7 +284,7 @@ Content-Type: application/json
 
 - **Roles:** customer (own), admin (all), staff (assigned). Other roles receive 403.
 - **Path:** code, required booking code GS- followed by digits. **Query:** none. **Body:** none.
-- **200 OK:** `{booking: Booking}`.
+- **200 OK:** `{booking: Booking}` for customer and assigned staff. Admin also receives `adminActions: {rescheduleBlockedReason: string|null, finalLinkBlockedReason: string|null, editor: {id, name}|null}`. A null reason allows the corresponding form subject to revalidation at write time. Editor is null when an older booking has no stored assignment.
 - **Errors:** inherited 401/403/500; 404 NOT_FOUND for unknown code or an existing booking outside the customer's ownership/staff assignment. An unrecognized path code is a missing resource, not a 400 field error. No 409 for a read.
 
 ### Examples
@@ -380,6 +385,12 @@ Content-Type: application/json
 ```
 
 ## Changes
+
+- 2026-11-27: B4.1 integration uses the QA9 confirmation helper and retains the editor selected at booking creation.
+
+- 2026-11-27: Clarify the B4.11 editor data handoff and preservation of the editor when shoot staff changes. The shared Booking response shape stays the same.
+
+- 2026-11-27: QA10, B2.2/B3.3/B4.4–5/B4.7/B4.11. One booking per thread, latest accepted proposal, configured hours, explicit editor and Admin eligibility.
 
 - 2026-11-23: R07: replacement after cancellation with a fresh accepted proposal and preserved history (group choice, plan 2.7); package-only price (PO R3), one-VND deposit rounding (group choice).
 
