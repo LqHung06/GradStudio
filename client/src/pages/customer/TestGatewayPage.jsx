@@ -67,12 +67,12 @@ export function TestGatewayPage() {
       ) : (
         <article className="package-detail-card gateway-card" aria-labelledby="gateway-heading">
           <header className="package-detail-header">
-            <p className="section-eyebrow">Mô phỏng thanh toán trực tuyến (PA#3)</p>
+            <p className="section-eyebrow">Mô phỏng thanh toán trực tuyến</p>
             <h1 id="gateway-heading">Cổng thanh toán thử nghiệm</h1>
           </header>
 
           <p className="chat-hold-notice">
-            Đây là trang thanh toán thử nghiệm dùng cho PA#3, không phát sinh giao dịch thật. Chọn một kết quả bên dưới để kiểm tra luồng xác nhận lịch.
+            Đây là cổng thanh toán thử nghiệm (test payment), không phát sinh giao dịch thật. Chọn một kết quả bên dưới để kiểm tra luồng xác nhận lịch.
           </p>
 
           <AsyncState

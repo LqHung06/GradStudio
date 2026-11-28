@@ -1,6 +1,6 @@
 # FRONTEND.md — GradStudio PA#3
 
-> Trạng thái: **đang làm**. Nhóm cập nhật file này trong suốt PA#3; bản cuối phải khớp với bản build trong zip.
+> Bản chốt nộp PA#3 — tài liệu phản ánh đúng trạng thái mã nguồn và bản build `client/dist/` trong gói nộp.
 
 ## 1. Team
 
@@ -50,13 +50,14 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/` | public | G1 | GET `/api/services`, `/api/packages`, `/api/extras`, `/api/portfolio`, `/api/reviews` | |
 | `/packages/pkg-tn-premium` | public | G1 | GET `/api/packages/:id`, GET `/api/extras` | |
 | `/sign-in` | public | G2 | POST `/api/auth/login` | |
-| `/chat` | customer | G3, G6 | GET `/api/conversations`, GET `/api/conversations/:id`, POST `/api/conversations`, POST `/api/conversations/:id/messages`, PATCH `/api/conversations/:id/proposals/:proposalId`, GET `/api/services`, `/api/packages`, `/api/extras` | |
-| `/my-bookings` | customer | G7 | GET `/api/bookings` | |
-| `/my-bookings/GS-1024` | customer | G7, G9 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | after G6 |
-| `/test-gateway/PAY-1` | customer | G7, G9 | GET `/api/payments/:id`, POST `/api/test-gateway/:paymentId` | after G7 |
-| `/payments/PAY-1/result` | customer | G7, G9 | GET `/api/payments/:id` | after G7 |
-| `/notifications` | customer | G7 | GET `/api/reminders` | |
-| `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
+| `/chat` | customer (`linh`, `han`) | G3, G6 | GET `/api/conversations`, GET `/api/conversations/:id`, POST `/api/conversations`, POST `/api/conversations/:id/messages`, PATCH `/api/conversations/:id/proposals/:proposalId`, GET `/api/services`, `/api/packages`, `/api/extras` | |
+| `/my-bookings` | customer (`linh`, `han`) | G7 | GET `/api/bookings` | Hân thấy `GS-1023` có sẵn (`awaiting_deposit`) ngay khi khởi động mock |
+| `/my-bookings/GS-1023` | customer (`han`) | G7 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | Booking mẫu của Hân có sẵn (`awaiting_deposit`). Bấm *Thanh toán cọc 30%* để sinh `PAY-1` và sang `/test-gateway/PAY-1`. |
+| `/my-bookings/GS-1024` | customer (`linh`) | G7, G9 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | after G6 (chỉ thuộc `linh`; mở trước hoặc dùng sai tài khoản sẽ hiện thông báo) |
+| `/test-gateway/PAY-1` | customer (`han` / `linh`) | G7, G9 | GET `/api/payments/:id`, POST `/api/test-gateway/:paymentId` | after G7: dùng đúng `paymentId` (`PAY-1`, `PAY-2`…) từ `redirectUrl` sau khi bấm thanh toán ở `GS-1023` (`han`) hoặc `GS-1024` (`linh`) |
+| `/payments/PAY-1/result` | customer (`han` / `linh`) | G7, G9 | GET `/api/payments/:id` | after G7: đọc kết quả giao dịch `PAY-n` trực tiếp từ API |
+| `/notifications` | customer (`linh`, `han`) | G7 | GET `/api/reminders` | Hiện rỗng ban đầu; có nhắc lịch sau khi đặt cọc thành công ở G7 |
+| `/my-bookings/GS-1024/gallery` | customer (`linh`) | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
 | `/admin/conversations` | admin (`thao`) | G4 | GET `/api/conversations` | Lọc theo trạng thái hội thoại |
 | `/admin/conversations/c-linh` | admin (`thao`) | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule?date=...`, POST `/api/availability/check`, GET `/api/packages`, GET `/api/extras`, GET/POST `/api/bookings` | Hội thoại Linh có sẵn. Booking GS-1024 xuất hiện after G6. |
 | `/admin/bookings` | admin (`thao`) | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
@@ -101,32 +102,32 @@ Câu hỏi đặt dưới bài *GradStudio — questions for the product owners*
 
 ### 5.3 Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)
 
-Nguồn: các bài QA bổ sung (`B2`, `B3`, `B4`, `BS.1`, giải thích ký hiệu tại `docs/qa-reference.md`; chưa có đường dẫn bài đăng Facebook để trích dẫn, không tự tạo link). Trạng thái dưới đây phản ánh đúng commit `62c2d63` trên `main`.
+Nguồn: các bài QA bổ sung (`B2`, `B3`, `B4`, `BS.1`, giải thích ký hiệu tại `docs/qa-reference.md`; đường dẫn trực tiếp tới comment Facebook `#WAD2431` chưa trích xuất được trong gói nộp nên giữ trung thực là chưa có link, không tự tạo URL). Trạng thái dưới đây phản ánh đúng bản chốt trên `main` (`6875966`).
 
-| Mã QA | Bước / R | Quyết định PO | Phụ trách | Trạng thái tại `62c2d63` |
+| Mã QA | Bước / R | Quyết định PO | Phụ trách | Trạng thái tại `6875966` |
 |---|---|---|---|---|
-| `B2.1` | G8, G9 · R6 | Mở trả 70% khi các việc `shoot` đã `done` và danh sách ảnh đã lưu; hiện lý do khi khóa nút; việc `shoot` lùi trạng thái trước khi trả phải khóa nút 70% lại. | TV2 + TV1 | Đã hoàn thành trên `main` (`62c2d63`, PR #32 & PR #35). |
-| `B2.2` | G4, G10 | Hủy booking vẫn giữ hội thoại `Đã chốt lịch`; **mỗi hội thoại gắn tối đa 1 booking, kể cả booking đã hủy**; đặt lại qua yêu cầu mới (thay quy ước R07 cũ). | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B2.3` | G5, G6 · R2 | Khách từ chối đề xuất thì hội thoại vẫn `Đang tư vấn`; Admin đề xuất tiếp và chỉ mở *Tạo booking* sau khi khách đồng ý giờ hợp lệ. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B2.4` | G1, G6, G9 · R3, R5 | Mỗi dịch vụ có ít nhất 1 gói đủ tên, thời lượng, số ảnh chỉnh và giá; giá *"từ"* là giá thấp nhất; máy chủ tính giá/cọc và giới hạn ảnh; giữ nguyên Premium cho `GS-1024`. | TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, kiểm lại ở PR #33–#35). |
-| `B2.5` | G3, G4, G6 | Tin từ trang dịch vụ và yêu cầu mới áp dụng quy tắc chọn hội thoại ở `B4.6`; khách vẫn nhắn tiếp được trong hội thoại gắn booking. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B3.1` | G3, G6, G10 · R3 | Nếu dùng đơn giá mỗi người (Kỷ yếu), phải có số người trước khi tạo booking và máy chủ kiểm tra số nguyên theo giới hạn nhóm chốt; khóa sau khi đã cọc. | TV3 + TV2 | Đã chốt theo contract nhóm (giá trọn gói, extras không cộng giá riêng) trên `main` (`62c2d63`). |
-| `B3.2` | G3 | Xếp độ gần theo thời điểm tin nhắn mới nhất; khi có nhiều hội thoại chưa hoàn thành và chưa có booking, ưu tiên hội thoại có tin nhắn mới nhất. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B3.3` | G5, G6 · R2 | Đề xuất mới thay thế đề xuất đang `pending`; hiện chữ **Đã bị thay thế** trên đề xuất cũ và chỉ cho phản hồi đề xuất mới nhất. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B4.1` | G7, G10 · R4, R7, R8 | Cọc thành công nhưng trùng giờ giữ tiền đã thu và `Chờ cọc 30%`; nếu giữ nguyên gói, đổi giờ trống trên **chính booking đó** để sang `Đã đặt lịch` và sinh việc/nhắc lịch đúng 1 lần; đổi gói hoặc bỏ chụp thì hủy (hoàn ngoài hệ thống). | TV3 + TV2 + TV1 | Đã hoàn thành trên `main` (`62c2d63`, PR #35 `confirmBookingReservation` & PR #36). |
-| `B4.2` | G7, G9, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì hủy trả `409` kèm giờ được hủy; hết hạn chuyển `Thất bại`; ngoại lệ cổng thực thu sau khi hủy thì ghi tiền đã thu và giữ `Đã hủy`. Áp dụng cả 30% và 70%. | TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B4.3` | G7, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì đổi giờ trả `409` kèm giờ mở khóa; cọc thành công kiểm tra người/phòng theo giờ booking tại lúc trả; cọc trùng xử lý theo `B4.1`. | TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B4.4` | G5, G10, G11 · R1, R7 | Dùng khoảng `[bắt đầu, kết thúc)`, cho phép liền giờ; **giờ mở cửa tách T2–T6 (`weekday`) và T7–CN (`weekend`)**; kiểm ở đề xuất/tạo/đổi/gợi ý; đổi cấu hình giữ booking cũ, lúc cọc chỉ kiểm người/phòng. Seed T7 `24/10/2026` bao `09:00–16:00`. | TV1 + TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #32 QA8 & PR #33/#34 QA10). |
-| `B4.5` | G5, G6 · R2 | Admin gửi đề xuất khác sau khi khách đã đồng ý và trước khi tạo booking thì giờ cũ hết hiệu lực, hội thoại về `Đang tư vấn` và khóa *Tạo booking* tới khi khách đồng ý giờ mới. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B4.6` | G3, G4, G6 | Từ trang dịch vụ, chat và yêu cầu ưu tiên hội thoại chưa `Hoàn thành` và chưa có booking; nếu không có thì yêu cầu mở hội thoại mới, chat nối hội thoại chưa `Hoàn thành` có tin mới nhất hoặc mở mới; yêu cầu mới trong hội thoại đã có booking đi sang hội thoại mới. | TV3 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #33 & PR #35). |
-| `B4.7` | G6, G10 · R3, R7 | Chỉ đổi giờ khi `Chờ cọc` hoặc `Đã đặt lịch` và việc `shoot` chưa `Đang làm`; từ lúc `shoot` `in_progress`/`done`, đã `paid_in_full` hoặc `completed` thì trả `409`; khóa gói/giá từ lúc tạo. | TV3 + TV1 | Đã hoàn thành trên `main` (`62c2d63`, PR #33). |
-| `B4.8` | G8, G9, G10 · R6, R7 | Staff đổi trạng thái việc của mình theo thứ tự bất kỳ (kể cả lùi trạng thái) khi còn mở; **khóa `makeup`/`shoot` sau khi trả 70%**, **khóa `edit` sau khi gắn `finalLink`**; booking hủy vẫn hiện việc kèm nhãn, chặn cập nhật `409` và nhả lịch bận. | TV1 + TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, PR #32 QA8 & kiểm lại ở PR #37). |
-| `B4.9` | G9 · R5, R6 | Chọn từ 1 đến giới hạn gói; danh sách rỗng trả `400` và không đủ điều kiện trả 70%. | TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #35 QA9). |
-| `B4.10` | G9 · R5, R6, R8 | Khi trả 70% thành công, khóa danh sách lưu thành công gần nhất; khoản trả theo giá gói, không đổi theo số ảnh. | TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #35 QA9). |
-| `B4.11` | G8, G9, G10 · R4, R6 | Admin phân công makeup, chụp, chỉnh khi tạo booking (seed Tuấn cho `GS-1024`); Staff chỉ mở chỉnh sau khi đã lưu ảnh và trả đủ 70%; Admin chỉ gắn `finalLink` khi đã trả đủ 70% và việc `edit` `done` (thiếu trả `409`). | TV3 + TV1 + TV2 | Đã hoàn thành trên `main` (`62c2d63`, PR #32, PR #33, PR #35 & PR #36). |
-| `B4.12` | G7, G10 · R4, R7, R9 | Đổi lịch thay nhắc chưa gửi, giữ lịch sử đã gửi và tạo nhắc mới theo mốc sớm nhất mới; mốc đã tới/qua hiện ngay trong tài khoản, e-mail gửi ở lượt chạy kế tiếp, mỗi nhắc tối đa 1 lần. | TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, PR #35 QA9). |
-| `B4.13` | G7, G11 · R4, R9 | Đổi số giờ nhắc chỉ áp dụng cho nhắc tạo sau hoặc tính lại khi đổi lịch; lỗi gửi vẫn hiện trong tài khoản với trạng thái `Gửi lỗi`. | TV2 + TV1 | Đã hoàn thành trên `main` (`62c2d63`, PR #32 QA8 & PR #35 QA9). |
-| `BS.1` | G7, G9, G10 · R8 | Hạn thanh toán **15 phút** cho cả cọc 30% và 70% (cổng thử và hệ thống dùng cùng hạn; sang PA#4 nếu sandbox đòi tối thiểu dài hơn thì dùng mức ngắn nhất cổng cho phép). | TV2 + TV3 | Đã hoàn thành trên `main` (`62c2d63`, PR #35 QA9 & PR #33 QA10). |
+| `B2.1` | G8, G9 · R6 | Mở trả 70% khi các việc `shoot` đã `done` và danh sách ảnh đã lưu; hiện lý do khi khóa nút; việc `shoot` lùi trạng thái trước khi trả phải khóa nút 70% lại. | TV2 + TV1 | Đã hoàn thành trên `main` (`6875966`, PR #32 & PR #35). |
+| `B2.2` | G4, G10 | Hủy booking vẫn giữ hội thoại `Đã chốt lịch`; **mỗi hội thoại gắn tối đa 1 booking, kể cả booking đã hủy**; đặt lại qua yêu cầu mới (thay quy ước R07 cũ). | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B2.3` | G5, G6 · R2 | Khách từ chối đề xuất thì hội thoại vẫn `Đang tư vấn`; Admin đề xuất tiếp và chỉ mở *Tạo booking* sau khi khách đồng ý giờ hợp lệ. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B2.4` | G1, G6, G9 · R3, R5 | Mỗi dịch vụ có ít nhất 1 gói đủ tên, thời lượng, số ảnh chỉnh và giá; giá *"từ"* là giá thấp nhất; máy chủ tính giá/cọc và giới hạn ảnh; giữ nguyên Premium cho `GS-1024`. | TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, kiểm lại ở PR #33–#35). |
+| `B2.5` | G3, G4, G6 | Tin từ trang dịch vụ và yêu cầu mới áp dụng quy tắc chọn hội thoại ở `B4.6`; khách vẫn nhắn tiếp được trong hội thoại gắn booking. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B3.1` | G3, G6, G10 · R3 | Nếu dùng đơn giá mỗi người (Kỷ yếu), phải có số người trước khi tạo booking và máy chủ kiểm tra số nguyên theo giới hạn nhóm chốt; khóa sau khi đã cọc. | TV3 + TV2 | Đã chốt theo contract nhóm (giá trọn gói, extras không cộng giá riêng) trên `main` (`6875966`). |
+| `B3.2` | G3 | Xếp độ gần theo thời điểm tin nhắn mới nhất; khi có nhiều hội thoại chưa hoàn thành và chưa có booking, ưu tiên hội thoại có tin nhắn mới nhất. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B3.3` | G5, G6 · R2 | Đề xuất mới thay thế đề xuất đang `pending`; hiện chữ **Đã bị thay thế** trên đề xuất cũ và chỉ cho phản hồi đề xuất mới nhất. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B4.1` | G7, G10 · R4, R7, R8 | Cọc thành công nhưng trùng giờ giữ tiền đã thu và `Chờ cọc 30%`; nếu giữ nguyên gói, đổi giờ trống trên **chính booking đó** để sang `Đã đặt lịch` và sinh việc/nhắc lịch đúng 1 lần; đổi gói hoặc bỏ chụp thì hủy (hoàn ngoài hệ thống). | TV3 + TV2 + TV1 | Đã hoàn thành trên `main` (`6875966`, PR #35 `confirmBookingReservation` & PR #36). |
+| `B4.2` | G7, G9, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì hủy trả `409` kèm giờ được hủy; hết hạn chuyển `Thất bại`; ngoại lệ cổng thực thu sau khi hủy thì ghi tiền đã thu và giữ `Đã hủy`. Áp dụng cả 30% và 70%. | TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B4.3` | G7, G10 · R4, R7, R8 | Còn giao dịch chờ trong hạn thì đổi giờ trả `409` kèm giờ mở khóa; cọc thành công kiểm tra người/phòng theo giờ booking tại lúc trả; cọc trùng xử lý theo `B4.1`. | TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B4.4` | G5, G10, G11 · R1, R7 | Dùng khoảng `[bắt đầu, kết thúc)`, cho phép liền giờ; **giờ mở cửa tách T2–T6 (`weekday`) và T7–CN (`weekend`)**; kiểm ở đề xuất/tạo/đổi/gợi ý; đổi cấu hình giữ booking cũ, lúc cọc chỉ kiểm người/phòng. Seed T7 `24/10/2026` bao `09:00–16:00`. | TV1 + TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #32 QA8 & PR #33/#34 QA10). |
+| `B4.5` | G5, G6 · R2 | Admin gửi đề xuất khác sau khi khách đã đồng ý và trước khi tạo booking thì giờ cũ hết hiệu lực, hội thoại về `Đang tư vấn` và khóa *Tạo booking* tới khi khách đồng ý giờ mới. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B4.6` | G3, G4, G6 | Từ trang dịch vụ, chat và yêu cầu ưu tiên hội thoại chưa `Hoàn thành` và chưa có booking; nếu không có thì yêu cầu mở hội thoại mới, chat nối hội thoại chưa `Hoàn thành` có tin mới nhất hoặc mở mới; yêu cầu mới trong hội thoại đã có booking đi sang hội thoại mới. | TV3 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #33 & PR #35). |
+| `B4.7` | G6, G10 · R3, R7 | Chỉ đổi giờ khi `Chờ cọc` hoặc `Đã đặt lịch` và việc `shoot` chưa `Đang làm`; từ lúc `shoot` `in_progress`/`done`, đã `paid_in_full` hoặc `completed` thì trả `409`; khóa gói/giá từ lúc tạo. | TV3 + TV1 | Đã hoàn thành trên `main` (`6875966`, PR #33). |
+| `B4.8` | G8, G9, G10 · R6, R7 | Staff đổi trạng thái việc của mình theo thứ tự bất kỳ (kể cả lùi trạng thái) khi còn mở; **khóa `makeup`/`shoot` sau khi trả 70%**, **khóa `edit` sau khi gắn `finalLink`**; booking hủy vẫn hiện việc kèm nhãn, chặn cập nhật `409` và nhả lịch bận. | TV1 + TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, PR #32 QA8 & kiểm lại ở PR #37). |
+| `B4.9` | G9 · R5, R6 | Chọn từ 1 đến giới hạn gói; danh sách rỗng trả `400` và không đủ điều kiện trả 70%. | TV2 | Đã hoàn thành trên `main` (`6875966`, PR #35 QA9). |
+| `B4.10` | G9 · R5, R6, R8 | Khi trả 70% thành công, khóa danh sách lưu thành công gần nhất; khoản trả theo giá gói, không đổi theo số ảnh. | TV2 | Đã hoàn thành trên `main` (`6875966`, PR #35 QA9). |
+| `B4.11` | G8, G9, G10 · R4, R6 | Admin phân công makeup, chụp, chỉnh khi tạo booking (seed Tuấn cho `GS-1024`); Staff chỉ mở chỉnh sau khi đã lưu ảnh và trả đủ 70%; Admin chỉ gắn `finalLink` khi đã trả đủ 70% và việc `edit` `done` (thiếu trả `409`). | TV3 + TV1 + TV2 | Đã hoàn thành trên `main` (`6875966`, PR #32, PR #33, PR #35 & PR #36). |
+| `B4.12` | G7, G10 · R4, R7, R9 | Đổi lịch thay nhắc chưa gửi, giữ lịch sử đã gửi và tạo nhắc mới theo mốc sớm nhất mới; mốc đã tới/qua hiện ngay trong tài khoản, e-mail gửi ở lượt chạy kế tiếp, mỗi nhắc tối đa 1 lần. | TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, PR #35 QA9). |
+| `B4.13` | G7, G11 · R4, R9 | Đổi số giờ nhắc chỉ áp dụng cho nhắc tạo sau hoặc tính lại khi đổi lịch; lỗi gửi vẫn hiện trong tài khoản với trạng thái `Gửi lỗi`. | TV2 + TV1 | Đã hoàn thành trên `main` (`6875966`, PR #32 QA8 & PR #35 QA9). |
+| `BS.1` | G7, G9, G10 · R8 | Hạn thanh toán **15 phút** cho cả cọc 30% và 70% (cổng thử và hệ thống dùng cùng hạn; sang PA#4 nếu sandbox đòi tối thiểu dài hơn thì dùng mức ngắn nhất cổng cho phép). | TV2 + TV3 | Đã hoàn thành trên `main` (`6875966`, PR #35 QA9 & PR #33 QA10). |
 
 ### 5.4 Tóm tắt quy tắc TV3 theo QA của PO
 
@@ -150,9 +151,9 @@ Nguồn: các bài QA bổ sung (`B2`, `B3`, `B4`, `BS.1`, giải thích ký hi�
 
 ## 7. Not done
 
-Đang làm. Mục này được cập nhật trước khi nộp: bước nào hoặc phần nào của một bước chưa chạy thì ghi vào đây.
+Toàn bộ luồng chính **G1–G11** cho cả 4 vai trò đã hoạt động trên bản build `client/dist/`. Các giới hạn còn lại trong phạm vi bản nộp PA#3:
 
-
-### TV3 — giới hạn tích hợp còn lại
-
-- PA#3 dùng một job theo mỗi loại ca. Đổi lịch có jobs hiện hữu mà thêm, bớt hoặc lặp loại ca trả `409 CONFLICT`. Khôi phục booking đã nhận cọc cũng trả `409 CONFLICT` nếu lịch mới cần nhiều job cùng loại. Đây là giới hạn ánh xạ jobs của bản PA#3.
+- **Ánh xạ job theo loại ca khi đổi lịch / khôi phục booking:** PA#3 dùng một job theo mỗi loại ca (`makeup`, `shoot`, `edit`). Đổi lịch khi đã có jobs mà thêm, bớt hoặc lặp loại ca trả `409 CONFLICT`; khôi phục booking đã nhận cọc cũng trả `409 CONFLICT` nếu lịch mới cần nhiều job cùng loại.
+- **Hạng mục chuyển sang PA#4 (Express Back-end):** cổng thanh toán sandbox thật (PA#3 dùng `/test-gateway/:paymentId` mô phỏng), gửi e-mail nhắc lịch thật qua SMTP và scheduler, lưu file upload thật kèm kiểm chữ ký file (magic bytes, S5).
+- **Kiểm tra W3C Nu HTML Validator trực tuyến:** khi gửi DOM lên `https://validator.w3.org/nu/` qua CLI bị Cloudflare anti-bot challenge (`403`) nên chưa hoàn tất xác thực trực tuyến; nhóm đã thay bằng kiểm tra cấu trúc HTML ngữ nghĩa và responsive qua Headless Chrome (`48/48` lượt PASS ở 16 route × `360/768/1280px`).
+- **Link trực tiếp tới từng comment PO trên Facebook (`#WAD2431`):** chưa trích xuất được URL từng bình luận vào cột *Link tới comment* ở mục 5 (nhóm giữ nguyên `"Chưa có link"` và không tự tạo URL).

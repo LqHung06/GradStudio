@@ -3516,42 +3516,31 @@ Kết thúc bằng danh sách file sửa, kết quả kiểm tra và phần còn
 ```
 
 
-## 41. [TV1 · 27–28/11/2026 · Antigravity Assistant] Chuẩn bị & đồng bộ bản nháp PA#3 `SELF_ASSESSMENT_REPORT.md`, mục 5 `FRONTEND.md` và dọn đường dẫn cục bộ (`62c2d63`)
-
-Tin nhắn 1:
+## 41. [TV2 · 28/11/2026 · Antigravity] Dọn phần TV2 trước nộp PA#3 và kiểm tra chéo
 
 ```text
-Bối cảnh: GradStudio PA#3, tách nhánh `docs/qa12-pa3-report-draft` từ `main` mới nhất (`a8236fd`, sau khi PR #32 QA8 của TV1 đã merge). Chuẩn bị trước bản nháp hồ sơ PA#3 (`SELF_ASSESSMENT_REPORT.md`) và cập nhật mục 5 (`Product owner decisions`) của `FRONTEND.md` theo bản kế hoạch 27/11/2026 để sẵn sàng chốt số liệu cuối vào mốc `QA11–QA12` (CN 29/11).
+Việc cần sửa, theo thứ tự ưu tiên
+Bảng Routes trong FRONTEND.md còn dòng /admin/bookings/:code. Giám khảo mở đúng đường dẫn đó, trang hiện "Không tìm thấy booking :code". Rubric yêu cầu dùng id mà mock có sẵn (GS-1023). Đổi thành /admin/bookings/GS-1023.
+GS-1023 thuộc về Hân, nhưng bảng Routes không có dòng nào cho Hân. Khi Linh mở /my-bookings/GS-1023, trang hiện "Chưa có lịch chụp". Thêm các dòng route cho han (xem GS-1023, thanh toán cọc, test gateway). Nhờ vậy giám khảo thấy được màn G7 có dữ liệu ngay khi mock vừa khởi động. Các dòng "after G6/G7" hiện không bị trắng: trang có thông báo.
+SELF_ASSESSMENT_REPORT.md vẫn là bản PA#2 (97/100). Cần viết lại theo 9 tiêu chí PA#3, mỗi dòng có bằng chứng, kèm mục "what we did not manage". Tổng trong bảng phải bằng số trong tên zip. Chấm thật thà, vì lệch trên 10 điểm so với điểm thực sẽ bị trừ thêm.
+Dòng ## Changes cho commit mock sau khi có code. Rubric yêu cầu mọi thay đổi docs/api/ hoặc mock/ sau đó đều có dòng. Commit 84a9c34 (sửa cách cấp ID nhắc lịch, 25/11) chỉ sửa mock/ và không có dòng ngày 25/11 trong 07-reminders.md. Tôi mới kiểm tra ba commit mock, nên nhóm cần rà các commit mock còn lại.
+Xóa file PA#2 không còn dùng. Tôi đã kiểm tra: pages/BookingPage.jsx, pages/HomePage.jsx, pages/StudioPage.jsx, components/FloatingChat.jsx và data/fixtures.js không được route nào import (routes/public.jsx import pages/public/HomePage.jsx, là file khác). Chúng chứa dữ liệu cứng và chat nổi, đúng thứ AGENTS.md cấm.
+Đổi chữ trên trang cổng thanh toán. TestGatewayPage.jsx còn dòng "Mô phỏng thanh toán trực tuyến (PA#3)". Rubric yêu cầu nhãn "test payment" rõ ràng, nhưng nên bỏ chữ "PA#3" khỏi giao diện.
+Tap target. Ở /chat có ô input cao 20 px, ở /admin/conversations/c-linh có ô cao 13 px (kiểm tra ở cả 3 độ rộng). Nhiều khả năng đó là checkbox/radio, rubric chỉ nói "buttons and links", nên rủi ro thấp. Vẫn nên làm vùng bấm của nhãn bao ô đó cao tối thiểu 44 px.
+Dọn tài liệu. Bỏ đường dẫn file:///home/hungj2020/... trong AI-LOG.md và PROTOTYPE.md. Đặt một git config user.name thống nhất cho mỗi người (hiện có "Nhut", "Tuan Kiet", "Lê Công Minh Nhựt", "Đặng Hoàng Tuấn Kiệt"). Giải thích các mã B4.x, R0x, QA8–QA11 trong một file ngắn, vì kế hoạch nội bộ không nằm trong repo.
+FRONTEND.md. Bỏ dòng "Trạng thái: đang làm". Điền mục "Not done" cho trung thực. Mục 5 ghi 10 quyết định PO mà cột link đều là "Chưa có link". Rubric yêu cầu link tới từng bài, nên cần bổ sung nếu có.
+bám sát cái trên nha, giờ tới phần tôi làm, check kĩ
+```
 
-Ràng buộc bắt buộc:
-1. KHÔNG sửa bất kỳ file code/contract/mock/test nào (`docs/api/`, `mock/`, `client/`, `tools/`). Chỉ sửa `SELF_ASSESSMENT_REPORT.md`, `FRONTEND.md`, `brief.md`, `AI-LOG.md`.
-2. KHÔNG bịa điểm tự chấm cuối cùng, KHÔNG bịa link bài đăng PO, KHÔNG đánh dấu "đã pass" những mục chưa chạy (`QA9`, `QA10`, `QA11`, W3C Nu HTML Validator, kiểm thử zip cuối). Mọi chỗ còn chờ `QA11` ngày 29/11 phải ghi rõ nhãn `[CHỜ CHỐT QA11]`.
-3. Mọi bằng chứng (commit hash, số endpoint, số ví dụ contract, số test `node:test`, số module build, số mục `brief.md` / `AI-LOG.md`, danh sách route) phải đối chiếu trực tiếp từ `main` (`a8236fd`) và `git log`.
-4. Không tự chạy `git add`, `git commit`, `git push`.
 
-Yêu cầu chi tiết:
-1. **`SELF_ASSESSMENT_REPORT.md`** (ghi đè bản PA#2 cũ bằng khung hoàn chỉnh cho **PA#3 — Front end in React**, ghi rõ ở đầu file: `Trạng thái: BẢN NHÁP tại commit a8236fd — chờ chốt điểm & bằng chứng cuối sau QA11 ngày 29/11`):
-   - Thông tin học phần, đồ án PA#3, danh sách 3 thành viên + MSSV (`24120184`, `24120211`, `24120354`) và mẫu tên file zip `24120184-24120211-24120354_<tổng>.zip` (`[CHỜ CHỐT QA11]`).
-   - Bảng tự đánh giá đủ **9 tiêu chí theo rubric PA#3** (tổng 100 điểm):
-     1. Toàn bộ luồng G1–G11 bằng React (25đ)
-     2. Routing, đăng nhập, shared state (10đ)
-     3. Dữ liệu từ API: loading / error / empty (10đ)
-     4. Forms (10đ)
-     5. Contract và mock (15đ)
-     6. Responsive, semantic, valid (5đ)
-     7. `brief.md` và file rules `AGENTS.md` (10đ)
-     8. `AI-LOG.md` (10đ)
-     9. Lịch sử commit (5đ)
-   - Mỗi tiêu chí có cột: Điểm tối đa | Điểm tự chấm (`[CHỜ CHỐT QA11]`) | Bằng chứng cụ thể hiện có tại `a8236fd` (file, route, contract, test, CI, commit hash) | Phần chưa xong / cần chốt ở `QA11` (*What we did not manage*).
-   - Mục 2 **What We Did Not Manage / Known Limitations**: liệt kê trung thực các phần đang chờ tích hợp `QA9`/`QA10`, W3C Nu HTML Validator, và các giới hạn đã biết theo phạm vi PA#3 (cổng thanh toán thử nghiệm thay sandbox thật, nhắc lịch mô phỏng thay SMTP, kiểm tra chữ ký file upload chuyển sang PA#4).
+## 42. [TV1 · 27–28/11/2026 · Antigravity] QA12 — Chốt hồ sơ PA#3 (`SELF_ASSESSMENT_REPORT.md`, `FRONTEND.md`, `AGENTS.md`), dọn đường dẫn cục bộ và kiểm tra 5 Gate cuối
 
-2. **`FRONTEND.md` (cập nhật mục 5 — *Product owner decisions*):**
-   - Giữ nguyên mục 5.1 (10 quyết định PO ngày 23/11) và ghi chú rõ các điểm được cập nhật/thay thế bởi đợt QA mới 27/11 (ví dụ `B2.2` thay thế quy ước cũ cho tạo booking thay thế cùng hội thoại).
-   - Bổ sung mục **5.2 (hoặc 5.3) — Đợt QA bổ sung của Product Owner (cập nhật 27/11/2026)**: bảng tóm tắt đầy đủ các quyết định `B2.1–B2.5`, `B3.1–B3.3`, `B4.1–B4.13`, `BS.1`, người phụ trách và trạng thái triển khai trung thực tại `a8236fd` (`QA8` đã xong trên `main`; `QA9` & `QA10` đang triển khai). Không tự tạo URL bài đăng PO.
-   - Rà nhẹ mục 5.2 (quy ước nhóm 23/11): đánh dấu rõ dòng *Hội thoại & booking thay thế sau hủy* đã được thay bằng `B2.2` (mỗi hội thoại tối đa 1 booking, kể cả đã hủy) để tránh mâu thuẫn trong cùng tài liệu.
-   - Chưa xóa các ghi chú trạng thái của TV3 trong mục 7 (*Not done*) cho đến khi `QA10` merge xong.
+```text
+Bối cảnh: GradStudio PA#3, PR #40 của TV2 đã merge vào `origin/main` (`6875966`). Hoàn tất phần việc cuối của TV1 (Chặng 3 — QA12) trên nhánh `docs/qa12-pa3-report-draft` để sẵn sàng mở PR chốt hồ sơ PA#3 vào `main`, sau đó build `client/dist/` và đóng gói zip nộp bài.
 
-3. **Kiểm tra & ghi log:**
-   - Xác nhận `git diff -- docs/api mock client tools` trống hoàn toàn và `git diff --check` 0 lỗi, 0 conflict markers.
-   - Ghi mục tiếp theo (mục 33) vào cuối `brief.md` và `AI-LOG.md`.
+1. Hợp nhất `origin/main` (`6875966`) vào `docs/qa12-pa3-report-draft`, giữ nguyên bảng Routes có `han` + `GS-1023`, giữ trọn mục 41 của TV2 và đánh số mục QA12 thành 42.
+2. Chốt `FRONTEND.md`: bỏ dòng `Trạng thái: đang làm`, cập nhật bảng §5.3 tại `6875966` (giữ trung thực `"Chưa có link"` khi chưa có URL Facebook PO), chốt mục 7 *Not done* trung thực.
+3. Cập nhật chú thích `src/data/fixtures.js` trong `AGENTS.md` (đã xóa khỏi repo trước khi nộp).
+4. Chốt `SELF_ASSESSMENT_REPORT.md` đủ 9 tiêu chí PA#3 với bằng chứng thật và điểm tự đánh giá trung thực theo `rubric.txt` (khớp tên file zip `24120184-24120211-24120354_<tổng>.zip`).
+5. Dọn sạch đường dẫn cục bộ `file:///home/hungj2020/...` trong `PROTOTYPE.md` & `AI-LOG.md`; chạy lại trọn 5 Gate kiểm tra và xác nhận không sửa `docs/api/`, `mock/`, `client/`, `tools/`.
 ```
