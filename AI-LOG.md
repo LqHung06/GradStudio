@@ -1091,3 +1091,40 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
     - **[D] Đối soát log mock & Console:** **197/197** request `/api` phát sinh từ bản build đều khớp `docs/api/` (**0** endpoint lạ), **0** `console.error`, **0** `pageerror`, **0** phản hồi `5xx`.
   - **Phần QA11 thuộc vai trò thành viên khác (chưa chạy trong phiên TV1 này):** W3C Nu HTML Validator & kiểm tra responsive `360/768/1280px` toàn app (TV2 — Kiệt); kiểm tra 4 chế độ `normal/slow/error/empty` & nút *Thử lại* toàn app (TV3 — Nhựt).
 - **Commits:** Giữ thay đổi chưa commit để thành viên kiểm tra trước khi tách commit.
+
+
+### [TV3] 38. Rà phần TV3 trước khi nộp PA#3 (28/11/2026)
+
+- **Tool:** Codex, Git, Node.js, Vite preview và Chrome DevTools Protocol.
+- **Request:** `brief.md` mục 38. Nhánh `fix/tv3-submission-readiness` tách từ `origin/main` tại `0639fb2`, sau khi xác nhận có B4.1 (`39848f6`).
+- **Changed:**
+  - Bảng Routes Admin dùng tài khoản `thao`, mã seed `c-linh` và `GS-1023`. Ví dụ GS-1024 có thông tin after G6. Router và endpoint vẫn dùng tham số.
+  - Bổ sung truy vết trong Changes của contract 03/04 ngày 28/11. Thêm [giải thích mã QA](docs/qa-reference.md). Not done của TV3 hiện còn giới hạn ánh xạ job và 409 trong PA#3.
+  - Xóa `client/src/pages/StudioPage.jsx` và `client/src/components/FloatingChat.jsx`. Đã rà import tĩnh/động, entry HTML, router, cấu hình Vite, script và harness. Ghi chú, kiểm tra và ảnh PA#2 được giữ làm lịch sử.
+  - Mở rộng harness Admin để mở trực tiếp, reload, đo vùng bấm và bấm vào chữ của nhãn checkbox bằng sự kiện chuột CDP.
+- **Rejected / lỗi phát hiện:** Checkbox Admin 13 × 13 px nhưng toàn bộ nhãn hoạt động và cao 44 px ở ba độ rộng. Giữ CSS. `client/src/pages/HomePage.jsx` và `client/src/pages/BookingPage.jsx` cũ vẫn import `../data/fixtures.js`. Các file này cần dọn chung với TV2, còn trang G1 đang dùng là `client/src/pages/public/HomePage.jsx`.
+- **Checked:**
+  - `npm ci` và `npm run build` tạo `client/dist` (95 modules). Hồi quy bốn bộ TV1/TV2/QA9/TV3 **46/46 PASS**. Contract-check trên mock mới cổng 3011 **112/112, 40/40 endpoint**. Cú pháp 27 mô-đun, parse 14 JSON seed, conflict markers và `git diff --check` sạch.
+  - `node tools/tv3-admin-build-check.mjs` trên production build thoát 0. Mở trực tiếp và reload cả `/admin/conversations`, `/admin/conversations/c-linh`, `/admin/bookings` và `/admin/bookings/GS-1023` bằng `thao`. `GS-1024` trước G6 có thông báo thiếu dữ liệu. G4 gửi, lọc và lỗi giữ bản nháp. G5 kiểm trùng, gợi ý và đề xuất. G6 chờ khách đồng ý rồi tạo đúng một lần. G10 đã qua B4.1, đổi giờ, hủy, gắn link và khách Nhận ảnh. Harness chạy normal/slow/error/empty, có Thử lại không reload, không lỗi JS hay endpoint lạ.
+  - Kích thước tính theo CSS px, đo cả hai dịch vụ thêm. Admin `.admin-extras label` lần lượt **253 × 44**, **645 × 44**, **532.5 × 44** ở 360/768/1280. Input cùng kích thước **13 × 13**. `label.control` khớp input và bấm chữ đổi lựa chọn rồi khôi phục. Nút/link riêng trong main đạt tối thiểu 44 px. Header của c-linh không có phần tử đo được dưới 44 px.
+  - TV2 có thể tái hiện ở `/chat`, đăng nhập `linh`, chọn hội thoại Linh rồi xem Dịch vụ thêm. `.extras-fieldset label.checkbox-option input[type="checkbox"]` đo **20 × 20** ở cả ba độ rộng. Hai label ở 360 px đo **245 × 105.59** và **245 × 81.59**. Ở 768 px cả hai đo **621 × 57.59**, ở 1280 px đo **773 × 57.59**. `label.control` gắn đúng. Không dùng riêng kích thước input để chấm vùng bấm.
+  - Phạm vi bằng chứng cho Hưng: các route/luồng Admin ở trên, mã B4.1 `39848f6`, kết quả HTTP/Chrome của lượt này và harness tương ứng. Chưa chạy W3C Nu, hoặc kiểm đủ mọi route/mode ngoài phạm vi Admin. Có thể ghi giới hạn job theo loại ca và 409 vào mục What we did not manage.
+
+  | Commit mock | File | Hành vi | Contract và Changes |
+  |---|---|---|---|
+  | `ce4b4c8` | `mock/routes/admin-bookings.mjs` | Đổi lịch cập nhật nhắc, hủy bỏ queued và giữ sent. | 10 có dòng 24/11. Commit contract `36d9da5` đến sau mock và sau khi Admin routes được nối ở `1c08484`. |
+  | `b4a5277` | `mock/routes/conversations.mjs` | Chọn hội thoại đích, trả ID, chỉ đề xuất mới nhất được phản hồi. | 03 có QA10, trước đây thiếu truy vết cụ thể yêu cầu bị chuyển hội thoại và tab cũ. Đã bổ sung 28/11. |
+  | `b225837` | `mock/routes/bookings.mjs` | Một booking mỗi hội thoại, tạo bằng đề xuất mới nhất, bắt buộc editorId và trả lý do khóa Admin. | 05 có dòng QA10. |
+  | `78f0598`, `3ed7561` | `mock/lib/clash.mjs`, `mock/routes/resources.mjs` | Validate giờ mở cửa cho lịch mới và gợi ý ca hợp lệ. | 04 có dòng B4.4. |
+  | `34e8e14`, `700ebab` | `mock/lib/clash.mjs` | Gợi ý theo ngày dự kiến, tích hợp helper các khung giờ QA8. | 04 thiếu dòng riêng về QA8, bổ sung 28/11. |
+  | `d99184b`, `812d890` | `mock/lib/admin-booking-rules.mjs`, `mock/routes/admin-bookings.mjs` | Khóa giao dịch/việc chụp khi đổi, giữ lịch sử khi hủy, giao link cần trả đủ và edit done. | 05/10 có Changes QA10 và mô tả retryAt ở 10. |
+  | `ef4c106`, `39848f6` | `mock/lib/booking-confirmation.mjs`, `mock/lib/reminders.mjs`, `mock/routes/admin-bookings.mjs` | QA9 sinh job chỉnh và nhắc queued, G10 xác nhận cọc đã thu trên cùng mã. | 05/10 đã ghi B4.1. 06/07 đã ghi QA9. |
+  | `84a9c34` | `mock/lib/reminders.mjs` | Cấp ID từ max hậu tố và lọc start null/sai dạng. | 07 thiếu dòng riêng. Bàn giao TV2, không sửa contract 07. |
+
+  Bàn giao nội dung tài liệu:
+
+  - TV1 Hưng: `SELF_ASSESSMENT_REPORT.md` đang ghi PA#2, 7 tiêu chí và 97/100. Dùng 9 tiêu chí PA#3, lấy số liệu kiểm thật, cộng lại và đưa cùng tổng vào tên zip. Khi chốt, bỏ câu Đang làm ở Not done và hợp nhất bảng Routes. Cùng nhóm bổ sung link PO thật nếu có. Bản tổng hợp PO và kế hoạch nằm ngoài repo, chưa có link PO thật trong các mục đang ghi Chưa có link.
+  - TV2 Kiệt: Sau sign-in `han`, `/my-bookings` dùng GET `/api/bookings`, `/my-bookings/GS-1023` dùng GET `/api/bookings/:code` và POST `/api/bookings/:code/payments` với `kind=deposit`. Sau khi tạo payment ở G7, mở `/test-gateway/{paymentId}` theo `redirectUrl` từ API, rồi `/payments/{paymentId}/result` theo URL trả về khi mô phỏng thanh toán. Hai route dùng ID thật và không có dữ liệu giao dịch sẵn sau restart. Tài khoản `han` đã có trong Demo accounts. Rà hai chuỗi PA#3 trong `TestGatewayPage.jsx` (dòng 70/75), checkbox /chat đo ở trên, Changes 07 cho `84a9c34` và dọn hai trang PA#2 cũ cùng fixtures.
+  - Link lịch sử `file:///home/hungj2020/...` ở PROTOTYPE.md có đích thay thế đã xác minh: dòng 88 là `client/src/styles.css`; dòng 136 là `checks/ui-test-results.json`; dòng 141–143 là `checks/validator-{index,studio,booking}.txt`; dòng 146 là `screenshots/`. Hai ảnh `verify-fix-item-1-grey.png` và `verify-fix-count-5-centered.png` tại AI-LOG.md dòng 198 chưa tìm thấy đích cùng tên trong repo/thư mục tài liệu. Giữ các mục lịch sử.
+  - Git hiện hiển thị `Nhut <lecongminhnhut6533@gmail.com>`. Đề xuất dùng tên đầy đủ Lê Quốc Hưng, Đặng Hoàng Tuấn Kiệt, Lê Công Minh Nhựt với email đã thống nhất cho các commit mới.
+- **Commits:** `5f35e68` brief; `fc13cd8`, `fda9664` contract; `406d1fb` Routes; `f64651e`, `ac9bd6e` dọn mã PA#2; `61e8e70` harness; `a26c488` mã QA. Nhật ký được commit riêng sau cùng.

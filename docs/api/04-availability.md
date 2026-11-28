@@ -341,6 +341,8 @@ The exact same clashes/suggestions objects are placed inside error.details for 4
 
 ## Changes
 
+- 2026-11-28: Backfill traceability for `34e8e14` and its integration in `700ebab`. Clash suggestions use the configured opening hours of the candidate date, including alternatives on the next day. The integration shares the same date-specific helper with schedule validation.
+
 - 2026-11-27: QA10, B4.4. Validate configured opening hours in scheduling operations, keep the past-date example and use half-open intervals.
 
 - 2026-11-20: first version: resources, readable daily schedule, read-only clash check and complete alternatives. Owner: TV3 Lê Công Minh Nhựt (24120211).

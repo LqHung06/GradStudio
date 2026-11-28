@@ -3139,3 +3139,197 @@ Bối cảnh: GradStudio PA#3, tách nhánh `chore/qa11-ci-gate3-and-verificatio
    - Đối soát toàn bộ log `/api` với `docs/api/`, kiểm Console 0 lỗi JS / 0 5xx.
 4. Ghi nhận kết quả chạy thật vào `brief.md` và `AI-LOG.md` (không tự chạy `git add`/`commit`/`push`).
 ```
+
+
+## 38. [TV3 · 28/11/2026 · Codex] Rà phần TV3 trước khi nộp PA#3
+
+```text
+Phần TV3 nên ưu tiên: sửa route Admin trong tài liệu, rà Changes, dọn mã PA#2 thuộc TV3 và kiểm tra vùng bấm Admin. Lưu ý: .admin-extras label hiện đã có chiều cao tối thiểu 44px; cần đo vùng nhãn thực tế trước khi sửa CSS.
+
+Nhánh đề xuất: fix/tv3-submission-readiness.
+
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy xử lý các nhận xét trước nộp thuộc phạm vi TV3, đồng thời lập bàn giao rõ ràng cho TV1/TV2.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+Đọc AGENTS.md, rubric PA#3, FRONTEND.md, kế hoạch QA mới,
+contract, router, source Admin và nhật ký hiện tại trước khi sửa.
+
+Kiểm tra Git và giữ nguyên thay đổi có sẵn. Nếu tạo nhánh mới,
+dùng fix/tv3-submission-readiness từ main đã cập nhật, sau khi
+xác nhận phần B4.1 mới nhất đã được tích hợp. Không tự reset,
+stash, cherry-pick hoặc merge nhánh khác.
+
+Lượt này dừng ở diff để tôi review, không commit hoặc push.
+
+1. Sửa bảng Routes thuộc TV3
+
+Trong FRONTEND.md:
+- Đổi path ví dụ /admin/bookings/:code thành
+  /admin/bookings/GS-1023.
+- Ghi rõ đăng nhập thao để xem route Admin này.
+- Giữ nguyên :code trong cột endpoint và trong router;
+  chỉ thay path ví dụ mà giám khảo sẽ mở.
+- Rà các dòng Admin khác để bảo đảm dùng ID có sẵn trong seed.
+- Các route chỉ có dữ liệu sau một bước phải ghi đúng after Gx.
+- Mở trực tiếp và F5 các route Admin bằng đúng tài khoản;
+  không chỉ kiểm tra bằng cách bấm từ trang trước.
+
+GS-1023 thuộc Hân. Không thay chủ sở hữu seed hoặc nới quyền
+để Linh xem được booking này.
+
+Với phần Customer, soạn các dòng Routes đề xuất cho TV2:
+- /my-bookings và /my-bookings/GS-1023 khi đăng nhập han.
+- Luồng tạo thanh toán cọc từ booking của Hân.
+- Route test gateway và kết quả, ghi rõ chỉ có sau khi tạo
+  payment và dùng ID thực sự được API trả về.
+
+Không mô tả payment là dữ liệu có sẵn sau khi restart mock.
+Không thêm lại tài khoản han nếu bảng Demo accounts đã có.
+Chưa sửa trang Customer hoặc dòng Routes của TV2 trong task này.
+
+2. Rà Changes cho phần TV3
+
+Đọc git log và diff các commit sửa docs/api/ hoặc mock/ của TV3
+sau khi frontend bắt đầu sử dụng endpoint tương ứng.
+
+Lập bảng:
+commit → file thay đổi → hành vi ảnh hưởng → contract liên quan
+→ dòng Changes đã có hay còn thiếu.
+
+Rà ít nhất:
+- conversations và quy tắc chọn hội thoại.
+- proposal bị thay thế và chặn tab cũ.
+- tạo booking, editorId và một booking cho mỗi hội thoại.
+- kiểm giờ mở cửa.
+- đổi/hủy, reminders và B4.1.
+- điều kiện giao link.
+
+Bổ sung Changes còn thiếu trong contract TV3, ghi ngày cập nhật
+thực tế, dẫn commit gốc và giải thích thay đổi. Không ghi lùi
+ngày hoặc làm như dòng này đã tồn tại từ trước.
+
+Không amend, rebase hoặc viết lại lịch sử để che thiếu sót.
+Bổ sung truy vết không có nghĩa tự khẳng định đã đáp ứng thứ tự
+lịch sử nếu thực tế chưa đáp ứng.
+
+Commit 84a9c34 và contract 07-reminders thuộc TV2:
+xác minh nhận xét rồi ghi vào bàn giao cho Kiệt, không tự sửa.
+Không coi đây là commit duy nhất cần rà.
+
+3. Dọn mã PA#2 thuộc phần TV3
+
+Kiểm tra toàn bộ import tĩnh, import động, entry HTML,
+vite.config.js, script và công cụ kiểm tra trước khi xóa.
+
+Được xóa hai file sau nếu xác nhận không còn dùng:
+- client/src/pages/StudioPage.jsx
+- client/src/components/FloatingChat.jsx
+
+Không xóa:
+- client/src/pages/public/HomePage.jsx.
+- Các component chat PA#3 đang dùng.
+- CSS dùng chung, ảnh hoặc bằng chứng lịch sử PA#2.
+
+Các file HomePage.jsx, BookingPage.jsx ở thư mục pages cũ
+và data/fixtures.js cần phối hợp TV2. Ghi rõ import còn lại
+và đề xuất xóa theo nhóm; không xóa fixtures khi các trang
+chưa được dọn vẫn import nó.
+
+Không sửa dữ liệu nghiệp vụ hoặc giao diện đang chạy chỉ vì
+phát hiện dữ liệu cứng trong một file PA#2 không được sử dụng.
+
+Sau khi xóa, build và kiểm lại các màn Admin để phát hiện
+import hoặc phụ thuộc gián tiếp còn sót.
+
+4. Kiểm tra vùng bấm Admin
+
+Trên /admin/conversations/c-linh ở 360/768/1280px:
+- Đo input checkbox và label bao quanh riêng biệt.
+- Kiểm tra label thực sự gắn với checkbox và bấm vào chữ
+  cũng thay đổi lựa chọn.
+- Đo vùng bấm của label, không dùng riêng chiều cao ô checkbox
+  để kết luận không đạt.
+- Rà thêm button và link đứng riêng, yêu cầu tối thiểu 44px.
+
+Source hiện có .admin-extras label với min-block-size: 44px.
+Nếu vùng bấm thực tế đã đạt, ghi bằng chứng và giữ nguyên CSS.
+Nếu chưa đạt, sửa trong phạm vi CSS/component Admin.
+Không dùng CSS toàn cục phóng mọi input hoặc làm vỡ bố cục.
+
+Ô input nhỏ trên /chat thuộc TV2: ghi selector, kích thước input,
+kích thước label và cách tái hiện để Kiệt xử lý.
+
+5. Tài liệu và bằng chứng TV3
+
+Cập nhật Not done của TV3 theo code và kiểm tra hiện tại:
+- Gỡ phụ thuộc đã giải quyết sau khi xác minh.
+- Ghi rõ giới hạn đổi lịch thêm/bớt/lặp loại ca nếu còn.
+- Không giữ mô tả tạo booking thay thế trong hội thoại cũ
+  trái quy tắc QA10 hiện hành.
+- Không dùng kết quả kiểm tra PA#2 làm bằng chứng PA#3.
+
+Chuẩn bị bằng chứng TV3 để Hưng viết SELF_ASSESSMENT_REPORT:
+- G4/G5/G6 Admin/G10 đã chạy được gì.
+- File, route, test, commit hoặc output chứng minh.
+- Phần chưa đạt và kiểm tra chưa chạy.
+- Các nội dung phù hợp cho “what we did not manage”.
+
+Không tự chấm điểm toàn nhóm hoặc ghi đè báo cáo PA#2.
+Bàn giao cho Hưng yêu cầu thay bằng 9 tiêu chí PA#3,
+cộng tổng đúng và khớp tên zip. Không mặc định giữ 97/100.
+
+6. Các nhận xét chung cần bàn giao
+
+Lập danh sách ngắn, có chủ xử lý và bằng chứng:
+- TV1: báo cáo tự chấm PA#3; bỏ trạng thái “đang làm” khi chốt
+  bản nộp; tổng hợp Not done và bảng Routes.
+- TV2: các dòng Routes cho Hân, nhãn test payment không có
+  chữ PA#3 trên UI, vùng bấm /chat và Changes của reminders.
+- TV1 cùng nhóm: bổ sung link PO thật nếu có. Không bịa link
+  hoặc lấy link kế hoạch nội bộ thay cho bài trả lời PO.
+- Tài liệu: liệt kê file:///home/hungj2020/... và đường dẫn
+  tương đối có thể thay thế sau khi kiểm tra đích tồn tại.
+  Không sửa PROTOTYPE.md hoặc các mục nhật ký cũ ngoài phạm vi.
+- Danh tính Git: kiểm tra user.name/user.email hiện tại,
+  đề xuất tên đầy đủ thống nhất cho các commit sau.
+  Không đổi tên tác giả commit cũ hoặc global Git config.
+
+Được tạo docs/qa-reference.md để giải thích ngắn các mã
+đang xuất hiện trong tài liệu TV3:
+- B2.x/B3.x/B4.x/BS.1: tham chiếu câu hỏi và trả lời PO.
+- R01…: mục trong báo cáo đối chiếu.
+- QA8…QA11: đầu việc trong kế hoạch QA.
+
+Đọc nguồn trước khi mô tả và giữ đúng từng hệ mã.
+Không gộp R01 của báo cáo với R1 của rubric PA#4.
+Nếu nguồn tham chiếu nằm ngoài repo, ghi rõ tình trạng đó;
+không tạo link tương đối bị hỏng hoặc tự chép toàn bộ tài liệu
+của nhóm vào repo.
+
+7. Kiểm tra và nhật ký
+
+Với sửa tài liệu, kiểm tra link, path và tính nhất quán.
+Với xóa source hoặc sửa UI, chạy build và kiểm tra các màn
+Admin bị ảnh hưởng bằng công cụ hiện có.
+
+Chạy gate phù hợp trong AGENTS.md/HARNESS.md; nếu contract/mock
+có thay đổi thì chạy contract-check trên mock mới.
+Không thêm dependency hoặc viết test chỉ để kiểm tra một
+chuỗi văn bản vừa sửa.
+
+Ghi prompt nguyên văn vào brief.md trước khi sửa.
+Thêm mục AI-LOG.md theo đúng cấu trúc có sẵn, dùng ngày thực tế.
+Không sửa prompt nguyên văn hoặc dựng lại bằng chứng cũ.
+
+Báo cáo cuối:
+- Nhận xét nào TV3 đã xử lý.
+- Nhận xét nào đã kiểm tra và không cần sửa.
+- File thay đổi, kết quả kiểm tra và phần chưa kiểm chứng.
+- Bảng Changes còn thiếu.
+- Danh sách bàn giao TV1/TV2.
+- Git status và diff để tôi review.
+
+Không commit, push, mở PR hoặc gửi tin nhắn cho người khác.
+```

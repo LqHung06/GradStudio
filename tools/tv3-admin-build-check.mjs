@@ -251,17 +251,22 @@ try {
   await login('thao');
   await see('Không tìm thấy booking GS-1024');
   assert.equal(await run(() => location.pathname), firstDetail);
-  await click('Về danh sách booking');
-  await see('Xem chi tiết GS-1021');
-  await navigate(detail);
-  await see('Kiểm tra và đề xuất giờ');
-  assert.equal(await run(() => location.pathname), detail);
-  await send('Page.reload');
-  await see('Kiểm tra và đề xuất giờ');
-  await navigate(list);
-  await see('Trần Minh Khoa');
-  await send('Page.reload');
-  await see('Trần Minh Khoa');
+  for (const [path, content] of [
+    [bookingList, 'Xem chi tiết GS-1023'],
+    [bookingList + '/GS-1023', 'Lê Ngọc Hân'],
+    [detail, 'Kiểm tra và đề xuất giờ'],
+    [list, 'Trần Minh Khoa'],
+  ]) {
+    await navigate(path);
+    await see(content);
+    assert.equal(await run(() => location.pathname), path);
+    const beforeReload = await run(() => performance.timeOrigin);
+    await send('Page.reload');
+    await waitFor(() => run((previous) => performance.timeOrigin !== previous, beforeReload), 'reload ' + path);
+    await see(content);
+    assert.equal(await run(() => location.pathname), path);
+    console.log('PASS direct/F5 as thao:', path);
+  }
   const filter = await run(() => [...document.querySelectorAll('button')].find(
     (button) => button.textContent.startsWith('Chưa trả lời'),
   ).textContent.trim());
@@ -281,6 +286,8 @@ try {
   const waitForForms = () => waitFor(() => run(() => Boolean(document.getElementById('date'))
     && !document.querySelector('.async-loading')), 'detail requests settle');
   await waitForForms();
+  await measureExtras('.admin-extras label', true);
+  await checkWidths(detail);
   assert.equal(await buttonDisabled(), true);
   await fill('text', 'Tin nhắn kiểm tra Admin');
   await checkFieldErrors('/api/conversations/c-linh/messages', 'Gửi', { text: 'Kiểm tra 400: Tin nhắn' });
@@ -342,6 +349,7 @@ try {
   const proposalId = conversation.messages.at(-1).proposal.id;
   await switchRole('/chat', 'linh');
   await see('Chat với GradStudio');
+  await measureExtras('.extras-fieldset label.checkbox-option', false);
   await click('Đồng ý giờ này');
   await see('Khách đã đồng ý');
   await switchRole(detail, 'thao');
@@ -571,16 +579,65 @@ try {
   await see('Không có quyền truy cập');
   await switchRole(replacementDetail, 'thao');
 
+  async function measureExtras(selector, tapText) {
+    await waitFor(() => run((query) => Boolean(document.querySelector(query)), selector), selector);
+    for (const width of [360, 768, 1280]) {
+      await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+      const measurements = await run((query) => [...document.querySelectorAll(query)].map((label) => {
+        const input = label.querySelector('input[type="checkbox"]');
+        const size = (el) => {
+          const { width, height } = el.getBoundingClientRect();
+          return [Number(width.toFixed(2)), Number(height.toFixed(2))];
+        };
+        return { name: label.innerText.trim(), label: size(label), input: size(input), associated: label.control === input };
+      }), selector);
+      assert(measurements.length);
+      assert(measurements.every(({ associated }) => associated));
+      if (tapText) {
+        assert(measurements.every(({ label }) => label[1] >= 44));
+        for (const [index, { name }] of measurements.entries()) {
+          const target = await run((query, index) => {
+            const label = document.querySelectorAll(query)[index];
+            const input = label.control;
+            label.scrollIntoView({ block: 'center', behavior: 'instant' });
+            const text = [...label.childNodes].find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+            const range = document.createRange();
+            range.selectNodeContents(text);
+            const rect = range.getClientRects()[0];
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            return { x, y, checked: input.checked, hitsLabel: document.elementFromPoint(x, y) === label };
+          }, selector, index);
+          assert(target.hitsLabel, name + ' at ' + width);
+          for (const checked of [!target.checked, target.checked]) {
+            await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: target.x, y: target.y, button: 'left', clickCount: 1 });
+            await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: target.x, y: target.y, button: 'left', clickCount: 1 });
+            await waitFor(() => run((query, index, expected) => document.querySelectorAll(query)[index].control.checked === expected,
+              selector, index, checked), 'label text toggles ' + name);
+          }
+        }
+      }
+      console.log('MEASURE', selector, width, JSON.stringify(measurements));
+    }
+  }
+
   async function checkWidths(path) {
     for (const width of [360, 768, 1280]) {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
-      const metrics = await run(() => ({
-        width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-        small: [...document.querySelectorAll('main a, main button')]
-          .filter((el) => el.getBoundingClientRect().height < 44).map((el) => el.textContent.trim()),
-      }));
+      const metrics = await run(() => {
+        const targets = [...document.querySelectorAll('main a, main button')];
+        const height = (el) => el.getBoundingClientRect().height;
+        return {
+          width: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+          minMain: Math.min(...targets.map(height)),
+          small: targets.filter((el) => height(el) < 44).map((el) => el.textContent.trim()),
+          smallHeader: [...document.querySelectorAll('header a, header button')]
+            .filter((el) => height(el) < 44).map((el) => [el.textContent.trim().replace(/\s+/g, ' '), height(el)]),
+        };
+      });
       assert(metrics.scrollWidth <= width, path + ' ' + JSON.stringify(metrics));
       assert.deepEqual(metrics.small, [], path + ' ' + width);
+      if (path === detail) console.log('MEASURE controls', path, width, JSON.stringify(metrics));
     }
   }
   for (const path of [list, detail, '/admin/bookings']) {
