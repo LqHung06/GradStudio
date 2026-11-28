@@ -3493,3 +3493,24 @@ Báo cáo cuối:
 Dừng ở diff để tôi review. Không commit, push, mở PR,
 merge hoặc gửi tin nhắn cho người khác.
 ```
+
+## 40. [TV3 · 28/11/2026 · Codex] Xử lý ba điểm còn lại của QA11
+
+```text
+Hoàn tất ba điểm còn lại của QA11 trên checkout hiện tại. Giữ nguyên diff chưa stage, không ghi đè ma trận, harness hoặc nhật ký.
+
+Tôi cho phép sửa các file dùng chung/TV1/TV2 chỉ trong phạm vi:
+1. Sửa 404 favicon: dùng icon hợp lệ và khai báo đúng trong client/index.html. Kiểm bằng Chrome profile mới; không tạo file rỗng hoặc bỏ qua lỗi trong harness để báo PASS.
+2. FRONTEND.md: bổ sung GET /api/bookings/:code cho route chi tiết việc Staff.
+3. FRONTEND.md: bổ sung GET /api/extras cho route chi tiết gói.
+
+Đọc AGENTS.md và xác minh endpoint thực tế trước khi sửa. Không đổi nghiệp vụ, contract, mock hoặc mở rộng chức năng.
+
+Build lại và chạy lại ca favicon trong normal: đăng nhập linh, mở /my-bookings/GS-1024 trước G6. Trang vẫn phải hiện đúng thông báo booking chưa được tạo, không còn request icon 404. Chạy lại các kiểm tra liên quan; nếu chạy toàn bộ ma trận thì cập nhật đúng số liệu mới.
+
+Cập nhật docs/qa11-tv3.md, brief.md và AI-LOG.md đúng cấu trúc hiện có. Giữ nguyên bằng chứng cũ, ghi riêng kết quả kiểm lại; không tự đổi 123/124 thành 124/124 nếu chưa chạy đủ.
+
+W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh vẫn ghi chưa kiểm nếu chưa thực hiện. Giữ giới hạn đổi lịch trong Not done.
+
+Kết thúc bằng danh sách file sửa, kết quả kiểm tra và phần còn thiếu. Dừng ở diff để tôi review, không stage, commit, push hoặc mở PR.
+```
