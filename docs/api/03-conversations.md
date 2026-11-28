@@ -888,6 +888,8 @@ Content-Type: application/json
 
 ## Changes
 
+- 2026-11-28: Backfill traceability for `b4a5277`. A new booking request sent from a linked thread follows the unbooked-thread rule, and the response identifies the destination thread. A stale tab cannot respond to a superseded proposal.
+
 - 2026-11-27: QA10. B4.6 clarifies B2.5/B3.2 for destination selection. B3.3 and B4.5 replace earlier pending/accepted proposals. B2.2 supersedes the previous same-thread replacement rule.
 
 - 2026-11-23: R15: numeric conversation IDs and executable 201 (group implementation choice, plan 2.7); R07: new proposals after cancellation (group choice), G10 direct changes (PO, plan 2.5).
