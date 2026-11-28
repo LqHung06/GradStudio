@@ -319,4 +319,5 @@ Content-Type: application/json
 ## Changes
 
 - 2026-11-20: initial version: services, packages, package detail, extras, portfolio, reviews. (TV2)
+- 2026-11-22: `79728f9`, `6937490` split catalog data into per-resource seed files (`services`, `packages`, `extras`, `portfolio`, `reviews`) and aligned catalog routes to read them directly. (TV2)
 - 2026-11-23: removed `price` from `Extra` per PO #6 decision (extras have no separate surcharge; package price is the total). (TV2)
