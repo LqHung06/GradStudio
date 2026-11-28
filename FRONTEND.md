@@ -43,7 +43,7 @@ node tools/contract-check.mjs --base http://localhost:3001
 
 ## 4. Routes
 
-Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nhập: customer `/my-bookings`, admin `/admin/conversations`, staff `/staff/jobs`, superadmin `/superadmin/admins`. Các ID là ID mock có sẵn khi vừa khởi động. Route ghi `after Gx` chỉ có dữ liệu sau bước đó; mở trước thì hiện thông báo.
+Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nhập: customer `/my-bookings`, admin `/admin/conversations`, staff `/staff/jobs`, superadmin `/superadmin/admins`. Route có ID mẫu và không ghi `after Gx` dùng dữ liệu seed. Route ghi `after Gx` cần hoàn thành bước đó để có dữ liệu. Mở trước thì hiện thông báo.
 
 | Path | Role | Steps | Endpoints | Ghi chú |
 |---|---|---|---|---|
@@ -57,10 +57,10 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/payments/PAY-1/result` | customer | G7, G9 | GET `/api/payments/:id` | after G7 |
 | `/notifications` | customer | G7 | GET `/api/reminders` | |
 | `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
-| `/admin/conversations` | admin | G4 | GET `/api/conversations` | Lọc theo trạng thái hội thoại |
-| `/admin/conversations/c-linh` | admin | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule?date=...`, POST `/api/availability/check`, GET `/api/packages`, GET `/api/extras`, GET/POST `/api/bookings` | Kết quả tạo và lịch sử booking hiện trong hội thoại |
-| `/admin/bookings` | admin | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
-| `/admin/bookings/:code` | admin | G10 | GET `/api/bookings/:code`, GET `/api/resources`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link` | Đổi lịch trực tiếp, hủy có xác nhận và lưu link ảnh |
+| `/admin/conversations` | admin (`thao`) | G4 | GET `/api/conversations` | Lọc theo trạng thái hội thoại |
+| `/admin/conversations/c-linh` | admin (`thao`) | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule?date=...`, POST `/api/availability/check`, GET `/api/packages`, GET `/api/extras`, GET/POST `/api/bookings` | Hội thoại Linh có sẵn. Booking GS-1024 xuất hiện after G6. |
+| `/admin/bookings` | admin (`thao`) | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
+| `/admin/bookings/GS-1023` | admin (`thao`) | G10 | GET `/api/bookings/:code`, GET `/api/resources`, PATCH `/api/bookings/:code`, POST `/api/bookings/:code/cancel`, PUT `/api/bookings/:code/final-link` | Booking mẫu của Hân có sẵn. Thử đổi hoặc hủy lịch tại đây. Gắn link sau khi đã trả đủ và việc chỉnh ảnh hoàn thành. |
 | `/staff/jobs` | staff | G8 | GET `/api/jobs` | |
 | `/staff/jobs/J-GS-1022-shoot` | staff (tuan) | G8 | GET `/api/jobs/:id`, PATCH `/api/jobs/:id`, POST `/api/bookings/:code/previews`, GET `/api/bookings/:code/photos` | `J-GS-1024-*`: after G7 |
 | `/superadmin/admins` | superadmin | G11 | GET `/api/admins`, POST `/api/admins`, PATCH `/api/admins/:id` | |
