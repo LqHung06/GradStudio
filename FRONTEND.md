@@ -50,13 +50,14 @@ Router: `react-router-dom` với `BrowserRouter`. Trang chủ sau khi đăng nh�
 | `/` | public | G1 | GET `/api/services`, `/api/packages`, `/api/extras`, `/api/portfolio`, `/api/reviews` | |
 | `/packages/pkg-tn-premium` | public | G1 | GET `/api/packages/:id`, GET `/api/extras` | |
 | `/sign-in` | public | G2 | POST `/api/auth/login` | |
-| `/chat` | customer | G3, G6 | GET `/api/conversations`, GET `/api/conversations/:id`, POST `/api/conversations`, POST `/api/conversations/:id/messages`, PATCH `/api/conversations/:id/proposals/:proposalId`, GET `/api/services`, `/api/packages`, `/api/extras` | |
-| `/my-bookings` | customer | G7 | GET `/api/bookings` | |
-| `/my-bookings/GS-1024` | customer | G7, G9 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | after G6 |
-| `/test-gateway/PAY-1` | customer | G7, G9 | GET `/api/payments/:id`, POST `/api/test-gateway/:paymentId` | after G7 |
-| `/payments/PAY-1/result` | customer | G7, G9 | GET `/api/payments/:id` | after G7 |
-| `/notifications` | customer | G7 | GET `/api/reminders` | |
-| `/my-bookings/GS-1024/gallery` | customer | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
+| `/chat` | customer (`linh`, `han`) | G3, G6 | GET `/api/conversations`, GET `/api/conversations/:id`, POST `/api/conversations`, POST `/api/conversations/:id/messages`, PATCH `/api/conversations/:id/proposals/:proposalId`, GET `/api/services`, `/api/packages`, `/api/extras` | |
+| `/my-bookings` | customer (`linh`, `han`) | G7 | GET `/api/bookings` | Hân thấy `GS-1023` có sẵn (`awaiting_deposit`) ngay khi khởi động mock |
+| `/my-bookings/GS-1023` | customer (`han`) | G7 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | Booking mẫu của Hân có sẵn (`awaiting_deposit`). Bấm *Thanh toán cọc 30%* để sinh `PAY-1` và sang `/test-gateway/PAY-1`. |
+| `/my-bookings/GS-1024` | customer (`linh`) | G7, G9 | GET `/api/bookings/:code`, POST `/api/bookings/:code/payments` | after G6 (chỉ thuộc `linh`; mở trước hoặc dùng sai tài khoản sẽ hiện thông báo) |
+| `/test-gateway/PAY-1` | customer (`han` / `linh`) | G7, G9 | GET `/api/payments/:id`, POST `/api/test-gateway/:paymentId` | after G7: dùng đúng `paymentId` (`PAY-1`, `PAY-2`…) từ `redirectUrl` sau khi bấm thanh toán ở `GS-1023` (`han`) hoặc `GS-1024` (`linh`) |
+| `/payments/PAY-1/result` | customer (`han` / `linh`) | G7, G9 | GET `/api/payments/:id` | after G7: đọc kết quả giao dịch `PAY-n` trực tiếp từ API |
+| `/notifications` | customer (`linh`, `han`) | G7 | GET `/api/reminders` | Hiện rỗng ban đầu; có nhắc lịch sau khi đặt cọc thành công ở G7 |
+| `/my-bookings/GS-1024/gallery` | customer (`linh`) | G9 | GET `/api/bookings/:code`, GET `/api/bookings/:code/photos`, PUT `/api/bookings/:code/selection`, POST `/api/bookings/:code/payments`, POST `/api/bookings/:code/receive` | after G6; có ảnh sau G8 |
 | `/admin/conversations` | admin (`thao`) | G4 | GET `/api/conversations` | Lọc theo trạng thái hội thoại |
 | `/admin/conversations/c-linh` | admin (`thao`) | G4, G5, G6 | GET `/api/conversations/:id`, POST `/api/conversations/:id/messages`, POST `/api/conversations/:id/proposals`, GET `/api/resources`, GET `/api/schedule?date=...`, POST `/api/availability/check`, GET `/api/packages`, GET `/api/extras`, GET/POST `/api/bookings` | Hội thoại Linh có sẵn. Booking GS-1024 xuất hiện after G6. |
 | `/admin/bookings` | admin (`thao`) | G10 | GET `/api/bookings` | Lọc theo trạng thái, mở chi tiết và hội thoại liên quan |
