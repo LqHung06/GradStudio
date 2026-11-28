@@ -3514,3 +3514,20 @@ W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → 
 
 Kết thúc bằng danh sách file sửa, kết quả kiểm tra và phần còn thiếu. Dừng ở diff để tôi review, không stage, commit, push hoặc mở PR.
 ```
+
+
+## 41. [TV2 · 28/11/2026 · Antigravity] Dọn phần TV2 trước nộp PA#3 và kiểm tra chéo
+
+```text
+Việc cần sửa, theo thứ tự ưu tiên
+Bảng Routes trong FRONTEND.md còn dòng /admin/bookings/:code. Giám khảo mở đúng đường dẫn đó, trang hiện "Không tìm thấy booking :code". Rubric yêu cầu dùng id mà mock có sẵn (GS-1023). Đổi thành /admin/bookings/GS-1023.
+GS-1023 thuộc về Hân, nhưng bảng Routes không có dòng nào cho Hân. Khi Linh mở /my-bookings/GS-1023, trang hiện "Chưa có lịch chụp". Thêm các dòng route cho han (xem GS-1023, thanh toán cọc, test gateway). Nhờ vậy giám khảo thấy được màn G7 có dữ liệu ngay khi mock vừa khởi động. Các dòng "after G6/G7" hiện không bị trắng: trang có thông báo.
+SELF_ASSESSMENT_REPORT.md vẫn là bản PA#2 (97/100). Cần viết lại theo 9 tiêu chí PA#3, mỗi dòng có bằng chứng, kèm mục "what we did not manage". Tổng trong bảng phải bằng số trong tên zip. Chấm thật thà, vì lệch trên 10 điểm so với điểm thực sẽ bị trừ thêm.
+Dòng ## Changes cho commit mock sau khi có code. Rubric yêu cầu mọi thay đổi docs/api/ hoặc mock/ sau đó đều có dòng. Commit 84a9c34 (sửa cách cấp ID nhắc lịch, 25/11) chỉ sửa mock/ và không có dòng ngày 25/11 trong 07-reminders.md. Tôi mới kiểm tra ba commit mock, nên nhóm cần rà các commit mock còn lại.
+Xóa file PA#2 không còn dùng. Tôi đã kiểm tra: pages/BookingPage.jsx, pages/HomePage.jsx, pages/StudioPage.jsx, components/FloatingChat.jsx và data/fixtures.js không được route nào import (routes/public.jsx import pages/public/HomePage.jsx, là file khác). Chúng chứa dữ liệu cứng và chat nổi, đúng thứ AGENTS.md cấm.
+Đổi chữ trên trang cổng thanh toán. TestGatewayPage.jsx còn dòng "Mô phỏng thanh toán trực tuyến (PA#3)". Rubric yêu cầu nhãn "test payment" rõ ràng, nhưng nên bỏ chữ "PA#3" khỏi giao diện.
+Tap target. Ở /chat có ô input cao 20 px, ở /admin/conversations/c-linh có ô cao 13 px (kiểm tra ở cả 3 độ rộng). Nhiều khả năng đó là checkbox/radio, rubric chỉ nói "buttons and links", nên rủi ro thấp. Vẫn nên làm vùng bấm của nhãn bao ô đó cao tối thiểu 44 px.
+Dọn tài liệu. Bỏ đường dẫn file:///home/hungj2020/... trong AI-LOG.md và PROTOTYPE.md. Đặt một git config user.name thống nhất cho mỗi người (hiện có "Nhut", "Tuan Kiet", "Lê Công Minh Nhựt", "Đặng Hoàng Tuấn Kiệt"). Giải thích các mã B4.x, R0x, QA8–QA11 trong một file ngắn, vì kế hoạch nội bộ không nằm trong repo.
+FRONTEND.md. Bỏ dòng "Trạng thái: đang làm". Điền mục "Not done" cho trung thực. Mục 5 ghi 10 quyết định PO mà cột link đều là "Chưa có link". Rubric yêu cầu link tới từng bài, nên cần bổ sung nếu có.
+bám sát cái trên nha, giờ tới phần tôi làm, check kĩ
+```
