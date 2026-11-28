@@ -130,3 +130,21 @@ Bảng chính gồm 18 mẫu route của router và trang 404. Một số route 
 - normal · `GS-1024`, `J-GS-1024-shoot`, `/test-gateway/PAY-1`, `/payments/PAY-2/result`, `ph-01`.
 - slow · `GS-1024`, `J-GS-1024-shoot`, `/test-gateway/PAY-1`, `/payments/PAY-2/result`, `ph-01`.
 - empty · `GS-1024`, `J-GS-1024-shoot`, `/test-gateway/PAY-1`, `/payments/PAY-2/result`, `ph-01`.
+
+## Kiểm lại sau khi sửa favicon và Routes · 28/11/2026
+
+- Checkout `e0e966e` với diff sửa favicon và hai dòng Routes. Build lại bằng `npm.cmd run build` trong `client/` rồi chạy lại `node tools/qa11-app-check.mjs` trên Vite preview với Chrome profile mới.
+- Ca normal trước G6 dùng phiên `linh`, mở trực tiếp `/my-bookings/GS-1024` và thấy “Chưa có lịch chụp GS-1024”. `GET /api/bookings/GS-1024 → 404` vẫn đúng ở thời điểm này.
+- Ở ca kiểm riêng với mock normal và Chrome profile mới, đăng nhập `linh` qua form rồi mở URL trên. DevTools ghi `POST /api/auth/login → 200`, `GET /api/auth/me → 200` và `GET /favicon.svg → 200 image/svg+xml`, không có icon 404 hay lỗi trình duyệt. Kiểm HTTP trên preview của ma trận cũng xác nhận HTML khai báo đúng icon.
+- Dòng Routes chi tiết việc Staff ghi `GET /api/bookings/:code` theo `StaffJobDetailPage.jsx`. Dòng chi tiết gói ghi `GET /api/extras` theo `PackageDetailPage.jsx`. Cả hai đã có trong contract. Trace normal ghi `GET /api/bookings/GS-1022 → 200` khi `tuan` mở việc `J-GS-1022-shoot` và `GET /api/extras → 200` khi mở `/packages/pkg-tn-premium`.
+- W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh chưa được kiểm ở lượt này. Giới hạn đổi lịch trong `FRONTEND.md` §7 vẫn áp dụng.
+
+| Mode | PASS | FAIL | Chưa chạy |
+| --- | ---: | ---: | ---: |
+| normal | 28 | 0 | 0 |
+| slow | 22 | 0 | 0 |
+| error | 48 | 0 | 0 |
+| empty | 26 | 0 | 0 |
+| **Tổng lượt kiểm lại** | **124** | **0** | **0** |
+
+Harness thoát 0. Ma trận 123/124 ở trên là bằng chứng của lượt trước khi sửa.
