@@ -103,4 +103,5 @@ Content-Type: application/json
 
 - 2026-11-20: initial version: customer reminders list with emailStatus. (TV2)
 - 2026-11-23: documented reminder recalculation on reschedule (R04) and stopping queued reminders on cancel while preserving sent history (R05). (TV2)
+- 2026-11-25: `84a9c34` (`mock/lib/reminders.mjs`) allocated reminder IDs from the max numeric `rm-N` suffix and ignored null/malformed item times so cancelling queued reminders never collides on subsequent IDs. (TV2)
 - 2026-11-27: QA9 reminder lifecycle (`B4.12`, `B4.13`): start booking reminders as `queued`, dispatch due reminders at most once on delivery pass, keep future reminders `queued`, preserve `sent`/`failed` history, and apply `reminderHoursBefore` changes only to new/recalculated reminders. (TV2)

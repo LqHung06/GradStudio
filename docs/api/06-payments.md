@@ -378,5 +378,6 @@ Content-Type: application/json
 ## Changes
 
 - 2026-11-20: initial version: deposit and remaining payments, PA#3 test gateway, failure and success examples. (TV2)
+- 2026-11-22: `6937490` aligned mock payment timestamps with shared `+07:00` `nowIso()`. (TV2)
 - 2026-11-23: added `reservationFailure` for succeeded-but-clashed deposits (PO #8 / R08), re-checked booking/payment state at gateway callback (R09), and required `shoot` jobs to be `done` before remaining 70% payment (R19). (TV2)
 - 2026-11-27: QA9 added `Payment.expiresAt` (+15 min expiry rule, retry allowed after expiry, `409` on expired gateway callback), superseded/closed older pending attempts of the same `(bookingCode, kind)` on new attempt or settlement (`activePaymentLock` clean unlock), documented `gatewayCaptured` post-cancel late-callback exception (`B4.2`), and extracted `confirmBookingReservation` with assigned editor provisioning (`B4.1`, `B4.11`). (TV2)
