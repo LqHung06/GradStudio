@@ -3333,3 +3333,163 @@ Báo cáo cuối:
 
 Không commit, push, mở PR hoặc gửi tin nhắn cho người khác.
 ```
+
+
+## 39. [TV3 · 28/11/2026 · Codex] QA11 nghiệm thu bốn chế độ mock trên toàn ứng dụng
+
+```text
+Tôi là Lê Công Minh Nhựt, TV3, MSSV 24120211. Hãy hoàn tất phần QA11 của TV3 trong ngày 28/11: kiểm normal/slow/error/empty và nút Thử lại trên toàn bộ ứng dụng.
+
+Phần sửa trước nộp đã nằm trên nhánh fix/tv3-submission-readiness. Lượt này bổ sung nghiệm thu toàn app, không làm lại riêng các màn Admin đã kiểm.
+
+Repository:
+F:\CSC_HCMUS\Chuyên ngành\Web\New folder\GradStudio
+
+1. Đọc và xác định phạm vi
+
+Đọc:
+- AGENTS.md và HARNESS.md.
+- FRONTEND.md, nhất là Routes và Not done.
+- Kế hoạch TV3 cập nhật 27/11, phần QA11.
+- Các file routes Public, Customer, Admin, Staff, Superadmin.
+- Công cụ kiểm tra và nhật ký mới nhất của nhóm.
+
+Kiểm tra working tree, branch, HEAD và chênh lệch với origin/main.
+Giữ nguyên các commit đã có. Không reset, stash, cherry-pick
+hoặc tự merge nhánh khác.
+
+Dùng nhánh hiện tại nếu phù hợp. Nếu phát hiện thay đổi có sẵn,
+không ghi đè hoặc đưa chúng vào phần việc của mình.
+
+2. Lập ma trận kiểm tra
+
+Liệt kê toàn bộ route thực tế, đối chiếu với FRONTEND.md.
+Mỗi ca ghi:
+- Route cụ thể, không dùng :id/:code làm URL truy cập.
+- Tài khoản và vai trò.
+- Dữ liệu tiền đề.
+- Chế độ mock.
+- Kết quả mong đợi, thực tế và PASS/FAIL/chưa chạy.
+
+Dùng dữ liệu seed và đúng chủ sở hữu:
+- thao cho các màn Admin.
+- han cho GS-1023 của Hân.
+- tuan/mai cho việc thực sự được giao.
+- superadmin cho G11.
+
+Với route after G6/G7:
+- Chuẩn bị dữ liệu qua API trên mock kiểm tra riêng khi cần.
+- Dùng ID thật API trả về.
+- Kiểm cả trạng thái mở sớm: có thông báo rõ, không trắng màn.
+- Mock restart làm mất dữ liệu runtime; không nhầm dữ liệu mất
+  sau restart với lỗi UI hoặc dùng nhầm ID của lần chạy trước.
+
+Không sửa seed sản phẩm để tạo bằng chứng.
+
+3. Kiểm trên production build
+
+Build source hiện tại rồi chạy preview với proxy API đúng.
+Không dùng kết quả từ npm run dev để thay cho nghiệm thu build.
+
+Với mỗi màn tải dữ liệu:
+
+normal:
+- Hiện dữ liệu API hoặc thông báo rỗng hợp lệ.
+- Không có request ngoài contract, 404 ngoài dự kiến,
+  request lặp khi đứng yên hoặc lỗi Console.
+
+slow:
+- Thấy Đang tải trước khi dữ liệu xuất hiện.
+- Không có khoảng trắng thay cho loading hoặc dữ liệu cứng
+  làm che trạng thái tải.
+
+error:
+- Đăng nhập vẫn thực hiện được theo quy tắc mock.
+- Màn hiển thị lỗi và nút Thử lại.
+- Giữ nguyên trang và phiên đăng nhập, đưa mock về normal,
+  bấm Thử lại phải phục hồi dữ liệu mà không F5.
+- Kiểm từng vùng dữ liệu có nút retry riêng nếu trang tải
+  nhiều resource.
+
+empty:
+- Mọi danh sách và danh sách lồng nhau có trạng thái rỗng.
+- Không crash, không trắng màn, không hiện dữ liệu fixtures.
+- Form thiếu danh mục có thông báo phù hợp, không tạo request
+  sai vì options rỗng.
+
+Kiểm cả Public, Customer, Admin, Staff và Superadmin.
+Không lấy kết quả Admin đại diện cho toàn app.
+
+4. Công cụ và bằng chứng
+
+Ưu tiên mở rộng công cụ hiện có hoặc tạo harness QA11 riêng,
+dùng dependency đã có. Không cài thêm thư viện.
+
+Lưu bằng chứng có thể chạy lại trong repo:
+- Ma trận kết quả.
+- Lệnh chạy và cách chuẩn bị dữ liệu.
+- Commit/source được kiểm.
+- Log hoặc ảnh cần thiết để giải thích lỗi và phục hồi.
+
+Phân biệt kiểm qua UI, HTTP và dữ liệu chuẩn bị riêng.
+Không tái sử dụng output cũ như kết quả lượt này.
+
+Chỉ dừng các tiến trình do task tạo. Không chiếm hoặc tắt server
+của người khác. Dọn tiến trình kiểm tra sau khi kết thúc.
+
+Nếu Chrome hoặc build bị chặn bởi môi trường, ghi nguyên nhân
+và ca chưa chạy. Build ra TEMP có thể dùng để chẩn đoán,
+nhưng không coi đó là bản client/dist đóng gói cuối cùng.
+
+5. Xử lý lỗi phát hiện
+
+- Lỗi thuộc TV3: sửa trong phạm vi Admin/component TV3,
+  rồi chạy lại ca lỗi và các ca hồi quy liên quan.
+- Lỗi thuộc TV1/TV2: ghi route, tài khoản, mode, bước tái hiện,
+  kết quả mong đợi/thực tế và bằng chứng để bàn giao.
+- Không tự sửa file của thành viên khác.
+- Tiếp tục kiểm các ca độc lập, không dừng toàn bộ vì một lỗi.
+- Không thay contract/mock cho khớp UI, tắt assertion hoặc
+  chuyển ca lỗi sang skip để báo xanh.
+
+Không mở rộng chức năng đổi lịch thêm/bớt/lặp loại ca.
+Giữ giới hạn PA#3 đã công bố trong Not done.
+
+6. Chạy lại các gate phù hợp
+
+Theo lệnh hiện tại trong AGENTS.md/HARNESS.md:
+- Syntax và seed JSON.
+- Contract-check trên mock mới.
+- Bốn bộ hồi quy TV1/TV2/QA9/TV3.
+- Build React.
+- Conflict markers và git diff --check.
+
+Ghi tổng kết quả thực tế, không mặc định giữ số 46/46.
+
+7. Nhật ký và bàn giao
+
+Trước khi sửa, nối prompt này nguyên văn vào brief.md,
+đúng cấu trúc, số mục tiếp theo và ngày thực tế.
+
+Thêm mục AI-LOG.md theo mẫu hiện có:
+- Request trỏ đúng brief.
+- Ghi phần đã kiểm, lỗi thật, cách xử lý và phần chưa chạy.
+- Giữ nguyên các mục lịch sử.
+
+Cập nhật Not done thuộc TV3 nếu kết quả mới làm thay đổi
+tình trạng đã công bố. Không tự đánh dấu W3C, responsive
+toàn app hoặc báo cáo tự chấm của TV1/TV2 đã hoàn thành.
+
+Báo cáo cuối:
+- Đã kiểm bao nhiêu route/ca trong từng mode.
+- Số PASS, FAIL và chưa chạy.
+- Các lỗi còn lại cùng người phụ trách.
+- QA11 phần TV3 đã đủ điều kiện bàn giao chưa.
+- File thay đổi và Git status.
+- Các commit đang chưa vào main.
+- Đề xuất tiêu đề/nội dung PR cho Kiệt review, gồm bằng chứng
+  QA11 và phần sửa trước nộp đã có trên nhánh.
+
+Dừng ở diff để tôi review. Không commit, push, mở PR,
+merge hoặc gửi tin nhắn cho người khác.
+```
