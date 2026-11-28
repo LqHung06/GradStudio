@@ -195,7 +195,7 @@ Triển khai prototype GradStudio theo master prompt, `Proposal.md`, `design.md`
   - Căn giữa số `5` trong `.count-badge` bằng cách reset padding về 0, đặt `line-height: 1; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;`.
   - Căn giữa dọc tiêu đề `.sidebar-title` với `align-items: center;`.
 - **Rejected / lỗi phát hiện & khắc phục:** ban đầu số `5` bị lệch xuống dưới do `.count-badge` kế thừa thuộc tính `padding: .25rem .75rem` từ rule CSS chung ở dòng 940 của `styles.css`. Đã ghi đè padding về 0 và căn giữa flexbox chuẩn xác.
-- **Kiểm tra / bằng chứng:** chụp ảnh bằng chứng cận cảnh [verify-fix-item-1-grey.png](file:///home/hungj2020/.gemini/antigravity-cli/brain/9fbac3ad-da21-46fe-9e1d-b777a2f44b00/verify-fix-item-1-grey.png) và [verify-fix-count-5-centered.png](file:///home/hungj2020/.gemini/antigravity-cli/brain/9fbac3ad-da21-46fe-9e1d-b777a2f44b00/verify-fix-count-5-centered.png).
+- **Kiểm tra / bằng chứng:** chụp ảnh bằng chứng cận cảnh `verify-fix-item-1-grey.png` và `verify-fix-count-5-centered.png` (lưu cục bộ thời điểm PA#2).
 
 ### 20. Khắc phục chuẩn W3C Nu HTML Checker và hoàn thiện bộ tài liệu PA#2
 
@@ -1156,7 +1156,6 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Chưa chạy W3C Nu, responsive toàn app, F5 mọi route và toàn chuỗi chọn ảnh → trả 70% → nhận ảnh. Giới hạn đổi lịch trong Not done vẫn áp dụng.
 - **Commits:** Dừng ở diff chưa stage trên checkout `e0e966e`.
 
-
 ### [TV2] 41. Dọn phần TV2 trước nộp PA#3 và kiểm tra chéo (28/11/2026)
 
 - **Tool:** Antigravity Assistant, Git, Node.js (`node:test`, `node --check`), Vite 7 (`vite preview`), Headless Chrome CDP.
@@ -1183,3 +1182,25 @@ Mỗi task giao cho assistant có một mục: **Tool**, **Request** (trỏ tớ
   - Gate 5 (`git diff --check`): **PASS**.
   - W3C Nu HTML Validator: **chưa hoàn tất qua CLI** do Cloudflare anti-bot challenge (giữ nguyên chưa đánh dấu đạt; kiểm trực tiếp trên trình duyệt bằng file đã xuất hoặc ghi nhận ở QA12).
 - **Commits:** `adda12a` dọn PA#2; `f6aa302` `brief.md`; `7a96f6f` `## Changes` 02/06/07; `848186e` `TestGatewayPage.jsx`; `54cad28` `FRONTEND.md`; cập nhật gộp mục 41 trong `AI-LOG.md` vào PR #40.
+
+
+### [TV1] 42. QA12 — Chốt hồ sơ PA#3, dọn đường dẫn cục bộ và đối chiếu 5 Gate cuối (28/11/2026)
+
+- **Tool:** Antigravity (Google Deepmind), Git, Node.js v20.20.2, Vite 7.
+- **Request:** `brief.md` mục 42. Trên nhánh `docs/qa12-pa3-report-draft` sau khi merge `origin/main` (`6875966`, gồm đủ PR #32–#40), hoàn tất bộ hồ sơ nộp bài PA#3: dọn link cục bộ `file:///home/hungj2020/...`, cập nhật chú thích `fixtures.js` trong `AGENTS.md`, chốt `FRONTEND.md` (bỏ `"đang làm"`, chốt `Not done`, cập nhật §5.3 tại `6875966`), chốt `SELF_ASSESSMENT_REPORT.md` đủ 9 tiêu chí với điểm tự chấm thật thà (`95/100`), và chạy lại trọn 5 Gate xác minh.
+- **Changed:**
+  - `PROTOTYPE.md`: thay 6 link `file:///home/hungj2020/...` sang đường dẫn tương đối trong repo (`client/src/styles.css`, `checks/ui-test-results.json`, `checks/validator-{index,studio,booking}.txt`, `screenshots/`).
+  - `AI-LOG.md`: bỏ 2 link `file:///home/hungj2020/.gemini/...` ở dòng 198 (giữ tên ảnh văn bản thường) và ghi mục 42 này nối liền sau mục 41 của TV2.
+  - `AGENTS.md`: cập nhật 2 dòng chú thích `src/data/fixtures.js` (dòng 49 và 231) phản ánh thực tế file PA#2 cũ đã được xóa khỏi repo, vẫn giữ nguyên quy tắc cấm dữ liệu cứng.
+  - `FRONTEND.md`: bỏ dòng `Trạng thái: đang làm`, giữ nguyên bảng *Routes* có `han` + `GS-1023` từ `6875966`, cập nhật §5.3 tại `6875966` (giữ trung thực `"Chưa có link"` cho cột URL Facebook PO), và chốt mục 7 *Not done* trung thực.
+  - `SELF_ASSESSMENT_REPORT.md`: chốt bản nộp PA#3 với tổng điểm tự đánh giá **`95 / 100`** (`23/25` C1, `10/10` C2, `10/10` C3, `10/10` C4, `14/15` C5, `4/5` C6, `10/10` C7, `10/10` C8, `4/5` C9), nêu rõ các điểm tự trừ và mục 2 *What We Did Not Manage / Known Limitations*, khớp tên file zip `24120184-24120211-24120354_95.zip`.
+  - `brief.md`: giữ trọn mục 41 của TV2 và bổ sung mục 42 của TV1.
+- **Rejected:** Không sửa `docs/api/`, `mock/`, `client/`, `tools/`; không bịa link PO và không đánh dấu đạt W3C Nu trực tuyến khi bị Cloudflare chặn (`403`).
+- **Checked:**
+  - `git config user.name` (`Lê Quốc Hưng`) & `user.email` (`24120184@student.hcmus.edu.vn`).
+  - Gate 1 (`node --check` mọi `mock/**/*.mjs` & `tools/*.mjs`, parse 14 seed JSON): **PASS**.
+  - Gate 2 (`contract-check` trên mock khởi động mới): **112/112 examples, 40/40 endpoints, 0 FAIL**.
+  - Gate 3 (`node --test` 4 bộ `tv1-rules`, `tv2-reminders-id`, `tv2-qa9`, `tv3-booking-rules`): **46/46 PASS, 0 FAIL, 0 skipped, 0 todo**.
+  - Gate 4 (`cd client && npm run build`): **PASS (`95 modules transformed`, `client/dist/`)**.
+  - Gate 5 (`git diff --check`, conflict markers & `git diff --stat origin/main -- docs/api mock client tools`): **CLEAN** (0 lỗi, 0 conflict markers, code/contract/mock/tools không đổi so với `6875966`).
+- **Commits:** Giữ thay đổi để thành viên kiểm tra trước khi commit cục bộ và mở PR QA12 vào `main`.

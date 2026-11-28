@@ -46,7 +46,7 @@ PA#3 builds the **whole main flow G1–G11 for four roles** (Customer, Admin, St
 - `src/routes/{public,customer,admin,staff,superadmin}.jsx` — export arrays of `{ path, element }` merged by `src/App.jsx` (with `<Route path="*" element={<NotFoundPage />} />`).
 - `src/auth/AuthContext.jsx` (`useAuth()`: `{ user, token, ready, signIn, signOut }`, `ROLE_HOME`, `canRoleAccessPath`) and `src/auth/RequireRole.jsx` (`<RequireRole roles={['admin']}>`). `Layout` reads `useAuth()` automatically.
 - `src/pages/SignInPage.jsx` (`/sign-in`), `src/pages/ForbiddenPage.jsx`, `src/pages/NotFoundPage.jsx`.
-- `src/data/fixtures.js` is PA#2 legacy: new code must not import it. Its story data lives in `mock/data/`.
+- `src/data/fixtures.js` (PA#2 legacy) and old PA#2 pages (`HomePage.jsx`, `BookingPage.jsx`, `StudioPage.jsx`, `FloatingChat.jsx`) were removed before submission. Story data lives exclusively in `mock/data/`.
 
 ### Using the shared hooks and components (for TV2/TV3)
 
@@ -228,7 +228,7 @@ When done, list the files changed and the endpoints called. Report only checks y
 - Never run `git add`, `git commit` or `git push`; the member commits after reading the diff.
 - Never edit `docs/api/` or `mock/` without an explicit request, and never change them to match the code.
 - Never call an endpoint missing from `docs/api/README.md`, or an absolute URL.
-- Never hard-code business data in a component, or import `src/data/fixtures.js` in new code.
+- Never hard-code business data in a component, or recreate/import a legacy `src/data/fixtures.js` file.
 - Never add a dependency, framework or CSS framework without asking.
 - Never use `href="#"`, placeholder links, links that open nothing, or enabled controls with no outcome. A button may be disabled only where the flow itself disables it (`Tạo booking` before the customer agrees), with the reason visible next to it.
 - Never add demo controls: `Màn 1 / Màn 2 / Màn 3`, reset-demo, simulated replies, fake payment modals, role switchers.

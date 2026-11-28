@@ -3531,3 +3531,16 @@ Dọn tài liệu. Bỏ đường dẫn file:///home/hungj2020/... trong AI-LOG.
 FRONTEND.md. Bỏ dòng "Trạng thái: đang làm". Điền mục "Not done" cho trung thực. Mục 5 ghi 10 quyết định PO mà cột link đều là "Chưa có link". Rubric yêu cầu link tới từng bài, nên cần bổ sung nếu có.
 bám sát cái trên nha, giờ tới phần tôi làm, check kĩ
 ```
+
+
+## 42. [TV1 · 27–28/11/2026 · Antigravity] QA12 — Chốt hồ sơ PA#3 (`SELF_ASSESSMENT_REPORT.md`, `FRONTEND.md`, `AGENTS.md`), dọn đường dẫn cục bộ và kiểm tra 5 Gate cuối
+
+```text
+Bối cảnh: GradStudio PA#3, PR #40 của TV2 đã merge vào `origin/main` (`6875966`). Hoàn tất phần việc cuối của TV1 (Chặng 3 — QA12) trên nhánh `docs/qa12-pa3-report-draft` để sẵn sàng mở PR chốt hồ sơ PA#3 vào `main`, sau đó build `client/dist/` và đóng gói zip nộp bài.
+
+1. Hợp nhất `origin/main` (`6875966`) vào `docs/qa12-pa3-report-draft`, giữ nguyên bảng Routes có `han` + `GS-1023`, giữ trọn mục 41 của TV2 và đánh số mục QA12 thành 42.
+2. Chốt `FRONTEND.md`: bỏ dòng `Trạng thái: đang làm`, cập nhật bảng §5.3 tại `6875966` (giữ trung thực `"Chưa có link"` khi chưa có URL Facebook PO), chốt mục 7 *Not done* trung thực.
+3. Cập nhật chú thích `src/data/fixtures.js` trong `AGENTS.md` (đã xóa khỏi repo trước khi nộp).
+4. Chốt `SELF_ASSESSMENT_REPORT.md` đủ 9 tiêu chí PA#3 với bằng chứng thật và điểm tự đánh giá trung thực theo `rubric.txt` (khớp tên file zip `24120184-24120211-24120354_<tổng>.zip`).
+5. Dọn sạch đường dẫn cục bộ `file:///home/hungj2020/...` trong `PROTOTYPE.md` & `AI-LOG.md`; chạy lại trọn 5 Gate kiểm tra và xác nhận không sửa `docs/api/`, `mock/`, `client/`, `tools/`.
+```

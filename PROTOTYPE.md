@@ -85,7 +85,7 @@ Dự án đã giải quyết toàn bộ các vấn đề trong danh sách **"Fix
 ## 6. CSS Architecture & Design System
 
 ### 6.1. Phương pháp tổ chức CSS
-- Sử dụng **Plain CSS** (CSS thuần) được chia thành 5 module theo thứ tự thác đổ (cascade) trong `src/styles/` và tổng hợp tại [`src/styles.css`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/src/styles.css):
+- Sử dụng **Plain CSS** (CSS thuần) được chia thành 5 module theo thứ tự thác đổ (cascade) trong `src/styles/` và tổng hợp tại [`client/src/styles.css`](client/src/styles.css):
   - `src/styles/base-and-pages.css`: Design tokens `:root`, reset, typography, shared header/footer và bố cục cơ sở.
   - `src/styles/responsive-layout.css`: Các breakpoint đáp ứng cho mobile (`360px`), tablet (`768px`), desktop (`1280px+`).
   - `src/styles/chat-and-motion.css`: Khung chat tư vấn (nổi trên desktop, nằm trong luồng trang trên mobile) và hiệu ứng chuyển động.
@@ -133,17 +133,17 @@ Dựa trên bội số chuẩn của 4px (0.25rem), áp dụng xuyên suốt qua
    - Đạt **31/31 test suites (100% PASS)**.
    - Kiểm tra tự động cả 3 màn hình ở 360px, 768px, 1280px, 1440px.
    - Xác nhận không tràn ngang (`overflow: false`), không có phần tử nào vượt mép phải khung nhìn (`outside: []`), không có ảnh hỏng (`broken: 0`), không có tap target độc lập nào dưới ngưỡng (`small: []`).
-   - Kết quả lưu tại: [`checks/ui-test-results.json`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/checks/ui-test-results.json).
+   - Kết quả lưu tại: [`checks/ui-test-results.json`](checks/ui-test-results.json).
 
 2. **Kiểm tra chuẩn cú pháp W3C Nu HTML Checker (`https://validator.w3.org/nu/`):**
    - Đã chạy kiểm tra trực tiếp các file HTML đã pre-render trong `dist/` qua W3C Nu HTML Checker, đạt **0 ERRORS và 0 WARNINGS** trên cả 3 trang (`The document validates according to the specified schema(s).`).
    - Báo cáo lưu tại thư mục `checks/`:
-     - [`checks/validator-index.txt`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/checks/validator-index.txt)
-     - [`checks/validator-studio.txt`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/checks/validator-studio.txt)
-     - [`checks/validator-booking.txt`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/checks/validator-booking.txt)
+     - [`checks/validator-index.txt`](checks/validator-index.txt)
+     - [`checks/validator-studio.txt`](checks/validator-studio.txt)
+     - [`checks/validator-booking.txt`](checks/validator-booking.txt)
 
 3. **Ảnh chụp màn hình đầy đủ (9 full-page screenshots):**
-   - Đầy đủ 9 ảnh full-page ở 3 độ rộng (360px, 768px, 1280px) lưu tại thư mục [`screenshots/`](file:///home/hungj2020/Documents/User/hc%20tap/hk1-3/Web/PA#2/GradStudio/screenshots/):
+   - Đầy đủ 9 ảnh full-page ở 3 độ rộng (360px, 768px, 1280px) lưu tại thư mục [`screenshots/`](screenshots/):
      - `index-360.png`, `index-768.png`, `index-1280.png`
      - `studio-360.png`, `studio-768.png`, `studio-1280.png`
      - `booking-360.png`, `booking-768.png`, `booking-1280.png`
